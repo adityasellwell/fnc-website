@@ -1,0 +1,459 @@
+@import "tailwindcss";
+
+/* ------------------------------------------------------------------
+   F&C Design Tokens
+   Tailwind v4 CSS-first config — see Project-instructions.md section 3.5/4.
+   Every color/font/radius/type-scale token used across the site is
+   declared here. No tailwind.config.js, no arbitrary values in components.
+-------------------------------------------------------------------- */
+@theme {
+  /* Brand colors — precisely matched to the F&C logo.
+     Red: sampled from the F, &, C letterforms + rooster comb in the logo —
+     a pure, deep crimson with zero orange warmth. Previous value #DC2F26
+     read orange-warm on screen; corrected to #C8191A which matches the logo.
+     Green: forest green from the laurel wreath — unchanged.
+     Blue: cobalt from the fish body — unchanged. */
+  --color-fnc-red: #E8001D;
+  --color-fnc-green: #2D7A1F;
+  --color-fnc-blue: #1E6FBF;
+
+  /* Dark-mode-ready variants — reserved for a future dark theme, not
+     wired to any toggle yet. Slightly lifted in lightness/saturation
+     from the base brand colors so they still read clearly on dark
+     surfaces (a straight reuse of the light-mode shade goes muddy on
+     near-black backgrounds). */
+  --color-fnc-red-dark: #FF1A2E;
+  --color-fnc-green-dark: #5FA33D;
+  --color-fnc-blue-dark: #4A8FC7;
+  --color-dark-bg: #16130F;
+  --color-dark-surface: #211C18;
+  --color-dark-border: #332C26;
+  --color-dark-text: #F5F3F0;
+  --color-dark-text-muted: #B8B0A8;
+
+  /* Neutrals (light theme — current default) */
+  --color-offwhite: #FAF9F6;
+  --color-warmwhite: #F3F1EC;
+  --color-charcoal: #1E1E1E;
+  --color-slate: #6B6B6B;
+  --color-bordergray: #E5E3DD;
+
+  /* Fonts (set as CSS variables by next/font in app/layout.js) */
+  --font-display: var(--font-bricolage), ui-sans-serif, system-ui, sans-serif;
+  --font-body: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
+
+  /* Content container — wider than Tailwind's default max-w-7xl (80rem/1280px)
+     for a more expansive, food-forward layout. Backs the `max-w-content`
+     utility (Tailwind v4 generates max-w-* utilities from --container-*). */
+  --container-content: 100rem;
+  /* 1600px */
+
+  /* Type scale, rebuilt significantly larger for a food-forward, premium
+     retail feel rather than a text-driven editorial site. Mobile-first:
+     the bare token is the mobile/base size, pair with a `md:` variant of
+     the next size up for desktop (see usage in components). */
+
+  /* Hero — mobile ~44px, desktop (paired with hero-lg) up to 104px */
+  --text-hero: 2.75rem;
+  /* 44px */
+  --text-hero--line-height: 1.05;
+  --text-hero--letter-spacing: -0.02em;
+
+  --text-hero-lg: 6.5rem;
+  /* 104px — within the requested 80-120px range */
+  --text-hero-lg--line-height: 0.98;
+  --text-hero-lg--letter-spacing: -0.03em;
+
+  /* Section heading — mobile ~36px, desktop 48-64px range */
+  --text-section-heading: 2.25rem;
+  /* 36px */
+  --text-section-heading--line-height: 1.1;
+  --text-section-heading--letter-spacing: -0.015em;
+
+  --text-section-heading-lg: 3.5rem;
+  /* 56px */
+  --text-section-heading-lg--line-height: 1.05;
+  --text-section-heading-lg--letter-spacing: -0.02em;
+
+  /* Subheading — 22-28px range */
+  --text-subheading: 1.5rem;
+  /* 24px */
+  --text-subheading--line-height: 1.3;
+
+  /* Body copy — 18-20px range (replaces default text-base/text-sm for
+     paragraph copy across the site) */
+  --text-body: 1.125rem;
+  /* 18px */
+  --text-body--line-height: 1.6;
+
+  --text-body-lg: 1.25rem;
+  /* 20px */
+  --text-body-lg--line-height: 1.6;
+
+  /* Radius scale — softer, premium feel across buttons/cards/inputs */
+  --radius-sm: 0.375rem;
+  --radius-md: 0.625rem;
+  --radius-lg: 1rem;
+  --radius-xl: 1.5rem;
+  --radius-2xl: 2rem;
+  --radius-3xl: 2.5rem;
+
+  /* Named spacing for section rhythm, on top of Tailwind's default scale */
+  --spacing-section-sm: 3rem;
+  --spacing-section-md: 5rem;
+  --spacing-section-lg: 7rem;
+}
+
+@media (prefers-color-scheme: dark) {
+  /* F&C is a light, premium-food brand — intentionally no dark theme yet.
+     The --color-dark-* and --color-fnc-*-dark tokens above are reserved
+     so a future dark mode doesn't require reworking tokens. */
+}
+
+body {
+  background: var(--color-offwhite);
+  color: var(--color-charcoal);
+  font-family: var(--font-body);
+}
+
+@media (prefers-reduced-motion: reduce) {
+
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* ------------------------------------------------------------------
+   Leaflet z-index override
+   Leaflet's own CSS gives .leaflet-pane / .leaflet-top / .leaflet-bottom /
+   .leaflet-control z-index values of 400-1000+ (see leaflet.css). The map's
+   container div has `position: relative` but no z-index of its own, so it
+   never forms a stacking context — meaning those internal Leaflet values
+   compare directly against ancestors elsewhere on the page, including the
+   sticky Navbar (`z-50`, see components/layout/Navbar.js). Result: the map
+   and its zoom controls/popups render on top of the Navbar when scrolled
+   into view. Cap everything Leaflet draws to well below z-50.
+-------------------------------------------------------------------- */
+.leaflet-pane,
+.leaflet-top,
+.leaflet-bottom,
+.leaflet-control-container,
+.leaflet-control {
+  z-index: 10 !important;
+}
+
+.leaflet-popup {
+  z-index: 20 !important;
+}
+
+/* ------------------------------------------------------------------
+   Global Keyframe Animations
+   Used across components for micro-interactions and scroll reveals.
+   All meaningful animations should check prefers-reduced-motion
+   (see the media query at line ~109 above which disables durations).
+-------------------------------------------------------------------- */
+
+/* Shimmer sweep — price/skeleton highlight */
+@keyframes shimmer {
+  0% {
+    background-position: -200% center;
+  }
+
+  100% {
+    background-position: 200% center;
+  }
+}
+
+/* Pulse glow — primary CTA button ambient pulse */
+@keyframes pulse-glow {
+
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 rgba(232, 0, 29, 0);
+  }
+
+  50% {
+    box-shadow: 0 0 0 8px rgba(232, 0, 29, 0.18);
+  }
+}
+
+/* Float — decorative elements subtle bob */
+@keyframes float {
+
+  0%,
+  100% {
+    transform: translateY(0px);
+  }
+
+  50% {
+    transform: translateY(-8px);
+  }
+}
+
+/* Badge pop — scale in with overshoot spring feel */
+@keyframes badge-pop {
+  0% {
+    transform: scale(0) rotate(-8deg);
+    opacity: 0;
+  }
+
+  70% {
+    transform: scale(1.15) rotate(2deg);
+    opacity: 1;
+  }
+
+  100% {
+    transform: scale(1) rotate(0deg);
+    opacity: 1;
+  }
+}
+
+/* Slide down — navbar entrance on first load */
+@keyframes slide-down {
+  from {
+    transform: translateY(-100%);
+    opacity: 0;
+  }
+
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+/* Draw line — horizontal rule grows from left */
+@keyframes draw-line {
+  from {
+    width: 0;
+    opacity: 0;
+  }
+
+  to {
+    width: 100%;
+    opacity: 1;
+  }
+}
+
+/* Star fill — left to right fill sweep on review stars */
+@keyframes star-fill {
+  from {
+    clip-path: inset(0 100% 0 0);
+  }
+
+  to {
+    clip-path: inset(0 0% 0 0);
+  }
+}
+
+/* Fade up — generic entrance, used in layered staggered lists */
+@keyframes fade-up {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Spin slow — loading / ambient rotation */
+@keyframes spin-slow {
+  from {
+    transform: rotate(0deg);
+  }
+
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* Count up shimmer — background pulse when numbers animate in */
+@keyframes count-glow {
+  0% {
+    text-shadow: 0 0 0px rgba(232, 0, 29, 0);
+  }
+
+  50% {
+    text-shadow: 0 0 24px rgba(232, 0, 29, 0.5);
+  }
+
+  100% {
+    text-shadow: 0 0 0px rgba(232, 0, 29, 0);
+  }
+}
+
+/* Utility classes for the animations above */
+.animate-shimmer {
+  background: linear-gradient(90deg,
+      transparent 25%,
+      rgba(232, 0, 29, 0.08) 50%,
+      transparent 75%);
+  background-size: 200% auto;
+  animation: shimmer 2.4s linear infinite;
+}
+
+.animate-pulse-glow {
+  animation: pulse-glow 2.5s ease-in-out infinite;
+}
+
+.animate-float {
+  animation: float 4s ease-in-out infinite;
+}
+
+.animate-badge-pop {
+  animation: badge-pop 0.45s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+}
+
+.animate-slide-down {
+  animation: slide-down 0.5s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+.animate-draw-line {
+  animation: draw-line 0.9s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+.animate-count-glow {
+  animation: count-glow 0.8s ease-in-out;
+}
+
+.animate-fade-up {
+  animation: fade-up 0.6s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+/* ================================================================
+   LOGO COLOR OVERRIDES  hard-coded to bypass Tailwind v4 cache.
+   Sampled directly from the F&C logo:
+   Red   = #E8001D (F & C letters + rooster comb)  bright blood red
+   Blue  = #1E6FBF (fish body)  cobalt royal blue
+   Green = #2D7A1F (laurel wreath + banner) vivid leaf green
+================================================================ */
+.bg-fnc-red {
+  background-color: #E8001D !important;
+}
+
+.text-fnc-red {
+  color: #E8001D !important;
+}
+
+.border-fnc-red {
+  border-color: #E8001D !important;
+}
+
+.ring-fnc-red {
+  --tw-ring-color: #E8001D !important;
+}
+
+.fill-fnc-red {
+  fill: #E8001D !important;
+}
+
+.stroke-fnc-red {
+  stroke: #E8001D !important;
+}
+
+.bg-fnc-red\/10 {
+  background-color: rgba(232, 0, 29, 0.10) !important;
+}
+
+.bg-fnc-red\/15 {
+  background-color: rgba(232, 0, 29, 0.15) !important;
+}
+
+.bg-fnc-red\/20 {
+  background-color: rgba(232, 0, 29, 0.20) !important;
+}
+
+.bg-fnc-red\/40 {
+  background-color: rgba(232, 0, 29, 0.40) !important;
+}
+
+.bg-fnc-red\/90 {
+  background-color: rgba(232, 0, 29, 0.90) !important;
+}
+
+.border-fnc-red\/30 {
+  border-color: rgba(232, 0, 29, 0.30) !important;
+}
+
+.hover\:bg-fnc-red:hover {
+  background-color: #E8001D !important;
+}
+
+.hover\:bg-fnc-red\/90:hover {
+  background-color: rgba(232, 0, 29, 0.90) !important;
+}
+
+.hover\:border-fnc-red:hover {
+  border-color: #E8001D !important;
+}
+
+.hover\:text-fnc-red:hover {
+  color: #E8001D !important;
+}
+
+.group-hover\:text-fnc-red {
+  color: #E8001D !important;
+}
+
+.focus\:border-fnc-red:focus {
+  border-color: #E8001D !important;
+}
+
+.shadow-\[0_0_8px_rgba\(200\,25\,26\,0\.7\)\] {
+  box-shadow: 0 0 8px rgba(232, 0, 29, 0.7) !important;
+}
+
+.bg-fnc-blue {
+  background-color: #1E6FBF !important;
+}
+
+.text-fnc-blue {
+  color: #1E6FBF !important;
+}
+
+.border-fnc-blue {
+  border-color: #1E6FBF !important;
+}
+
+.bg-fnc-blue\/10 {
+  background-color: rgba(30, 111, 191, 0.10) !important;
+}
+
+.bg-fnc-blue\/15 {
+  background-color: rgba(30, 111, 191, 0.15) !important;
+}
+
+.bg-fnc-green {
+  background-color: #2D7A1F !important;
+}
+
+.text-fnc-green {
+  color: #2D7A1F !important;
+}
+
+.border-fnc-green {
+  border-color: #2D7A1F !important;
+}
+
+.bg-fnc-green\/10 {
+  background-color: rgba(45, 122, 31, 0.10) !important;
+}
+
+.bg-fnc-green\/15 {
+  background-color: rgba(45, 122, 31, 0.15) !important;
+}
+
+.hover\:border-fnc-green:hover {
+  border-color: #2D7A1F !important;
+}
+
+.hover\:bg-fnc-green\/5:hover {
+  background-color: rgba(45, 122, 31, 0.05) !important;
+}

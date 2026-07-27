@@ -1,0 +1,523 @@
+// F&C — Prisma schema
+//
+// Mirrors the data models in Project-instructions.md §7 as closely as
+// possible. Where the shorthand spec used a loose shape (e.g. "items[]",
+// "addresses[]", "geo{lat,lng}") this schema resolves it into a proper
+// relational structure — each deviation is commented at the point it
+// occurs, with the reasoning, so future readers aren't left guessing why
+// it doesn't match §7 verbatim.
+//
+// Every model gets `id` (cuid), `createdAt`, and (where the row is ever
+// mutated post-creation) `updatedAt` — standard practice, not called out
+// per-model below.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ---------------------------------------------------------------------
+// Catalog
+// ---------------------------------------------------------------------
+
+model Category {
+  id               String     @id @default(cuid())
+  slug             String     @unique
+  name             String
+  description      String
+  image            String
+  order            Int        @default(0)
+  parentCategory   Category?  @relation("CategoryToSubcategory", fields: [parentCategoryId], references: [id])
+  parentCategoryId String?
+  subcategories    Category[] @relation("CategoryToSubcategory")
+
+  products Product[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([order])
+}
+
+model Product {
+  id                  String   @id @default(cuid())
+  slug                String   @unique
+  name                String
+  description         String
+  images              String[]
+  // Money as Decimal, never Float — avoids floating-point rounding drift
+  // on prices/totals throughout checkout and reporting.
+  price               Decimal  @db.Decimal(10, 2)
+  unit                String
+  // Free-form per §7 ("nutrition{}") — shape varies per product (some
+  // list fat/carbs, others don't), so Json is the right fit rather than
+  // forcing a fixed set of columns.
+  nutrition           Json
+  cookingInstructions String
+  storageInstructions String
+  tags                String[]
+  rating              Float    @default(0)
+  reviewCount         Int      @default(0)
+
+  category   Category @relation(fields: [categoryId], references: [id])
+  categoryId String
+
+  // §7's "availableAtStores[]" — implicit many-to-many with Store.
+  availableAtStores Store[] @relation("StoreProducts")
+
+  // §7's "relatedProducts[]" — self many-to-many. Prisma requires an
+  // explicit relation name for self-relations; treated as symmetric
+  // (if A relates to B, the UI shows it both ways) rather than modeling
+  // direction, matching how the current mock data uses it.
+  relatedProducts   Product[] @relation("ProductRelations")
+  relatedProductsOf Product[] @relation("ProductRelations")
+
+  relatedRecipes Recipe[] @relation("ProductRecipes")
+
+  reviews      Review[]
+  orderItems   OrderItem[]
+  wishlistedBy Wishlist[]
+  offers       Offer[]     @relation("OfferProducts")
+  coupons      Coupon[]    @relation("CouponProducts")
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([categoryId])
+  @@index([createdAt])
+}
+
+// ---------------------------------------------------------------------
+// Stores
+// ---------------------------------------------------------------------
+
+enum StoreStatus {
+  ACTIVE
+  COMING_SOON
+}
+
+model Store {
+  id                String   @id @default(cuid())
+  slug              String   @unique
+  name              String
+  address           String
+  city              String
+  state             String
+  // §7 specified "geo{lat,lng}" as a nested object; split into two Float
+  // columns instead of Json so future nearest-store queries (deferred
+  // per §9 until there are 2+ real stores) can index/sort on them
+  // directly rather than pulling every row to filter in application code.
+  latitude          Float
+  longitude         Float
+  phone             String
+  whatsapp          String
+  // Varies by day (Mon-Sun), kept as Json rather than 7 fixed columns.
+  openingHours      Json
+  images            String[]
+  deliveryAvailable Boolean  @default(false)
+  pickupAvailable   Boolean  @default(true)
+  googleMapsLink    String
+
+  // Not in §7's shorthand, but load-bearing today: the homepage Store
+  // Locator section and /stores page already distinguish the one live
+  // store from announced-but-not-open locations ("Coming Soon" badge).
+  // Flagging here since §7 didn't list it explicitly — this schema
+  // formalizes what the mock data (lib/data/stores.js) already added.
+  status StoreStatus @default(COMING_SOON)
+
+  productsAvailable Product[]  @relation("StoreProducts")
+  reviews           Review[]
+  orders            Order[]
+  auditLogs         AuditLog[]
+  users             User[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([status])
+}
+
+// ---------------------------------------------------------------------
+// Franchise
+// ---------------------------------------------------------------------
+
+enum FranchiseLeadStatus {
+  NEW
+  CONTACTED
+  QUALIFIED
+  APPROVED
+  REJECTED
+}
+
+model FranchiseLead {
+  id               String              @id @default(cuid())
+  name             String
+  email            String
+  phone            String
+  city             String
+  investmentBudget String
+  message          String?
+  status           FranchiseLeadStatus @default(NEW)
+  createdAt        DateTime            @default(now())
+
+  @@index([status])
+  @@index([createdAt])
+}
+
+// ---------------------------------------------------------------------
+// Content — recipes, blog
+// ---------------------------------------------------------------------
+
+model Recipe {
+  id          String   @id @default(cuid())
+  slug        String   @unique
+  title       String
+  description String
+  image       String
+  ingredients String[]
+  steps       String[]
+  cookTime    String
+  servings    Int
+
+  relatedProducts Product[] @relation("ProductRecipes")
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model BlogPost {
+  id          String   @id @default(cuid())
+  slug        String   @unique
+  title       String
+  excerpt     String
+  content     String
+  image       String
+  tags        String[]
+  publishedAt DateTime @default(now())
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([publishedAt])
+}
+
+// ---------------------------------------------------------------------
+// Reviews
+// ---------------------------------------------------------------------
+
+model Review {
+  id         String @id @default(cuid())
+  rating     Int
+  comment    String
+  authorName String
+
+  // §7: "productId or storeId" — Prisma has no native polymorphic
+  // relation, so this is modeled as two nullable FKs. Application-level
+  // validation (API route + Zod) enforces exactly one is set, never both
+  // and never neither.
+  product   Product? @relation(fields: [productId], references: [id])
+  productId String?
+  store     Store?   @relation(fields: [storeId], references: [id])
+  storeId   String?
+
+  createdAt DateTime @default(now())
+
+  @@index([productId])
+  @@index([storeId])
+}
+
+// ---------------------------------------------------------------------
+// Customers, addresses, wishlist
+// ---------------------------------------------------------------------
+
+model Customer {
+  id    String  @id @default(cuid())
+  name  String
+  email String  @unique
+  phone String?
+
+  // §7's "addresses[]" resolved into a proper relation — checkout needs
+  // structured fields (street/city/pincode/default-flag), not a raw array.
+  addresses Address[]
+  orders    Order[]
+  wishlist  Wishlist[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Address {
+  id         String   @id @default(cuid())
+  customer   Customer @relation(fields: [customerId], references: [id])
+  customerId String
+  line1      String
+  line2      String?
+  city       String
+  state      String
+  pincode    String
+  isDefault  Boolean  @default(false)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([customerId])
+}
+
+model Wishlist {
+  id         String   @id @default(cuid())
+  customer   Customer @relation(fields: [customerId], references: [id])
+  customerId String
+  product    Product  @relation(fields: [productId], references: [id])
+  productId  String
+  createdAt  DateTime @default(now())
+
+  @@unique([customerId, productId])
+}
+
+// ---------------------------------------------------------------------
+// Orders
+// ---------------------------------------------------------------------
+
+enum FulfillmentType {
+  DELIVERY
+  PICKUP
+}
+
+enum OrderStatus {
+  PLACED
+  CONFIRMED
+  PREPARING
+  OUT_FOR_DELIVERY
+  DELIVERED
+  READY_FOR_PICKUP
+  COLLECTED
+  CANCELLED
+  REFUNDED
+}
+
+enum PaymentStatus {
+  PENDING
+  PAID
+  FAILED
+  REFUNDED
+}
+
+model Order {
+  id         String   @id @default(cuid())
+  customer   Customer @relation(fields: [customerId], references: [id])
+  customerId String
+
+  items OrderItem[]
+
+  fulfillmentType FulfillmentType
+
+  // Pickup: which store. Delivery: address is SNAPSHOTTED as Json at
+  // order time (not a live FK to Address) — an order's shipping record
+  // must stay accurate even if the customer later edits/deletes that
+  // saved address.
+  store           Store?  @relation(fields: [storeId], references: [id])
+  storeId         String?
+  deliveryAddress Json?
+
+  status        OrderStatus   @default(PLACED)
+  paymentStatus PaymentStatus @default(PENDING)
+  total         Decimal       @db.Decimal(10, 2)
+
+  couponCode String?
+
+  statusHistory OrderStatusHistory[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([customerId])
+  @@index([status])
+  @@index([createdAt])
+}
+
+// §7 described Order.items as a plain array; resolved into a proper join
+// model since each line item needs its own quantity and a price SNAPSHOT
+// (the product's price at time of purchase, which must not drift if the
+// catalog price changes later).
+model OrderItem {
+  id        String  @id @default(cuid())
+  order     Order   @relation(fields: [orderId], references: [id])
+  orderId   String
+  product   Product @relation(fields: [productId], references: [id])
+  productId String
+  quantity  Int
+  unitPrice Decimal @db.Decimal(10, 2)
+
+  @@index([orderId])
+}
+
+model OrderStatusHistory {
+  id          String      @id @default(cuid())
+  order       Order       @relation(fields: [orderId], references: [id])
+  orderId     String
+  status      OrderStatus
+  timestamp   DateTime    @default(now())
+  changedBy   User?       @relation(fields: [changedById], references: [id])
+  changedById String?
+
+  @@index([orderId])
+}
+
+// ---------------------------------------------------------------------
+// Coupons, offers, banners
+// ---------------------------------------------------------------------
+
+enum CouponType {
+  PERCENT
+  FLAT
+}
+
+enum CouponAppliesTo {
+  PRODUCT
+  CATEGORY
+  CART
+}
+
+model Coupon {
+  id              String          @id @default(cuid())
+  code            String          @unique
+  type            CouponType
+  value           Decimal         @db.Decimal(10, 2)
+  minOrderValue   Decimal?        @db.Decimal(10, 2)
+  appliesTo       CouponAppliesTo
+  // Only set when appliesTo is PRODUCT/CATEGORY respectively — not in
+  // §7's shorthand, but "appliesTo: product|category" is meaningless
+  // without knowing *which* product/category it's scoped to.
+  scopeProducts   Product[]       @relation("CouponProducts")
+  scopeCategoryId String?
+  expiryDate      DateTime
+  usageLimit      Int?
+  usedCount       Int             @default(0)
+  active          Boolean         @default(true)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([active])
+}
+
+enum OfferType {
+  FLASH
+  FESTIVAL
+  COMBO
+  BOGO
+}
+
+model Offer {
+  id          String    @id @default(cuid())
+  type        OfferType
+  title       String
+  discount    String
+  startsAt    DateTime
+  endsAt      DateTime
+  bannerImage String?
+  active      Boolean   @default(true)
+
+  products Product[] @relation("OfferProducts")
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([active])
+  @@index([startsAt, endsAt])
+}
+
+enum BannerPlacement {
+  HERO
+  CATEGORY
+  POPUP
+}
+
+// §7 listed device as 'desktop'|'mobile'; added ALL since most current
+// hero banners (lib/data/banners.js) are shown on every breakpoint, not
+// device-restricted, and that's the common case going forward too.
+enum BannerDevice {
+  DESKTOP
+  MOBILE
+  ALL
+}
+
+model Banner {
+  id        String          @id @default(cuid())
+  placement BannerPlacement
+  device    BannerDevice    @default(ALL)
+  image     String
+  video     String?
+  link      String
+  // Marketing copy — added after the initial pass omitted it and a
+  // consumer (components/home/Hero.js) needed real title/subtitle/CTA
+  // text per banner, not just an image+link. Nullable so a banner can
+  // be image-only if a future placement doesn't need copy overlaid.
+  title     String?
+  subtitle  String?
+  ctaLabel  String?
+  priority  Int             @default(0)
+  startsAt  DateTime?
+  endsAt    DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([placement, priority])
+}
+
+// ---------------------------------------------------------------------
+// Auth / roles / admin
+// ---------------------------------------------------------------------
+
+model Role {
+  id    String @id @default(cuid())
+  name  String @unique // 'admin' | 'store_manager' | 'staff' | 'customer'
+  users User[]
+}
+
+// §7 included `passwordHash` — removed. Auth is Clerk-managed (see
+// Project-instructions.md §3): Clerk owns credentials/sessions entirely,
+// we never store a password ourselves. `clerkId` links Clerk's external
+// identity to our app-specific role/store assignment.
+model User {
+  id      String  @id @default(cuid())
+  clerkId String  @unique
+  name    String
+  email   String  @unique
+  role    Role    @relation(fields: [roleId], references: [id])
+  roleId  String
+  // Set for store_manager/staff — which store they're scoped to.
+  store   Store?  @relation(fields: [storeId], references: [id])
+  storeId String?
+
+  auditLogs          AuditLog[]
+  orderStatusChanges OrderStatusHistory[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([roleId])
+  @@index([storeId])
+}
+
+model AuditLog {
+  id         String   @id @default(cuid())
+  user       User?    @relation(fields: [userId], references: [id])
+  userId     String?
+  action     String
+  entityType String
+  entityId   String
+  timestamp  DateTime @default(now())
+  details    Json?
+  store      Store?   @relation(fields: [storeId], references: [id])
+  storeId    String?
+
+  @@index([userId])
+  @@index([entityType, entityId])
+  @@index([timestamp])
+}
