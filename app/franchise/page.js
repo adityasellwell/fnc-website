@@ -24,7 +24,7 @@ const investmentHighlights = [
     icon: "TrendingUp",
     title: "Proven unit economics",
     detail:
-      "Our flagship Jubilee Hills store gives partners a real, working reference point for footfall, basket size and margins — not projections on a slide.",
+      "Our flagship Thane store gives partners a real, working reference point for footfall, basket size and margins — not projections on a slide.",
   },
   {
     icon: "Handshake",

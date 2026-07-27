@@ -90,15 +90,15 @@ const categoriesData = [
 
 const storesData = [
   {
-    id: "store-hyderabad-jubilee-hills",
-    slug: "jubilee-hills-hyderabad",
-    name: "F&C Jubilee Hills",
+    id: "store-thane-west",
+    slug: "thane-west",
+    name: "F&C Thane West",
     status: "ACTIVE",
-    address: "Road No. 36, Jubilee Hills",
-    city: "Hyderabad",
-    state: "Telangana",
-    latitude: 17.4326,
-    longitude: 78.4071,
+    address: "Shop No 11, Next to Eden Super Mart, Crown Apartment, Hiranandani Estate",
+    city: "Thane",
+    state: "Maharashtra",
+    latitude: 19.2588283,
+    longitude: 72.9790149,
     phone: "+91 98765 43210",
     whatsapp: "+91 98765 43210",
     openingHours: {
@@ -110,46 +110,10 @@ const storesData = [
       sat: "7:00 AM - 9:00 PM",
       sun: "7:00 AM - 9:00 PM",
     },
-    images: ["/images/stores/jubilee-hills.jpg"],
+    images: ["/images/categories/fish.jpg"],
     deliveryAvailable: true,
     pickupAvailable: true,
-    googleMapsLink: "https://maps.google.com/?q=Jubilee+Hills+Hyderabad",
-  },
-  {
-    id: "store-bengaluru-indiranagar",
-    slug: "indiranagar-bengaluru",
-    name: "F&C Indiranagar",
-    status: "COMING_SOON",
-    address: "100 Feet Road, Indiranagar",
-    city: "Bengaluru",
-    state: "Karnataka",
-    latitude: 12.9716,
-    longitude: 77.6412,
-    phone: "+91 98765 43211",
-    whatsapp: "+91 98765 43211",
-    openingHours: {},
-    images: ["/images/stores/indiranagar.jpg"],
-    deliveryAvailable: false,
-    pickupAvailable: true,
-    googleMapsLink: "https://maps.google.com/?q=Indiranagar+Bengaluru",
-  },
-  {
-    id: "store-mumbai-bandra",
-    slug: "bandra-mumbai",
-    name: "F&C Bandra",
-    status: "COMING_SOON",
-    address: "Linking Road, Bandra West",
-    city: "Mumbai",
-    state: "Maharashtra",
-    latitude: 19.0596,
-    longitude: 72.8295,
-    phone: "+91 98765 43212",
-    whatsapp: "+91 98765 43212",
-    openingHours: {},
-    images: ["/images/stores/bandra.jpg"],
-    deliveryAvailable: false,
-    pickupAvailable: true,
-    googleMapsLink: "https://maps.google.com/?q=Bandra+Mumbai",
+    googleMapsLink: "https://www.google.com/maps?q=19.2588283,72.9790149&z=17&hl=en",
   },
 ];
 
@@ -164,7 +128,7 @@ const productsData = [
     nutrition: { calories: 97, protein: "16.6g", fat: "1.4g", carbs: "0g" },
     cookingInstructions: "Marinate 15 minutes, shallow fry 3-4 minutes per side or simmer in curry for 12-15 minutes.",
     storageInstructions: "Keep refrigerated at 0-4°C. Use within 2 days, or freeze up to 3 months.",
-    tags: ["boneless", "bestseller", "curry-cut"], availableAtStores: ["store-hyderabad-jubilee-hills"],
+    tags: ["boneless", "bestseller", "curry-cut"], availableAtStores: ["store-thane-west"],
     rating: 4.6, reviewCount: 128, relatedProducts: ["prod-pomfret-whole", "prod-prawns-jumbo"], relatedRecipes: ["rohu-curry"],
   },
   {
@@ -174,7 +138,7 @@ const productsData = [
     nutrition: { calories: 90, protein: "18.8g", fat: "1.7g", carbs: "0g" },
     cookingInstructions: "Shallow fry whole after a turmeric-chilli marinade, or steam with a light coconut masala.",
     storageInstructions: "Keep refrigerated at 0-4°C. Use within 2 days, or freeze up to 3 months.",
-    tags: ["whole-fish", "premium"], availableAtStores: ["store-hyderabad-jubilee-hills"],
+    tags: ["whole-fish", "premium"], availableAtStores: ["store-thane-west"],
     rating: 4.8, reviewCount: 94, relatedProducts: ["prod-rohu-fillet", "prod-crab-meat-cleaned"], relatedRecipes: [],
   },
   {
@@ -184,7 +148,7 @@ const productsData = [
     nutrition: { calories: 208, protein: "20.4g", fat: "13.4g", carbs: "0g" },
     cookingInstructions: "Pan-sear skin-side down 4 minutes, flip 2 minutes. Rest 2 minutes before serving.",
     storageInstructions: "Keep frozen at -18°C. Thaw in refrigerator 12 hours before use.",
-    tags: ["imported", "premium", "high-protein"], availableAtStores: ["store-hyderabad-jubilee-hills"],
+    tags: ["imported", "premium", "high-protein"], availableAtStores: ["store-thane-west"],
     rating: 4.9, reviewCount: 61, relatedProducts: ["prod-prawns-jumbo"], relatedRecipes: [],
   },
   {
@@ -194,7 +158,7 @@ const productsData = [
     nutrition: { calories: 99, protein: "24g", fat: "0.3g", carbs: "0.2g" },
     cookingInstructions: "Toss in garlic butter and pan-sear 2 minutes per side, or add to curry in the last 6-8 minutes.",
     storageInstructions: "Keep refrigerated at 0-4°C. Use within 1 day, or freeze up to 2 months.",
-    tags: ["deveined", "bestseller"], availableAtStores: ["store-hyderabad-jubilee-hills"],
+    tags: ["deveined", "bestseller"], availableAtStores: ["store-thane-west"],
     rating: 4.7, reviewCount: 152, relatedProducts: ["prod-rohu-fillet", "prod-salmon-fillet"], relatedRecipes: [],
   },
   {
@@ -204,7 +168,7 @@ const productsData = [
     nutrition: { calories: 165, protein: "31g", fat: "3.6g", carbs: "0g" },
     cookingInstructions: "Pound to even thickness, grill or pan-sear 5-6 minutes per side until internal temp hits 74°C.",
     storageInstructions: "Keep refrigerated at 0-4°C. Use within 2 days, or freeze up to 4 months.",
-    tags: ["boneless", "high-protein", "bestseller"], availableAtStores: ["store-hyderabad-jubilee-hills"],
+    tags: ["boneless", "high-protein", "bestseller"], availableAtStores: ["store-thane-west"],
     rating: 4.7, reviewCount: 210, relatedProducts: ["prod-chicken-curry-cut", "prod-chicken-mince"], relatedRecipes: ["chicken-breast-stir-fry"],
   },
   {
@@ -214,7 +178,7 @@ const productsData = [
     nutrition: { calories: 190, protein: "27g", fat: "8g", carbs: "0g" },
     cookingInstructions: "Marinate 20 minutes, cook covered on medium heat for 25-30 minutes until tender.",
     storageInstructions: "Keep refrigerated at 0-4°C. Use within 2 days, or freeze up to 4 months.",
-    tags: ["bone-in", "curry-cut", "bestseller"], availableAtStores: ["store-hyderabad-jubilee-hills"],
+    tags: ["bone-in", "curry-cut", "bestseller"], availableAtStores: ["store-thane-west"],
     rating: 4.6, reviewCount: 187, relatedProducts: ["prod-chicken-breast", "prod-chicken-mince"], relatedRecipes: [],
   },
   {
@@ -224,7 +188,7 @@ const productsData = [
     nutrition: { calories: 143, protein: "19g", fat: "7g", carbs: "0g" },
     cookingInstructions: "Cook on high heat 8-10 minutes, breaking lumps, until fully browned and no pink remains.",
     storageInstructions: "Keep refrigerated at 0-4°C. Use within 1 day, or freeze up to 3 months.",
-    tags: ["mince", "keema"], availableAtStores: ["store-hyderabad-jubilee-hills"],
+    tags: ["mince", "keema"], availableAtStores: ["store-thane-west"],
     rating: 4.5, reviewCount: 76, relatedProducts: ["prod-chicken-breast"], relatedRecipes: [],
   },
   {
@@ -234,7 +198,7 @@ const productsData = [
     nutrition: { calories: 97, protein: "19g", fat: "1.5g", carbs: "0g" },
     cookingInstructions: "Cut into pieces, cook in a spiced masala for 15-18 minutes until shell turns bright red-orange.",
     storageInstructions: "Best used same day. Keep refrigerated at 0-4°C, use within 24 hours.",
-    tags: ["seasonal", "premium", "whole"], availableAtStores: ["store-hyderabad-jubilee-hills"],
+    tags: ["seasonal", "premium", "whole"], availableAtStores: ["store-thane-west"],
     rating: 4.8, reviewCount: 43, relatedProducts: ["prod-crab-meat-cleaned", "prod-pomfret-whole"], relatedRecipes: [],
   },
   {
@@ -244,7 +208,7 @@ const productsData = [
     nutrition: { calories: 83, protein: "18g", fat: "1.1g", carbs: "0g" },
     cookingInstructions: "Toss in garlic butter for 3-4 minutes, or fold into a quick crab curry in the last 5 minutes.",
     storageInstructions: "Keep refrigerated at 0-4°C. Use within 1 day, or freeze up to 1 month.",
-    tags: ["cleaned", "quick-cook"], availableAtStores: ["store-hyderabad-jubilee-hills"],
+    tags: ["cleaned", "quick-cook"], availableAtStores: ["store-thane-west"],
     rating: 4.7, reviewCount: 38, relatedProducts: ["prod-mud-crab-whole"], relatedRecipes: [],
   },
   {
@@ -254,7 +218,7 @@ const productsData = [
     nutrition: { calories: 78, protein: "6.3g", fat: "5.3g", carbs: "0.6g" },
     cookingInstructions: "Boil 9-10 minutes for a firm yolk, 6-7 minutes for a soft one.",
     storageInstructions: "Store refrigerated at 4°C. Best used within 3 weeks of purchase.",
-    tags: ["bestseller", "family-pack"], availableAtStores: ["store-hyderabad-jubilee-hills"],
+    tags: ["bestseller", "family-pack"], availableAtStores: ["store-thane-west"],
     rating: 4.8, reviewCount: 264, relatedProducts: ["prod-country-eggs"], relatedRecipes: [],
   },
   {
@@ -264,7 +228,7 @@ const productsData = [
     nutrition: { calories: 71, protein: "6.1g", fat: "4.8g", carbs: "0.5g" },
     cookingInstructions: "Boil 8-9 minutes for a firm yolk. Great for curries and bhurji.",
     storageInstructions: "Store refrigerated at 4°C. Best used within 3 weeks of purchase.",
-    tags: ["free-range", "desi"], availableAtStores: ["store-hyderabad-jubilee-hills"],
+    tags: ["free-range", "desi"], availableAtStores: ["store-thane-west"],
     rating: 4.6, reviewCount: 89, relatedProducts: ["prod-farm-eggs-tray"], relatedRecipes: [],
   },
   {
@@ -274,7 +238,7 @@ const productsData = [
     nutrition: { calories: 195, protein: "24g", fat: "9g", carbs: "3g" },
     cookingInstructions: "Grill or oven-roast at 220°C for 25-30 minutes, turning once.",
     storageInstructions: "Keep refrigerated at 0-4°C. Use within 2 days, or freeze up to 2 months.",
-    tags: ["marinated", "quick-cook"], availableAtStores: ["store-hyderabad-jubilee-hills"],
+    tags: ["marinated", "quick-cook"], availableAtStores: ["store-thane-west"],
     rating: 4.7, reviewCount: 63, relatedProducts: ["prod-peri-peri-chicken", "prod-malvani-chicken"], relatedRecipes: [],
   },
   {
@@ -284,7 +248,7 @@ const productsData = [
     nutrition: { calories: 188, protein: "25g", fat: "8g", carbs: "4g" },
     cookingInstructions: "Pan-fry 5-6 minutes per side, or air-fry at 200°C for 15 minutes.",
     storageInstructions: "Keep refrigerated at 0-4°C. Use within 2 days, or freeze up to 2 months.",
-    tags: ["marinated", "quick-cook", "bestseller"], availableAtStores: ["store-hyderabad-jubilee-hills"],
+    tags: ["marinated", "quick-cook", "bestseller"], availableAtStores: ["store-thane-west"],
     rating: 4.8, reviewCount: 91, relatedProducts: ["prod-tandoori-chicken", "prod-malvani-chicken"], relatedRecipes: [],
   },
   {
@@ -294,7 +258,7 @@ const productsData = [
     nutrition: { calories: 200, protein: "23g", fat: "10g", carbs: "4g" },
     cookingInstructions: "Cook covered on medium heat for 25-30 minutes until tender.",
     storageInstructions: "Keep refrigerated at 0-4°C. Use within 2 days, or freeze up to 2 months.",
-    tags: ["marinated"], availableAtStores: ["store-hyderabad-jubilee-hills"],
+    tags: ["marinated"], availableAtStores: ["store-thane-west"],
     rating: 4.6, reviewCount: 34, relatedProducts: ["prod-tandoori-chicken", "prod-peri-peri-chicken"], relatedRecipes: [],
   },
   {
@@ -304,7 +268,7 @@ const productsData = [
     nutrition: { calories: 140, protein: "19g", fat: "5g", carbs: "3g" },
     cookingInstructions: "Shallow fry 3-4 minutes per side on medium heat until golden.",
     storageInstructions: "Keep refrigerated at 0-4°C. Use within 1 day, or freeze up to 1 month.",
-    tags: ["marinated", "quick-cook"], availableAtStores: ["store-hyderabad-jubilee-hills"],
+    tags: ["marinated", "quick-cook"], availableAtStores: ["store-thane-west"],
     rating: 4.6, reviewCount: 42, relatedProducts: ["prod-frozen-fish-fillets"], relatedRecipes: [],
   },
   {
@@ -314,7 +278,7 @@ const productsData = [
     nutrition: { calories: 90, protein: "17g", fat: "2g", carbs: "0g" },
     cookingInstructions: "Thaw in the fridge overnight, then pan-fry or bake at 200°C for 15 minutes.",
     storageInstructions: "Keep frozen at -18°C. Do not refreeze once thawed.",
-    tags: ["frozen"], availableAtStores: ["store-hyderabad-jubilee-hills"],
+    tags: ["frozen"], availableAtStores: ["store-thane-west"],
     rating: 4.4, reviewCount: 26, relatedProducts: ["prod-marinated-fish"], relatedRecipes: [],
   },
   {
@@ -324,7 +288,7 @@ const productsData = [
     nutrition: { calories: 220, protein: "12g", fat: "13g", carbs: "15g" },
     cookingInstructions: "Air-fry at 200°C for 10-12 minutes, flipping halfway. No need to thaw.",
     storageInstructions: "Keep frozen at -18°C. Do not refreeze once thawed.",
-    tags: ["kids-friendly", "quick-cook", "frozen"], availableAtStores: ["store-hyderabad-jubilee-hills"],
+    tags: ["kids-friendly", "quick-cook", "frozen"], availableAtStores: ["store-thane-west"],
     rating: 4.6, reviewCount: 88, relatedProducts: ["prod-chicken-wings"], relatedRecipes: [],
   },
   {
@@ -334,7 +298,7 @@ const productsData = [
     nutrition: { calories: 203, protein: "18g", fat: "14g", carbs: "1g" },
     cookingInstructions: "Air-fry at 200°C for 18-20 minutes, turning halfway.",
     storageInstructions: "Keep frozen at -18°C. Do not refreeze once thawed.",
-    tags: ["quick-cook", "frozen"], availableAtStores: ["store-hyderabad-jubilee-hills"],
+    tags: ["quick-cook", "frozen"], availableAtStores: ["store-thane-west"],
     rating: 4.5, reviewCount: 57, relatedProducts: ["prod-chicken-nuggets", "prod-chicken-seekh-kebab"], relatedRecipes: [],
   },
   {
@@ -344,7 +308,7 @@ const productsData = [
     nutrition: { calories: 210, protein: "17g", fat: "13g", carbs: "5g" },
     cookingInstructions: "Pan-fry on medium heat 10-12 minutes, turning occasionally, until cooked through.",
     storageInstructions: "Keep frozen at -18°C. Do not refreeze once thawed.",
-    tags: ["quick-cook", "frozen", "bestseller"], availableAtStores: ["store-hyderabad-jubilee-hills"],
+    tags: ["quick-cook", "frozen", "bestseller"], availableAtStores: ["store-thane-west"],
     rating: 4.7, reviewCount: 97, relatedProducts: ["prod-chicken-wings", "prod-chicken-mince"], relatedRecipes: [],
   },
   {
@@ -354,7 +318,7 @@ const productsData = [
     nutrition: { calories: 179, protein: "11g", fat: "8g", carbs: "14g" },
     cookingInstructions: "Air-fry at 200°C for 10-12 minutes, flipping halfway. No need to thaw.",
     storageInstructions: "Keep frozen at -18°C. Do not refreeze once thawed.",
-    tags: ["kids-friendly", "quick-cook", "frozen"], availableAtStores: ["store-hyderabad-jubilee-hills"],
+    tags: ["kids-friendly", "quick-cook", "frozen"], availableAtStores: ["store-thane-west"],
     rating: 4.5, reviewCount: 118, relatedProducts: ["prod-chicken-popcorn"], relatedRecipes: [],
   },
   {
@@ -364,7 +328,7 @@ const productsData = [
     nutrition: { calories: 260, protein: "13g", fat: "16g", carbs: "17g" },
     cookingInstructions: "Reheat in an air-fryer at 190°C for 5 minutes, or microwave 90 seconds.",
     storageInstructions: "Keep frozen at -18°C. Do not refreeze once thawed.",
-    tags: ["kids-friendly", "ready-to-eat", "quick-cook"], availableAtStores: ["store-hyderabad-jubilee-hills"],
+    tags: ["kids-friendly", "ready-to-eat", "quick-cook"], availableAtStores: ["store-thane-west"],
     rating: 4.6, reviewCount: 68, relatedProducts: ["prod-fish-fingers"], relatedRecipes: [],
   },
   {
@@ -374,7 +338,7 @@ const productsData = [
     nutrition: { calories: 310, protein: "16g", fat: "14g", carbs: "29g" },
     cookingInstructions: "Microwave 90 seconds, or pan-heat 2 minutes per side.",
     storageInstructions: "Keep refrigerated at 0-4°C. Use within 1 day.",
-    tags: ["ready-to-eat", "quick-cook"], availableAtStores: ["store-hyderabad-jubilee-hills"],
+    tags: ["ready-to-eat", "quick-cook"], availableAtStores: ["store-thane-west"],
     rating: 4.5, reviewCount: 37, relatedProducts: ["prod-egg-roll"], relatedRecipes: [],
   },
   {
@@ -384,7 +348,7 @@ const productsData = [
     nutrition: { calories: 285, protein: "12g", fat: "12g", carbs: "31g" },
     cookingInstructions: "Microwave 90 seconds, or pan-heat 2 minutes per side.",
     storageInstructions: "Keep refrigerated at 0-4°C. Use within 1 day.",
-    tags: ["ready-to-eat", "quick-cook"], availableAtStores: ["store-hyderabad-jubilee-hills"],
+    tags: ["ready-to-eat", "quick-cook"], availableAtStores: ["store-thane-west"],
     rating: 4.4, reviewCount: 22, relatedProducts: ["prod-chicken-roll"], relatedRecipes: [],
   },
   {
@@ -394,7 +358,7 @@ const productsData = [
     nutrition: { calories: 175, protein: "18g", fat: "9g", carbs: "6g" },
     cookingInstructions: "Microwave 3-4 minutes or heat in a pan on medium for 5-6 minutes.",
     storageInstructions: "Keep refrigerated at 0-4°C. Use within 2 days.",
-    tags: ["ready-to-eat"], availableAtStores: ["store-hyderabad-jubilee-hills"],
+    tags: ["ready-to-eat"], availableAtStores: ["store-thane-west"],
     rating: 4.6, reviewCount: 48, relatedProducts: ["prod-butter-chicken"], relatedRecipes: [],
   },
   {
@@ -404,7 +368,7 @@ const productsData = [
     nutrition: { calories: 210, protein: "16g", fat: "13g", carbs: "8g" },
     cookingInstructions: "Microwave 3-4 minutes or heat in a pan on medium for 6-8 minutes, stirring once.",
     storageInstructions: "Keep refrigerated at 0-4°C. Use within 2 days.",
-    tags: ["ready-to-eat", "bestseller"], availableAtStores: ["store-hyderabad-jubilee-hills"],
+    tags: ["ready-to-eat", "bestseller"], availableAtStores: ["store-thane-west"],
     rating: 4.7, reviewCount: 84, relatedProducts: ["prod-chicken-breast"], relatedRecipes: ["butter-chicken-at-home"],
   },
   {
@@ -414,7 +378,7 @@ const productsData = [
     nutrition: { calories: 265, protein: "14g", fat: "9g", carbs: "32g" },
     cookingInstructions: "Microwave 3-4 minutes, fluff gently before serving.",
     storageInstructions: "Keep refrigerated at 0-4°C. Use within 1 day.",
-    tags: ["ready-to-eat", "quick-cook"], availableAtStores: ["store-hyderabad-jubilee-hills"],
+    tags: ["ready-to-eat", "quick-cook"], availableAtStores: ["store-thane-west"],
     rating: 4.6, reviewCount: 71, relatedProducts: ["prod-chicken-curry-cut"], relatedRecipes: [],
   },
   {
@@ -424,7 +388,7 @@ const productsData = [
     nutrition: { calories: 145, protein: "17g", fat: "6g", carbs: "5g" },
     cookingInstructions: "Heat in a pan on medium for 5-6 minutes, or microwave 3 minutes.",
     storageInstructions: "Keep refrigerated at 0-4°C. Use within 2 days.",
-    tags: ["ready-to-eat"], availableAtStores: ["store-hyderabad-jubilee-hills"],
+    tags: ["ready-to-eat"], availableAtStores: ["store-thane-west"],
     rating: 4.5, reviewCount: 39, relatedProducts: ["prod-rohu-fillet"], relatedRecipes: [],
   },
   {
@@ -434,7 +398,7 @@ const productsData = [
     nutrition: { calories: 265, protein: "18g", fat: "20g", carbs: "4g" },
     cookingInstructions: "Pan-sear cubes 2-3 minutes per side, or add to curry in the last 5 minutes.",
     storageInstructions: "Keep refrigerated at 0-4°C. Use within 3 days.",
-    tags: ["bestseller", "family-pack"], availableAtStores: ["store-hyderabad-jubilee-hills"],
+    tags: ["bestseller", "family-pack"], availableAtStores: ["store-thane-west"],
     rating: 4.8, reviewCount: 102, relatedProducts: ["prod-cheese-block"], relatedRecipes: [],
   },
   {
@@ -444,7 +408,7 @@ const productsData = [
     nutrition: { calories: 402, protein: "25g", fat: "33g", carbs: "1.3g" },
     cookingInstructions: "Ready to eat, melts well for sandwiches and bakes.",
     storageInstructions: "Keep refrigerated at 0-4°C. Use within 3 weeks of opening.",
-    tags: ["family-pack"], availableAtStores: ["store-hyderabad-jubilee-hills"],
+    tags: ["family-pack"], availableAtStores: ["store-thane-west"],
     rating: 4.6, reviewCount: 45, relatedProducts: ["prod-fresh-paneer"], relatedRecipes: [],
   },
   {
@@ -454,7 +418,7 @@ const productsData = [
     nutrition: { calories: 717, protein: "0.9g", fat: "81g", carbs: "0.1g" },
     cookingInstructions: "Ready to eat, or melt into gravies for a richer finish.",
     storageInstructions: "Keep refrigerated at 0-4°C. Use within 2 weeks.",
-    tags: ["quick-cook"], availableAtStores: ["store-hyderabad-jubilee-hills"],
+    tags: ["quick-cook"], availableAtStores: ["store-thane-west"],
     rating: 4.5, reviewCount: 28, relatedProducts: ["prod-fresh-paneer"], relatedRecipes: [],
   },
   {
@@ -464,7 +428,7 @@ const productsData = [
     nutrition: { calories: 340, protein: "2.1g", fat: "36g", carbs: "3g" },
     cookingInstructions: "Stir into curries off the heat, or whip for desserts.",
     storageInstructions: "Keep refrigerated at 0-4°C. Use within 5 days of opening.",
-    tags: ["quick-cook"], availableAtStores: ["store-hyderabad-jubilee-hills"],
+    tags: ["quick-cook"], availableAtStores: ["store-thane-west"],
     rating: 4.5, reviewCount: 19, relatedProducts: ["prod-white-butter"], relatedRecipes: [],
   },
   {
@@ -474,7 +438,7 @@ const productsData = [
     nutrition: { calories: 68, protein: "1.5g", fat: "3g", carbs: "9g" },
     cookingInstructions: "Sauté with your protein of choice for 8-10 minutes.",
     storageInstructions: "Keep refrigerated at 0-4°C once opened. Use within 2 weeks.",
-    tags: ["quick-cook", "family-pack"], availableAtStores: ["store-hyderabad-jubilee-hills"],
+    tags: ["quick-cook", "family-pack"], availableAtStores: ["store-thane-west"],
     rating: 4.4, reviewCount: 24, relatedProducts: ["prod-dips"], relatedRecipes: [],
   },
   {
@@ -484,7 +448,7 @@ const productsData = [
     nutrition: { calories: 310, protein: "1.2g", fat: "32g", carbs: "4g" },
     cookingInstructions: "Ready to eat, chilled.",
     storageInstructions: "Keep refrigerated at 0-4°C. Use within 1 week of opening.",
-    tags: ["quick-cook"], availableAtStores: ["store-hyderabad-jubilee-hills"],
+    tags: ["quick-cook"], availableAtStores: ["store-thane-west"],
     rating: 4.3, reviewCount: 15, relatedProducts: ["prod-cooking-sauce"], relatedRecipes: [],
   },
 ];
@@ -547,7 +511,7 @@ const recipesData = [
 const reviewsData = [
   { productId: "prod-rohu-fillet", rating: 5, comment: "No bones, no mess — my mother-in-law actually asked where I bought the fish from.", authorName: "Priya Reddy", createdAt: "2026-06-02" },
   { productId: "prod-chicken-breast", rating: 5, comment: "Been ordering weekly for 3 months now. Always cut fresh, never that 'been in the fridge' smell.", authorName: "Arjun Rao", createdAt: "2026-05-18" },
-  { storeId: "store-hyderabad-jubilee-hills", rating: 4, comment: "Store is spotless and the staff actually know their cuts. Slightly pricier than the market but worth it.", authorName: "Sandeep Kumar", createdAt: "2026-06-10" },
+  { storeId: "store-thane-west", rating: 4, comment: "Store is spotless and the staff actually know their cuts. Slightly pricier than the market but worth it.", authorName: "Sandeep Kumar", createdAt: "2026-06-10" },
   { productId: "prod-farm-eggs-tray", rating: 5, comment: "Yolks are noticeably firmer than the supermarket ones. Tray of 30 lasts us the week.", authorName: "Lakshmi Iyer", createdAt: "2026-04-22" },
   { productId: "prod-butter-chicken", rating: 4, comment: "Tastes home-cooked, not like a packaged ready meal. My go-to on days I can't cook.", authorName: "Fatima Sheikh", createdAt: "2026-06-28" },
   { productId: "prod-fresh-paneer", rating: 5, comment: "Softest paneer I've had outside my grandmother's kitchen. Doesn't turn rubbery when cooked.", authorName: "Karthik Nair", createdAt: "2026-05-30" },

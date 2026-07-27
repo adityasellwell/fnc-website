@@ -41,9 +41,7 @@ export default function StoresListInteractive({ stores = [] }) {
     // Smart pincode mapping
     let matchesPincode = false;
     if (/^\d+$/.test(query)) {
-      if (query.startsWith("500") && store.city === "Hyderabad") matchesPincode = true;
-      if (query.startsWith("560") && store.city === "Bengaluru") matchesPincode = true;
-      if (query.startsWith("400") && store.city === "Mumbai") matchesPincode = true;
+      if (query.startsWith("400") && store.city === "Thane") matchesPincode = true;
     }
 
     return matchesName || matchesCity || matchesAddress || matchesPincode;
@@ -100,7 +98,7 @@ export default function StoresListInteractive({ stores = [] }) {
           <span className="text-4xl mb-3 block">📍</span>
           <h3 className="font-display text-lg font-bold text-charcoal">No stores found</h3>
           <p className="font-body text-sm text-slate mt-1 max-w-sm mx-auto">
-            We couldn't find any F&C stores matching "{searchQuery}" under this tab. Try searching for "Hyderabad", "Bengaluru", or "Mumbai".
+            We couldn't find any F&C stores matching "{searchQuery}" under this tab. Try searching for "Thane" or "400607".
           </p>
         </div>
       ) : (
@@ -140,9 +138,9 @@ export default function StoresListInteractive({ stores = [] }) {
 
                 {/* Details Body */}
                 <div className="p-6 flex flex-col gap-4 flex-1">
-                  <div className="flex flex-col gap-3 font-body text-sm text-[#6B6B6B] flex-1">
+                  <div className="flex flex-col gap-3 font-body text-sm text-slate flex-1">
                     <p className="flex items-start gap-2.5">
-                      <MapPin className="h-4.5 w-4.5 text-[#DC2F26] shrink-0 mt-0.5" />
+                      <MapPin className="h-4.5 w-4.5 text-fnc-red shrink-0 mt-0.5" />
                       <span>
                         {store.address}, {store.city}, {store.state}
                       </span>
@@ -150,19 +148,19 @@ export default function StoresListInteractive({ stores = [] }) {
                     {isActive ? (
                       <>
                         <p className="flex items-center gap-2.5">
-                          <Clock className="h-4.5 w-4.5 text-[#DC2F26] shrink-0" />
+                          <Clock className="h-4.5 w-4.5 text-fnc-red shrink-0" />
                           <span>{store.openingHours?.mon || "7:00 AM - 9:00 PM"}</span>
                         </p>
                         <a
                           href={`tel:${store.phone.replace(/\s+/g, "")}`}
-                          className="flex items-center gap-2.5 hover:text-[#DC2F26] transition-colors w-fit"
+                          className="flex items-center gap-2.5 hover:text-fnc-red transition-colors w-fit"
                         >
-                          <Phone className="h-4.5 w-4.5 text-[#DC2F26] shrink-0" />
+                          <Phone className="h-4.5 w-4.5 text-fnc-red shrink-0" />
                           <span>{store.phone}</span>
                         </a>
                       </>
                     ) : (
-                      <p className="flex items-center gap-2.5 text-[#337FC2] font-semibold bg-[#337FC2]/5 p-2.5 rounded-xl border border-[#337FC2]/10">
+                      <p className="flex items-center gap-2.5 text-fnc-blue font-semibold bg-fnc-blue/5 p-2.5 rounded-xl border border-fnc-blue/10">
                         <Clock className="h-4.5 w-4.5 shrink-0" />
                         <span>Opening soon in your city!</span>
                       </p>
@@ -171,14 +169,14 @@ export default function StoresListInteractive({ stores = [] }) {
 
                   {/* Fulfillment Badges */}
                   {isActive && (
-                    <div className="flex flex-wrap gap-2 pt-1 border-t border-[#E5E3DD]">
+                    <div className="flex flex-wrap gap-2 pt-1 border-t border-bordergray">
                       {store.deliveryAvailable && (
-                        <span className="inline-flex items-center gap-1 rounded-full bg-[#337FC2]/10 text-[#337FC2] font-body text-xs font-semibold px-2.5 py-1">
+                        <span className="inline-flex items-center gap-1 rounded-full bg-fnc-blue/10 text-fnc-blue font-body text-xs font-semibold px-2.5 py-1">
                           <Truck className="h-3.5 w-3.5" />
                           Delivery
                         </span>
                       )}
-                      <span className="inline-flex items-center gap-1 rounded-full bg-[#1E1E1E]/5 text-[#1E1E1E] font-body text-xs font-semibold px-2.5 py-1">
+                      <span className="inline-flex items-center gap-1 rounded-full bg-charcoal/5 text-charcoal font-body text-xs font-semibold px-2.5 py-1">
                         <StoreIcon className="h-3.5 w-3.5" />
                         Pickup
                       </span>
@@ -186,7 +184,7 @@ export default function StoresListInteractive({ stores = [] }) {
                   )}
 
                   {/* Action Buttons */}
-                  <div className="flex flex-col gap-2 pt-3 border-t border-[#E5E3DD] mt-auto">
+                  <div className="flex flex-col gap-2 pt-3 border-t border-bordergray mt-auto">
                     {isActive ? (
                       <div className="grid grid-cols-2 gap-2">
                         <Button
@@ -206,9 +204,9 @@ export default function StoresListInteractive({ stores = [] }) {
                           rel="noopener noreferrer"
                           variant="outline"
                           size="sm"
-                          className="w-full flex items-center justify-center gap-1.5 border-[#E5E3DD] hover:border-[#1E1E1E]"
+                          className="w-full flex items-center justify-center gap-1.5 border-bordergray hover:border-charcoal"
                         >
-                          <Navigation className="h-3.5 w-3.5 text-[#DC2F26]" />
+                          <Navigation className="h-3.5 w-3.5 text-fnc-red" />
                           Directions
                         </Button>
                       </div>
@@ -217,14 +215,14 @@ export default function StoresListInteractive({ stores = [] }) {
                         href="/franchise"
                         variant="outline"
                         size="sm"
-                        className="w-full text-center border-[#E5E3DD] hover:border-[#337FC2]"
+                        className="w-full text-center border-bordergray hover:border-fnc-blue"
                       >
                         Franchise Opportunities
                       </Button>
                     )}
                     <Link
                       href={`/store/${store.slug}`}
-                      className="font-body text-xs font-bold text-[#DC2F26] hover:underline flex items-center justify-center gap-0.5 mt-1.5 py-1"
+                      className="font-body text-xs font-bold text-fnc-red hover:underline flex items-center justify-center gap-0.5 mt-1.5 py-1"
                     >
                       View Details &amp; Map
                       <ChevronRight className="h-3.5 w-3.5" />

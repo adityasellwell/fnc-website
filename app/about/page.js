@@ -26,7 +26,7 @@ const timeline = [
     year: "The Format",
     title: "One store, built around discipline",
     detail:
-      "Our first store in Jubilee Hills, Hyderabad, was built to prove a hygiene-first, cold-chain-disciplined format could work at real volume — cut fresh daily, checked in-store, never held over.",
+      "Our first store in Hiranandani Estate, Thane, was built to prove a hygiene-first, cold-chain-disciplined format could work at real volume — cut fresh daily, checked in-store, never held over.",
   },
   {
     year: "Today",

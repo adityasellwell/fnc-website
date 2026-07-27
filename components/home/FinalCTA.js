@@ -29,7 +29,7 @@ const CARDS = [
     iconBg: "bg-fnc-blue/10",
     iconColor: "text-fnc-blue",
     title: "Visit Our Store",
-    body: "Stop by our flagship store in Jubilee Hills, Hyderabad to buy fresh.",
+    body: "Stop by our flagship store in Hiranandani Estate, Thane to buy fresh.",
     cta: { label: "Visit Store", href: "/stores", variant: "outline" },
     hoverBorder: "hover:border-fnc-red",
     dark: false,

@@ -4,6 +4,7 @@ import { Star } from "lucide-react";
 import Card from "@/components/ui/Card";
 import PlaceholderMedia from "@/components/ui/PlaceholderMedia";
 import QuickOrderButton from "@/components/product/QuickOrderButton";
+import WishlistButton from "@/components/product/WishlistButton";
 import { CATEGORY_META, BRAND } from "@/lib/constants";
 import { cn } from "@/lib/utils";
 
@@ -85,6 +86,12 @@ export default function ProductCard({ product, variant = "editorial", className 
           phone={BRAND.whatsapp}
           message={`Hi! I'd like to order ${product.name} (${product.unit}).`}
           className="absolute bottom-3 right-3 z-10 h-10 w-10 opacity-0 group-hover:opacity-100 focus-visible:opacity-100 transition-opacity"
+        />
+
+        <WishlistButton
+          product={product}
+          image={meta.image}
+          className="absolute top-3 right-3 z-10"
         />
       </div>
 

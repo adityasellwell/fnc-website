@@ -21,8 +21,9 @@ import Container from "./Container";
 import Button from "@/components/ui/Button";
 import { BRAND, NAV_LINKS, CURRENT_LOCATION } from "@/lib/constants";
 import { getStores } from "@/lib/data/stores";
-
-const CART_COUNT = 0;
+import { useCartStore } from "@/lib/store/cart";
+import { useWishlistStore } from "@/lib/store/wishlist";
+import { reverseGeocode } from "@/lib/utils/geocode";
 
 function getDistance(lat1, lon1, lat2, lon2) {
   const R = 6371;
@@ -40,19 +41,20 @@ function getDistance(lat1, lon1, lat2, lon2) {
 
 function SearchBar({ className }) {
   return (
-    <div className={`flex items-center gap-3 h-11 md:h-12 rounded-full border border-[#E5E3DD] bg-white/90 backdrop-blur-sm px-5 ${className ?? ""}`}>
-      <Search className="h-4 w-4 text-[#6B6B6B] shrink-0" />
+    <div className={`flex items-center gap-3 h-11 md:h-12 rounded-full border border-bordergray bg-white/90 backdrop-blur-sm px-5 ${className ?? ""}`}>
+      <Search className="h-4 w-4 text-slate shrink-0" />
       <input
         type="text"
         placeholder="Search for fish, chicken, eggs..."
         disabled
-        className="w-full bg-transparent font-body text-sm text-[#1E1E1E] placeholder:text-[#6B6B6B] focus:outline-none"
+        className="w-full bg-transparent font-body text-sm text-charcoal placeholder:text-slate focus:outline-none"
       />
     </div>
   );
 }
 
 function CartIcon({ className, scrolled }) {
+  const count = useCartStore((s) => s.items.reduce((sum, i) => sum + i.qty, 0));
   return (
     <Link
       href="/cart"
@@ -60,13 +62,31 @@ function CartIcon({ className, scrolled }) {
       className={`relative h-10 w-10 flex items-center justify-center rounded-full transition-colors ${
         scrolled
           ? "text-white hover:bg-white/20"
-          : "text-[#1E1E1E] hover:bg-[#F3F1EC]"
+          : "text-charcoal hover:bg-warmwhite"
       } ${className ?? ""}`}
     >
       <ShoppingCart className="h-5 w-5" />
-      {CART_COUNT > 0 && (
+      {count > 0 && (
         <span className="absolute top-0.5 right-0.5 h-4 w-4 rounded-full bg-fnc-red text-white text-[10px] font-bold flex items-center justify-center leading-none">
-          {CART_COUNT}
+          {count}
+        </span>
+      )}
+    </Link>
+  );
+}
+
+function WishlistIcon({ className, textColor, iconHover }) {
+  const count = useWishlistStore((s) => s.items.length);
+  return (
+    <Link
+      href="/wishlist"
+      aria-label="Wishlist"
+      className={`relative h-10 w-10 flex items-center justify-center rounded-full transition-colors ${textColor} ${iconHover} ${className ?? ""}`}
+    >
+      <Heart className="h-5 w-5" />
+      {count > 0 && (
+        <span className="absolute top-0.5 right-0.5 h-4 w-4 rounded-full bg-fnc-red text-white text-[10px] font-bold flex items-center justify-center leading-none">
+          {count}
         </span>
       )}
     </Link>
@@ -77,20 +97,66 @@ export default function Navbar() {
   const [open, setOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
   const [locationLabel, setLocationLabel] = useState(CURRENT_LOCATION.label);
+  const [fullAddress, setFullAddress] = useState(null);
+  const [serviceable, setServiceable] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [locState, setLocState] = useState("idle");
   const [pincodeQuery, setPincodeQuery] = useState("");
   const [pincodeError, setPincodeError] = useState("");
   const [storeList, setStoreList] = useState([]);
 
+  const applyDetectedLocation = (uLat, uLng, geocoded, stores) => {
+    const activeStores = stores.filter((s) => s.status === "active");
+    let nearest = null;
+    let minDist = Infinity;
+    activeStores.forEach((s) => {
+      const dist = getDistance(uLat, uLng, s.geo.lat, s.geo.lng);
+      if (dist < minDist) { minDist = dist; nearest = s; }
+    });
+    const isServiceable = nearest !== null && minDist <= 15;
+    const label = geocoded?.short ?? (nearest ? nearest.name.replace("F&C ", "") : "Detected Location");
+
+    setLocationLabel(label);
+    setFullAddress(geocoded?.full ?? null);
+    setServiceable(isServiceable);
+    localStorage.setItem("fnc_delivery_location", label);
+    localStorage.setItem("fnc_delivery_address", geocoded?.full ?? label);
+  };
+
   useEffect(() => {
     function onScroll() {
       setScrolled(window.scrollY > 60);
     }
     window.addEventListener("scroll", onScroll, { passive: true });
-    getStores().then(setStoreList);
+
     const saved = localStorage.getItem("fnc_delivery_location");
+    const savedAddress = localStorage.getItem("fnc_delivery_address");
     if (saved) setLocationLabel(saved);
+    if (savedAddress) setFullAddress(savedAddress);
+
+    getStores().then((stores) => {
+      setStoreList(stores);
+
+      // No saved location yet on this device — silently ask for the
+      // visitor's real position so "Deliver to" reflects them by default,
+      // instead of always showing the store's own city until they open the
+      // picker manually. Fails silently (permission denied/unsupported)
+      // since this runs without the user having asked for it.
+      if (!saved && navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(
+          async (position) => {
+            const geocoded = await reverseGeocode(
+              position.coords.latitude,
+              position.coords.longitude
+            );
+            applyDetectedLocation(position.coords.latitude, position.coords.longitude, geocoded, stores);
+          },
+          () => {},
+          { timeout: 8000, maximumAge: 300000 }
+        );
+      }
+    });
+
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
 
@@ -98,34 +164,20 @@ export default function Navbar() {
     if (!navigator.geolocation) { setLocState("error"); return; }
     setLocState("detecting");
     navigator.geolocation.getCurrentPosition(
-      (position) => {
+      async (position) => {
         const uLat = position.coords.latitude;
         const uLng = position.coords.longitude;
-        const activeStores = storeList.filter((s) => s.status === "active");
-        if (activeStores.length === 0) {
-          const label = "Jubilee Hills, HYD";
-          setLocationLabel(label);
-          localStorage.setItem("fnc_delivery_location", label);
-          setLocState("success");
-          setTimeout(() => { setIsModalOpen(false); setLocState("idle"); }, 800);
-          return;
-        }
-        let nearest = activeStores[0];
-        let minDist = Infinity;
-        activeStores.forEach((s) => {
-          const dist = getDistance(uLat, uLng, s.geo.lat, s.geo.lng);
-          if (dist < minDist) { minDist = dist; nearest = s; }
-        });
-        const namePart = nearest.name.replace("F&C ", "");
-        const cityAbbr = nearest.city === "Hyderabad" ? "HYD" : nearest.city === "Bengaluru" ? "BLR" : "BOM";
-        const label = `${namePart}, ${cityAbbr}`;
-        setLocationLabel(label);
-        localStorage.setItem("fnc_delivery_location", label);
+
+        // Show the shopper's real detected address, not a nearby store's
+        // name — serviceability is checked separately below.
+        const geocoded = await reverseGeocode(uLat, uLng);
+        applyDetectedLocation(uLat, uLng, geocoded, storeList);
+
         setLocState("success");
-        setTimeout(() => { setIsModalOpen(false); setLocState("idle"); }, 1000);
+        setTimeout(() => { setIsModalOpen(false); setLocState("idle"); }, 1200);
       },
       () => { setLocState("error"); },
-      { timeout: 6000 }
+      { timeout: 8000 }
     );
   };
 
@@ -134,12 +186,14 @@ export default function Navbar() {
     if (!pincodeQuery.trim()) return;
     const query = pincodeQuery.toLowerCase().trim();
     let label = null;
-    if (query === "hyderabad" || query === "hyd" || query.startsWith("500")) label = "Jubilee Hills, HYD";
-    else if (query === "bengaluru" || query === "blr" || query === "bangalore" || query.startsWith("560")) label = "Indiranagar, BLR (Soon)";
-    else if (query === "mumbai" || query === "bom" || query.startsWith("400")) label = "Bandra, BOM (Soon)";
+    if (query === "thane" || query.startsWith("400607") || query.startsWith("4006")) label = "Hiranandani Estate, Thane";
+    else if (query === "mumbai" || query === "bombay" || query.startsWith("400")) label = "Thane (nearby) — Coming Soon";
     if (label) {
       setLocationLabel(label);
+      setFullAddress(null);
+      setServiceable(!label.includes("Soon"));
       localStorage.setItem("fnc_delivery_location", label);
+      localStorage.removeItem("fnc_delivery_address");
       setIsModalOpen(false);
       setPincodeQuery("");
       setPincodeError("");
@@ -150,7 +204,10 @@ export default function Navbar() {
 
   const selectPredefined = (label) => {
     setLocationLabel(label);
+    setFullAddress(null);
+    setServiceable(!label.includes("Soon"));
     localStorage.setItem("fnc_delivery_location", label);
+    localStorage.removeItem("fnc_delivery_address");
     setIsModalOpen(false);
     setPincodeError("");
   };
@@ -197,11 +254,11 @@ export default function Navbar() {
               className="hidden sm:flex items-center gap-1.5 shrink-0 border-l border-bordergray pl-4 h-10 hover:opacity-75 transition-opacity"
             >
               <MapPin className="h-4 w-4 text-fnc-red shrink-0" />
-              <span className="flex flex-col items-start leading-tight text-left">
+              <span className="flex flex-col items-start leading-tight text-left max-w-40">
                 <span className={`font-body text-[10px] ${subTextColor}`}>Deliver to</span>
-                <span className={`font-body text-sm font-bold ${textColor} flex items-center gap-0.5`}>
-                  {locationLabel}
-                  <ChevronDown className={`h-3 w-3 ${subTextColor}`} />
+                <span className={`font-body text-sm font-bold ${textColor} flex items-center gap-0.5 truncate`}>
+                  <span className="truncate">{locationLabel}</span>
+                  <ChevronDown className={`h-3 w-3 ${subTextColor} shrink-0`} />
                 </span>
               </span>
             </button>
@@ -226,13 +283,7 @@ export default function Navbar() {
               >
                 <User className="h-5 w-5" />
               </Link>
-              <Link
-                href="/wishlist"
-                aria-label="Wishlist"
-                className={`h-10 w-10 flex items-center justify-center rounded-full transition-colors ${textColor} ${iconHover}`}
-              >
-                <Heart className="h-5 w-5" />
-              </Link>
+              <WishlistIcon textColor={textColor} iconHover={iconHover} />
               <CartIcon scrolled={scrolled} />
             </div>
 
@@ -262,14 +313,14 @@ export default function Navbar() {
 
         {/* Mobile Menu */}
         {open && (
-          <div className="lg:hidden border-t border-[#E5E3DD] bg-[#FAF9F6]">
+          <div className="lg:hidden border-t border-bordergray bg-offwhite">
             <Container className="flex flex-col gap-5 py-6">
               <SearchBar />
 
               <button
                 type="button"
                 onClick={() => { setOpen(false); setIsModalOpen(true); }}
-                className="flex items-center gap-2 font-body text-base text-[#1E1E1E] w-fit"
+                className="flex items-center gap-2 font-body text-base text-charcoal w-fit"
               >
                 <MapPin className="h-5 w-5 text-fnc-red" />
                 Deliver to <span className="font-bold">{locationLabel}</span>
@@ -309,23 +360,23 @@ export default function Navbar() {
 
       {/* Location Modal */}
       {isModalOpen && (
-        <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
-          <div className="bg-white w-full max-w-md rounded-3xl border border-[#E5E3DD] shadow-2xl p-6 relative">
+        <div className="fixed inset-0 z-60 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
+          <div className="bg-white w-full max-w-md rounded-3xl border border-bordergray shadow-2xl p-6 relative">
             <button
               onClick={() => { setIsModalOpen(false); setPincodeError(""); }}
-              className="absolute top-4 right-4 h-9 w-9 flex items-center justify-center rounded-full text-[#6B6B6B] hover:bg-[#F3F1EC] transition-colors"
+              className="absolute top-4 right-4 h-9 w-9 flex items-center justify-center rounded-full text-slate hover:bg-warmwhite transition-colors"
             >
               <X className="h-5 w-5" />
             </button>
 
-            <h3 className="font-display text-xl font-bold text-[#1E1E1E] mb-1">Select Delivery Location</h3>
-            <p className="font-body text-sm text-[#6B6B6B] mb-5">Detect your location or search by city / pincode.</p>
+            <h3 className="font-display text-xl font-bold text-charcoal mb-1">Select Delivery Location</h3>
+            <p className="font-body text-sm text-slate mb-5">Detect your location or search by city / pincode.</p>
 
             <button
               type="button"
               onClick={handleDetectLocation}
               disabled={locState === "detecting"}
-              className="w-full flex items-center justify-center gap-2.5 h-12 rounded-2xl bg-fnc-red text-white font-body text-base font-semibold hover:bg-fnc-red/90 disabled:opacity-50 transition-colors shadow-sm mb-4"
+              className="w-full flex items-center justify-center gap-2.5 h-12 rounded-2xl bg-fnc-red text-white font-body text-base font-semibold hover:bg-fnc-red/90 disabled:opacity-50 transition-colors shadow-sm"
             >
               {locState === "detecting" ? (
                 <><Loader2 className="h-5 w-5 animate-spin" /> Detecting location...</>
@@ -336,10 +387,22 @@ export default function Navbar() {
               )}
             </button>
 
+            {locState === "success" && fullAddress && (
+              <div className="mt-3 rounded-xl border border-bordergray bg-warmwhite px-4 py-3">
+                <p className="font-body text-xs font-semibold text-slate uppercase mb-1">Detected Address</p>
+                <p className="font-body text-sm text-charcoal">{fullAddress}</p>
+                <p className={`font-body text-xs font-semibold mt-1.5 ${serviceable ? "text-fnc-green" : "text-fnc-blue"}`}>
+                  {serviceable ? "✓ We deliver here" : "Delivery is coming soon to your area — orders can still be placed via WhatsApp"}
+                </p>
+              </div>
+            )}
+
+            <div className="mt-4" />
+
             <div className="relative flex py-3 items-center">
-              <div className="flex-grow border-t border-[#E5E3DD]" />
-              <span className="flex-shrink mx-4 text-xs text-[#6B6B6B] font-body uppercase font-semibold">Or Search</span>
-              <div className="flex-grow border-t border-[#E5E3DD]" />
+              <div className="grow border-t border-bordergray" />
+              <span className="shrink mx-4 text-xs text-slate font-body uppercase font-semibold">Or Search</span>
+              <div className="grow border-t border-bordergray" />
             </div>
 
             <form onSubmit={handlePincodeSubmit} className="mt-2 flex flex-col gap-3">
@@ -351,7 +414,7 @@ export default function Navbar() {
                   onChange={(e) => setPincodeQuery(e.target.value)}
                   className="w-full h-12 pl-4 pr-20 rounded-xl border border-bordergray font-body text-base text-charcoal placeholder:text-slate focus:border-fnc-red focus:outline-none transition-colors"
                 />
-                <button type="submit" className="absolute right-2 top-2 h-8 px-3 rounded-lg bg-[#1E1E1E] text-white font-body text-xs font-semibold hover:bg-black transition-colors">
+                <button type="submit" className="absolute right-2 top-2 h-8 px-3 rounded-lg bg-charcoal text-white font-body text-xs font-semibold hover:bg-black transition-colors">
                   Apply
                 </button>
               </div>
@@ -360,13 +423,11 @@ export default function Navbar() {
               )}
             </form>
 
-            <div className="mt-5 pt-4 border-t border-[#E5E3DD]">
-              <p className="font-body text-xs font-semibold text-[#6B6B6B] uppercase mb-2.5">Available Locations</p>
+            <div className="mt-5 pt-4 border-t border-bordergray">
+              <p className="font-body text-xs font-semibold text-slate uppercase mb-2.5">Available Locations</p>
               <div className="flex flex-col gap-2">
                 {[
-                  { label: "Jubilee Hills, HYD", city: "Hyderabad", area: "Jubilee Hills & nearby", status: "Active" },
-                  { label: "Indiranagar, BLR (Soon)", city: "Bengaluru", area: "Indiranagar & nearby", status: "Soon" },
-                  { label: "Bandra, BOM (Soon)", city: "Mumbai", area: "Bandra & nearby", status: "Soon" },
+                  { label: "Hiranandani Estate, Thane", city: "Thane", area: "Hiranandani Estate & nearby", status: "Active" },
                 ].map((loc) => (
                   <button
                     key={loc.label}

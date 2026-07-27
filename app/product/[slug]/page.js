@@ -257,7 +257,7 @@ export default async function ProductDetailPage({ params }) {
                 </div>
               )}
 
-              <AddToCartButton product={product} className="w-full sm:w-auto" />
+              <AddToCartButton product={product} image={meta.image} className="w-full sm:w-auto" />
 
               {/* Nutrition */}
               <div className="rounded-2xl border border-bordergray bg-white p-5 sm:p-6">

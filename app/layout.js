@@ -1,5 +1,6 @@
 import { Bricolage_Grotesque, Inter } from "next/font/google";
 import SmoothScrollProvider from "@/components/motion/SmoothScrollProvider";
+import MobileBottomNav from "@/components/layout/MobileBottomNav";
 import "./globals.css";
 
 const bricolage = Bricolage_Grotesque({
@@ -21,7 +22,7 @@ export const metadata = {
   },
   description:
     "Premium, hygienically sourced fish, chicken, crab, eggs and ready-to-cook proteins. Delivered fresh to your door.",
-  keywords: ["fresh fish", "chicken", "crab", "proteins", "Hyderabad", "F&C"],
+  keywords: ["fresh fish", "chicken", "crab", "proteins", "Thane", "F&C"],
   icons: {
     icon: [
       { url: "/images/fnc-logo.jpg", type: "image/jpeg" },
@@ -53,8 +54,9 @@ export default function RootLayout({ children }) {
       lang="en"
       className={`${bricolage.variable} ${inter.variable} h-full antialiased overflow-x-hidden`}
     >
-      <body className="min-h-full flex flex-col bg-offwhite text-charcoal overflow-x-hidden">
+      <body className="min-h-full flex flex-col bg-offwhite text-charcoal overflow-x-hidden pb-16 lg:pb-0">
         <SmoothScrollProvider>{children}</SmoothScrollProvider>
+        <MobileBottomNav />
       </body>
     </html>
   );
