@@ -16,7 +16,7 @@ generator client {
 }
 
 datasource db {
-  provider = "postgresql"
+  provider = "mysql"
   url      = env("DATABASE_URL")
 }
 
@@ -48,7 +48,7 @@ model Product {
   slug                String   @unique
   name                String
   description         String
-  images              String[]
+  images              Json
   // Money as Decimal, never Float — avoids floating-point rounding drift
   // on prices/totals throughout checkout and reporting.
   price               Decimal  @db.Decimal(10, 2)
@@ -59,7 +59,7 @@ model Product {
   nutrition           Json
   cookingInstructions String
   storageInstructions String
-  tags                String[]
+  tags                Json
   rating              Float    @default(0)
   reviewCount         Int      @default(0)
 
@@ -117,7 +117,7 @@ model Store {
   whatsapp          String
   // Varies by day (Mon-Sun), kept as Json rather than 7 fixed columns.
   openingHours      Json
-  images            String[]
+  images            Json
   deliveryAvailable Boolean  @default(false)
   pickupAvailable   Boolean  @default(true)
   googleMapsLink    String
@@ -178,8 +178,8 @@ model Recipe {
   title       String
   description String
   image       String
-  ingredients String[]
-  steps       String[]
+  ingredients Json
+  steps       Json
   cookTime    String
   servings    Int
 
@@ -196,7 +196,7 @@ model BlogPost {
   excerpt     String
   content     String
   image       String
-  tags        String[]
+  tags        Json
   publishedAt DateTime @default(now())
 
   createdAt DateTime @default(now())
