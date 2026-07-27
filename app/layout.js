@@ -20,7 +20,31 @@ export const metadata = {
     template: "%s | F&C — Fresh Proteins & More",
   },
   description:
-    "Premium, hygienically sourced fish, chicken, crab, eggs and ready-to-cook proteins. Fresh Proteins & More.",
+    "Premium, hygienically sourced fish, chicken, crab, eggs and ready-to-cook proteins. Delivered fresh to your door.",
+  keywords: ["fresh fish", "chicken", "crab", "proteins", "Hyderabad", "F&C"],
+  icons: {
+    icon: [
+      { url: "/images/fnc-logo.jpg", type: "image/jpeg" },
+    ],
+    apple: "/images/fnc-logo.jpg",
+    shortcut: "/images/fnc-logo.jpg",
+  },
+  openGraph: {
+    title: "F&C — Fresh Proteins & More",
+    description:
+      "Premium, hygienically sourced fish, chicken, crab, eggs and ready-to-cook proteins.",
+    url: "https://fncmumbai.com",
+    siteName: "F&C Fresh Proteins",
+    images: [{ url: "/images/fnc-logo.jpg", width: 1024, height: 1024 }],
+    locale: "en_IN",
+    type: "website",
+  },
+  twitter: {
+    card: "summary",
+    title: "F&C — Fresh Proteins & More",
+    description: "Premium, hygienically sourced fish, chicken, crab, eggs.",
+    images: ["/images/fnc-logo.jpg"],
+  },
 };
 
 export default function RootLayout({ children }) {
