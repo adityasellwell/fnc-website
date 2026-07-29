@@ -236,9 +236,15 @@ model Review {
 
 model Customer {
   id    String  @id @default(cuid())
-  name  String
-  email String  @unique
-  phone String?
+  // Set once a shopper signs in via Clerk (public storefront auth). Null
+  // for guest-checkout customers created directly by /api/orders — the
+  // same email later signing in via Clerk gets this backfilled rather
+  // than creating a duplicate row. Staff/admin auth is a SEPARATE model
+  // (User + Role below) — this field is customer-facing only.
+  clerkId String? @unique
+  name    String
+  email   String  @unique
+  phone   String?
 
   // §7's "addresses[]" resolved into a proper relation — checkout needs
   // structured fields (street/city/pincode/default-flag), not a raw array.

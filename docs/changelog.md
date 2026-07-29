@@ -4,6 +4,58 @@ Milestone-level log per `Project-instructions.md` §10 process. Newest first.
 
 ---
 
+## Milestone 2 — Auth (Clerk) (2026-07-29)
+
+**Installed:** `@clerk/nextjs@^7.6.2`. Note v7 removed the old `SignedIn`/
+`SignedOut` components in favor of a unified `<Show when="signed-in">`.
+
+**Schema:** added `Customer.clerkId` (nullable, unique) via a new migration
+(`20260729100157_customer_clerk_id`). Design decision: `Customer` (not
+`User`) is the identity for public shoppers — `User`+`Role` stays reserved
+for staff/admin who'll get `/admin` access later. `Role` rows
+(admin/store_manager/staff/customer) are now seeded.
+
+**Built:**
+- `middleware.js` — protects `/account` and `/admin`, redirects signed-out
+  visitors to our own `/sign-in` (not Clerk's hosted portal — needed
+  `NEXT_PUBLIC_CLERK_SIGN_IN_URL`/`SIGN_UP_URL` env vars to point at our
+  custom pages).
+- `/sign-in`, `/sign-up` — Clerk's prebuilt components, themed to brand red.
+- `lib/auth.js` — `getCurrentCustomer()`/`getOrCreateCustomerForClerkUser()`,
+  find-or-create keyed on clerkId first, then email (so a guest order and a
+  later Clerk sign-in with the same email link to the same Customer/order
+  history instead of duplicating).
+- `/api/orders` — closed a real security gap: `customerId` was previously
+  accepted directly from the client (GET query param and POST body), which
+  let anyone read or attach orders to an arbitrary customer by guessing/
+  knowing an id. Now always derived server-side — from the Clerk session
+  if signed in, from guest contact details if not. Also now saves a real
+  `Address` row for signed-in delivery orders (previously only a JSON
+  snapshot on the Order), so account addresses actually populate.
+- `/account` — replaced the "coming soon" placeholder with real order
+  history and saved addresses, both scoped to the session's own customer.
+- `/checkout` — prefills from the Clerk profile and hides the name/email
+  fields when signed in (phone stays editable); guest fields only required
+  when signed out.
+- Navbar + bottom nav — Account icon routes to `/account` or `/sign-in`
+  based on real auth state.
+
+**Manual step still needed:** there's no self-serve admin sign-up. To make
+someone an admin/store_manager/staff, they must sign in once via Clerk
+(creating their `User` row isn't automatic either — that only happens for
+the admin panel work in a later milestone), then their `roleId` needs to be
+set manually in the database. Flagging now so it isn't a surprise later.
+
+**Verified:** `next build` passes; confirmed via local prod server that
+`/account` correctly 307-redirects signed-out visitors to `/sign-in` (not
+Clerk's hosted portal), and both auth pages render.
+
+**Deferred to the security pass (per Project-instructions.md §9):** `npm
+audit` reported additional vulnerabilities after installing `@clerk/nextjs`
+— not investigated now, same as the pre-existing dev-tooling ones.
+
+---
+
 ## Milestone 0 — Fix production database (2026-07-28)
 
 **Problem:** Production (Hostinger, MySQL) had zero tables — `prisma/migrations/`

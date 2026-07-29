@@ -1,8 +1,9 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
-import { Loader2, CheckCircle2, XCircle, Truck, Store as StoreIcon } from "lucide-react";
+import { useUser } from "@clerk/nextjs";
+import { Loader2, CheckCircle2, XCircle, Truck, Store as StoreIcon, UserCircle2 } from "lucide-react";
 import Section from "@/components/layout/Section";
 import Button from "@/components/ui/Button";
 import { useCartStore } from "@/lib/store/cart";
@@ -21,13 +22,15 @@ const initialValues = {
 const inputClasses =
   "w-full h-12 px-4 rounded-xl border border-bordergray bg-white font-body text-base text-charcoal placeholder:text-slate focus:border-fnc-red focus:outline-none transition-colors";
 
-function validate(values, fulfillmentType) {
+function validate(values, fulfillmentType, isSignedIn) {
   const errors = {};
-  if (!values.name.trim()) errors.name = "Please enter your full name.";
-  if (!values.email.trim()) {
-    errors.email = "Please enter your email.";
-  } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(values.email)) {
-    errors.email = "Please enter a valid email address.";
+  if (!isSignedIn) {
+    if (!values.name.trim()) errors.name = "Please enter your full name.";
+    if (!values.email.trim()) {
+      errors.email = "Please enter your email.";
+    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(values.email)) {
+      errors.email = "Please enter a valid email address.";
+    }
   }
   if (!values.phone.trim()) {
     errors.phone = "Please enter your phone number.";
@@ -44,6 +47,7 @@ function validate(values, fulfillmentType) {
 }
 
 export default function CheckoutPageClient({ stores = [] }) {
+  const { isLoaded, isSignedIn, user } = useUser();
   const items = useCartStore((s) => s.items);
   const clear = useCartStore((s) => s.clear);
   const subtotal = items.reduce((sum, i) => sum + i.price * i.qty, 0);
@@ -57,13 +61,26 @@ export default function CheckoutPageClient({ stores = [] }) {
 
   const store = stores[0];
 
+  // Prefill from the signed-in Clerk profile — the name/email fields are
+  // then hidden (server derives the real customer from the session anyway,
+  // see /api/orders), but phone stays editable since Clerk may not have one.
+  useEffect(() => {
+    if (!isSignedIn || !user) return;
+    setValues((v) => ({
+      ...v,
+      name: [user.firstName, user.lastName].filter(Boolean).join(" ") || v.name,
+      email: user.primaryEmailAddress?.emailAddress ?? v.email,
+      phone: v.phone || user.primaryPhoneNumber?.phoneNumber || "",
+    }));
+  }, [isSignedIn, user]);
+
   function handleChange(field) {
     return (e) => setValues((v) => ({ ...v, [field]: e.target.value }));
   }
 
   async function handleSubmit(e) {
     e.preventDefault();
-    const nextErrors = validate(values, fulfillmentType);
+    const nextErrors = validate(values, fulfillmentType, isSignedIn);
     setErrors(nextErrors);
     if (Object.keys(nextErrors).length > 0) return;
 
@@ -75,7 +92,9 @@ export default function CheckoutPageClient({ stores = [] }) {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          guest: { name: values.name, email: values.email, phone: values.phone },
+          ...(isSignedIn
+            ? {}
+            : { guest: { name: values.name, email: values.email, phone: values.phone } }),
           items: items.map((i) => ({ productId: i.productId, quantity: i.qty })),
           fulfillmentType,
           storeId: fulfillmentType === "PICKUP" ? store?.id : undefined,
@@ -190,14 +209,26 @@ export default function CheckoutPageClient({ stores = [] }) {
           {/* Contact details */}
           <div className="bg-white border border-bordergray rounded-3xl p-6 flex flex-col gap-5">
             <h2 className="font-display text-lg font-bold text-charcoal">Your Details</h2>
-            <div className="grid sm:grid-cols-2 gap-5">
-              <div className="flex flex-col gap-1.5">
-                <label htmlFor="name" className="font-body text-sm font-semibold text-charcoal">
-                  Full name
-                </label>
-                <input id="name" type="text" value={values.name} onChange={handleChange("name")} placeholder="Your full name" className={inputClasses} />
-                {errors.name && <p className="font-body text-xs text-fnc-red">{errors.name}</p>}
+
+            {isSignedIn && (
+              <div className="flex items-center gap-3 rounded-2xl bg-warmwhite px-4 py-3">
+                <UserCircle2 className="h-5 w-5 text-fnc-red shrink-0" />
+                <p className="font-body text-sm text-charcoal">
+                  Ordering as <span className="font-semibold">{values.name}</span> ({values.email})
+                </p>
               </div>
+            )}
+
+            <div className="grid sm:grid-cols-2 gap-5">
+              {!isSignedIn && (
+                <div className="flex flex-col gap-1.5">
+                  <label htmlFor="name" className="font-body text-sm font-semibold text-charcoal">
+                    Full name
+                  </label>
+                  <input id="name" type="text" value={values.name} onChange={handleChange("name")} placeholder="Your full name" className={inputClasses} />
+                  {errors.name && <p className="font-body text-xs text-fnc-red">{errors.name}</p>}
+                </div>
+              )}
               <div className="flex flex-col gap-1.5">
                 <label htmlFor="phone" className="font-body text-sm font-semibold text-charcoal">
                   Phone number
@@ -206,13 +237,15 @@ export default function CheckoutPageClient({ stores = [] }) {
                 {errors.phone && <p className="font-body text-xs text-fnc-red">{errors.phone}</p>}
               </div>
             </div>
-            <div className="flex flex-col gap-1.5">
-              <label htmlFor="email" className="font-body text-sm font-semibold text-charcoal">
-                Email
-              </label>
-              <input id="email" type="email" value={values.email} onChange={handleChange("email")} placeholder="you@example.com" className={inputClasses} />
-              {errors.email && <p className="font-body text-xs text-fnc-red">{errors.email}</p>}
-            </div>
+            {!isSignedIn && (
+              <div className="flex flex-col gap-1.5">
+                <label htmlFor="email" className="font-body text-sm font-semibold text-charcoal">
+                  Email
+                </label>
+                <input id="email" type="email" value={values.email} onChange={handleChange("email")} placeholder="you@example.com" className={inputClasses} />
+                {errors.email && <p className="font-body text-xs text-fnc-red">{errors.email}</p>}
+              </div>
+            )}
           </div>
 
           {/* Delivery address */}
@@ -265,7 +298,7 @@ export default function CheckoutPageClient({ stores = [] }) {
             </p>
           )}
 
-          <Button type="submit" size="lg" disabled={status === "submitting"} className="w-full sm:w-fit">
+          <Button type="submit" size="lg" disabled={status === "submitting" || !isLoaded} className="w-full sm:w-fit">
             {status === "submitting" ? (
               <>
                 <Loader2 className="h-5 w-5 animate-spin" />

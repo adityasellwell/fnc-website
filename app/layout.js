@@ -1,3 +1,4 @@
+import { ClerkProvider } from "@clerk/nextjs";
 import { Bricolage_Grotesque, Inter } from "next/font/google";
 import SmoothScrollProvider from "@/components/motion/SmoothScrollProvider";
 import MobileBottomNav from "@/components/layout/MobileBottomNav";
@@ -50,14 +51,24 @@ export const metadata = {
 
 export default function RootLayout({ children }) {
   return (
-    <html
-      lang="en"
-      className={`${bricolage.variable} ${inter.variable} h-full antialiased overflow-x-hidden`}
+    <ClerkProvider
+      appearance={{
+        variables: {
+          colorPrimary: "#DC2F26",
+          fontFamily: "var(--font-inter)",
+          borderRadius: "0.75rem",
+        },
+      }}
     >
-      <body className="min-h-full flex flex-col bg-offwhite text-charcoal overflow-x-hidden pb-16 lg:pb-0">
-        <SmoothScrollProvider>{children}</SmoothScrollProvider>
-        <MobileBottomNav />
-      </body>
-    </html>
+      <html
+        lang="en"
+        className={`${bricolage.variable} ${inter.variable} h-full antialiased overflow-x-hidden`}
+      >
+        <body className="min-h-full flex flex-col bg-offwhite text-charcoal overflow-x-hidden pb-16 lg:pb-0">
+          <SmoothScrollProvider>{children}</SmoothScrollProvider>
+          <MobileBottomNav />
+        </body>
+      </html>
+    </ClerkProvider>
   );
 }

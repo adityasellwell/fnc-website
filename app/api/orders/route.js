@@ -1,14 +1,16 @@
 import { z } from "zod";
 import { NextResponse } from "next/server";
+import { auth } from "@clerk/nextjs/server";
 import { db } from "@/lib/db";
 import { checkRateLimit, rateLimitResponse } from "@/lib/rate-limit";
+import { getOrCreateCustomerForClerkUser } from "@/lib/auth";
 
 /**
- * NOTE on `customerId`: there is no auth yet (Clerk integration is a later,
- * separate phase). Until then, `customerId` is accepted directly in the
- * request body/query as a placeholder identity mechanism. Once Clerk lands,
- * this gets replaced by the authenticated session's customer id and these
- * routes stop trusting a client-supplied value.
+ * `customerId` is NEVER accepted from the client (that would let anyone
+ * attach orders to, or read order history for, an arbitrary customer just
+ * by guessing/knowing an id). It's always derived server-side: from the
+ * Clerk session if signed in, or from find-or-create-by-email guest
+ * contact details if not.
  */
 
 const addressSchema = z.object({
@@ -25,8 +27,8 @@ const orderItemInputSchema = z.object({
 });
 
 // Guest checkout contact details — used to find-or-create a Customer row
-// when there's no authenticated session yet (pre-Clerk). Once Clerk lands,
-// `customerId` will come from the session instead of either of these paths.
+// when there's no authenticated session. Ignored entirely if the request
+// is authenticated (the session's own customer is used instead).
 const guestSchema = z.object({
   name: z.string().min(1, "name is required"),
   email: z.string().email("a valid email is required"),
@@ -35,19 +37,12 @@ const guestSchema = z.object({
 
 const createOrderSchema = z
   .object({
-    // Either an existing customerId OR guest contact details — see module
-    // note above.
-    customerId: z.string().min(1).optional(),
     guest: guestSchema.optional(),
     items: z.array(orderItemInputSchema).min(1, "At least one item is required"),
     fulfillmentType: z.enum(["DELIVERY", "PICKUP"]),
     storeId: z.string().min(1).optional(),
     deliveryAddress: addressSchema.optional(),
     couponCode: z.string().min(1).optional(),
-  })
-  .refine((data) => Boolean(data.customerId) || Boolean(data.guest), {
-    message: "Either customerId or guest contact details are required",
-    path: ["customerId"],
   })
   .refine((data) => data.fulfillmentType !== "PICKUP" || Boolean(data.storeId), {
     message: "storeId is required when fulfillmentType is PICKUP",
@@ -62,16 +57,19 @@ const createOrderSchema = z
   );
 
 const listOrdersQuerySchema = z.object({
-  customerId: z.string().min(1, "customerId is required"),
   page: z.coerce.number().int().positive().default(1),
   pageSize: z.coerce.number().int().positive().max(100).default(20),
 });
 
 export async function GET(request) {
+  const { userId } = await auth();
+  if (!userId) {
+    return NextResponse.json({ error: "Sign in required" }, { status: 401 });
+  }
+
   const { searchParams } = new URL(request.url);
 
   const parsed = listOrdersQuerySchema.safeParse({
-    customerId: searchParams.get("customerId"),
     page: searchParams.get("page") ?? undefined,
     pageSize: searchParams.get("pageSize") ?? undefined,
   });
@@ -83,9 +81,15 @@ export async function GET(request) {
     );
   }
 
-  const { customerId, page, pageSize } = parsed.data;
+  const { page, pageSize } = parsed.data;
 
   try {
+    const customer = await getOrCreateCustomerForClerkUser(userId);
+    if (!customer) {
+      return NextResponse.json({ data: [], pagination: { page, pageSize, totalCount: 0, totalPages: 1 } });
+    }
+    const customerId = customer.id;
+
     const [orders, totalCount] = await Promise.all([
       db.order.findMany({
         where: { customerId },
@@ -136,19 +140,33 @@ export async function POST(request) {
 
   const { items, fulfillmentType, storeId, deliveryAddress, couponCode, guest } =
     parsed.data;
-  let { customerId } = parsed.data;
 
   try {
-    if (customerId) {
-      const customer = await db.customer.findUnique({ where: { id: customerId } });
+    const { userId } = await auth();
+    let customerId;
+
+    if (userId) {
+      // Signed in — always use the session's own customer, never a
+      // client-supplied one. Guest details in the body, if any, are ignored.
+      const customer = await getOrCreateCustomerForClerkUser(userId);
       if (!customer) {
-        return NextResponse.json({ error: "Customer not found" }, { status: 400 });
+        return NextResponse.json(
+          { error: "Unable to resolve your account. Please try again." },
+          { status: 400 }
+        );
       }
+      customerId = customer.id;
     } else {
+      if (!guest) {
+        return NextResponse.json(
+          { error: "Guest contact details are required when not signed in", issues: [{ path: ["guest"], message: "required" }] },
+          { status: 400 }
+        );
+      }
       // Guest checkout — find-or-create by email (Customer.email is unique).
       // Reusing the same customer record across guest orders placed with
-      // the same email keeps order history intact once Clerk links a real
-      // account to it later.
+      // the same email keeps order history intact if they later sign in
+      // with that same email (see lib/auth.js).
       const customer = await db.customer.upsert({
         where: { email: guest.email },
         update: { name: guest.name, phone: guest.phone },
@@ -249,6 +267,21 @@ export async function POST(request) {
           where: { id: coupon.id },
           data: { usedCount: { increment: 1 } },
         });
+      }
+
+      // Save a reusable Address row for signed-in customers (skip guests —
+      // no account for it to be useful in later) so /account's saved
+      // addresses list actually populates, in addition to the immutable
+      // JSON snapshot on the order itself.
+      if (userId && fulfillmentType === "DELIVERY") {
+        const existing = await tx.address.findFirst({
+          where: { customerId, line1: deliveryAddress.line1, pincode: deliveryAddress.pincode },
+        });
+        if (!existing) {
+          await tx.address.create({
+            data: { customerId, ...deliveryAddress },
+          });
+        }
       }
 
       return created;

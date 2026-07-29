@@ -1,51 +1,113 @@
 import Link from "next/link";
-import { User, Heart, Package, MapPin, MessageCircle } from "lucide-react";
+import { UserButton } from "@clerk/nextjs";
+import { Heart, Package, MapPin, ChevronRight } from "lucide-react";
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
 import Section from "@/components/layout/Section";
 import Button from "@/components/ui/Button";
-import { BRAND } from "@/lib/constants";
+import { getCurrentCustomer } from "@/lib/auth";
+import { db } from "@/lib/db";
+import { cn } from "@/lib/utils";
 
 export const metadata = {
   title: "My Account",
-  description: "Manage your F&C orders, addresses and wishlist.",
+  description: "Your F&C orders, addresses and wishlist.",
 };
 
-const upcoming = [
-  { icon: Package, label: "Order History", detail: "Track and reorder your past purchases." },
-  { icon: MapPin, label: "Saved Addresses", detail: "Save home, work and other delivery spots." },
-];
+const statusLabels = {
+  PLACED: "Placed",
+  CONFIRMED: "Confirmed",
+  PREPARING: "Preparing",
+  OUT_FOR_DELIVERY: "Out for Delivery",
+  DELIVERED: "Delivered",
+  READY_FOR_PICKUP: "Ready for Pickup",
+  COLLECTED: "Collected",
+  CANCELLED: "Cancelled",
+  REFUNDED: "Refunded",
+};
 
-export default function AccountPage() {
-  const digits = BRAND.whatsapp.replace(/\D/g, "");
+const statusTone = {
+  DELIVERED: "text-fnc-green bg-fnc-green/10",
+  COLLECTED: "text-fnc-green bg-fnc-green/10",
+  CANCELLED: "text-fnc-red bg-fnc-red/10",
+  REFUNDED: "text-fnc-red bg-fnc-red/10",
+};
+
+export default async function AccountPage() {
+  const customer = await getCurrentCustomer();
+
+  const [orders, addresses] = customer
+    ? await Promise.all([
+        db.order.findMany({
+          where: { customerId: customer.id },
+          include: { items: { include: { product: true } } },
+          orderBy: { createdAt: "desc" },
+          take: 10,
+        }),
+        db.address.findMany({ where: { customerId: customer.id }, orderBy: { isDefault: "desc" } }),
+      ])
+    : [[], []];
 
   return (
     <>
       <Navbar />
       <main className="flex-1">
         <Section background="offwhite" spacing="md">
-          <h1 className="font-display text-section-heading font-bold text-charcoal mb-8">
-            My Account
-          </h1>
+          <div className="flex items-center justify-between gap-4 mb-8">
+            <h1 className="font-display text-section-heading font-bold text-charcoal">
+              My Account
+            </h1>
+            <UserButton afterSignOutUrl="/" />
+          </div>
 
           <div className="grid lg:grid-cols-3 gap-8 items-start">
-            <div className="lg:col-span-2 bg-white border border-bordergray rounded-3xl p-8 flex flex-col items-center text-center gap-4">
-              <div className="h-16 w-16 rounded-full bg-fnc-red/10 flex items-center justify-center">
-                <User className="h-7 w-7 text-fnc-red" />
-              </div>
-              <div>
-                <p className="font-display text-lg font-bold text-charcoal">
-                  Accounts &amp; order tracking are launching soon
-                </p>
-                <p className="font-body text-sm text-slate mt-1.5 max-w-sm">
-                  For now, orders are confirmed and tracked directly over WhatsApp —
-                  message us any time for order status, past orders, or delivery changes.
-                </p>
-              </div>
-              <Button href={`https://wa.me/${digits}`} target="_blank" rel="noopener noreferrer" size="lg" className="mt-2">
-                <MessageCircle className="h-5 w-5" />
-                Chat with F&amp;C on WhatsApp
-              </Button>
+            {/* Order history */}
+            <div className="lg:col-span-2 bg-white border border-bordergray rounded-3xl p-6 sm:p-8">
+              <h2 className="font-display text-lg font-bold text-charcoal mb-5 flex items-center gap-2">
+                <Package className="h-5 w-5 text-fnc-red" />
+                Order History
+              </h2>
+
+              {orders.length === 0 ? (
+                <div className="flex flex-col items-center text-center gap-3 py-10">
+                  <p className="font-body text-sm text-slate">You haven't placed any orders yet.</p>
+                  <Button href="/shop" size="md">
+                    Browse the Shop
+                  </Button>
+                </div>
+              ) : (
+                <div className="flex flex-col divide-y divide-bordergray">
+                  {orders.map((order) => (
+                    <div key={order.id} className="py-5 flex flex-col gap-2">
+                      <div className="flex items-center justify-between gap-3">
+                        <p className="font-body text-sm font-semibold text-charcoal">
+                          Order #{order.id.slice(-8)}
+                        </p>
+                        <span
+                          className={cn(
+                            "font-body text-xs font-semibold px-2.5 py-1 rounded-full shrink-0",
+                            statusTone[order.status] ?? "text-fnc-blue bg-fnc-blue/10"
+                          )}
+                        >
+                          {statusLabels[order.status] ?? order.status}
+                        </span>
+                      </div>
+                      <p className="font-body text-xs text-slate">
+                        {new Date(order.createdAt).toLocaleDateString("en-IN", {
+                          day: "numeric",
+                          month: "short",
+                          year: "numeric",
+                        })}{" "}
+                        · {order.items.length} item{order.items.length === 1 ? "" : "s"} ·{" "}
+                        {order.fulfillmentType === "DELIVERY" ? "Delivery" : "Pickup"}
+                      </p>
+                      <p className="font-display text-sm font-bold text-charcoal">
+                        ₹{Number(order.total).toFixed(0)}
+                      </p>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
 
             <div className="flex flex-col gap-4">
@@ -56,26 +118,38 @@ export default function AccountPage() {
                 <div className="h-11 w-11 shrink-0 rounded-full bg-fnc-red/10 flex items-center justify-center">
                   <Heart className="h-5 w-5 text-fnc-red" />
                 </div>
-                <div>
+                <div className="flex-1">
                   <p className="font-display font-semibold text-charcoal">Your Wishlist</p>
                   <p className="font-body text-xs text-slate">Saved products, ready to order</p>
                 </div>
+                <ChevronRight className="h-4 w-4 text-slate shrink-0" />
               </Link>
 
-              {upcoming.map(({ icon: Icon, label, detail }) => (
-                <div
-                  key={label}
-                  className="flex items-center gap-4 bg-white border border-bordergray rounded-2xl p-5 opacity-60"
-                >
-                  <div className="h-11 w-11 shrink-0 rounded-full bg-warmwhite flex items-center justify-center">
-                    <Icon className="h-5 w-5 text-slate" />
+              {/* Saved addresses */}
+              <div className="bg-white border border-bordergray rounded-2xl p-5">
+                <p className="font-display font-semibold text-charcoal flex items-center gap-2 mb-3">
+                  <MapPin className="h-5 w-5 text-fnc-red" />
+                  Saved Addresses
+                </p>
+                {addresses.length === 0 ? (
+                  <p className="font-body text-xs text-slate">
+                    No saved addresses yet — one gets saved the next time you check out with delivery.
+                  </p>
+                ) : (
+                  <div className="flex flex-col gap-3">
+                    {addresses.map((address) => (
+                      <div key={address.id} className="font-body text-xs text-slate">
+                        {address.line1}
+                        {address.line2 ? `, ${address.line2}` : ""}, {address.city}, {address.state}{" "}
+                        {address.pincode}
+                        {address.isDefault && (
+                          <span className="ml-1.5 text-fnc-green font-semibold">(Default)</span>
+                        )}
+                      </div>
+                    ))}
                   </div>
-                  <div>
-                    <p className="font-display font-semibold text-charcoal">{label}</p>
-                    <p className="font-body text-xs text-slate">{detail} — coming soon</p>
-                  </div>
-                </div>
-              ))}
+                )}
+              </div>
             </div>
           </div>
         </Section>

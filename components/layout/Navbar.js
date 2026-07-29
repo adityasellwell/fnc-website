@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import Image from "next/image";
 import Link from "next/link";
+import { Show } from "@clerk/nextjs";
 import { motion, useReducedMotion } from "framer-motion";
 import {
   MapPin,
@@ -276,13 +277,26 @@ export default function Navbar() {
                 <span>Stores</span>
                 <span className="absolute bottom-1 left-4 right-4 h-px bg-fnc-red scale-x-0 group-hover:scale-x-100 transition-transform duration-250 origin-left rounded-full" />
               </Link>
-              <Link
-                href="/account"
-                aria-label="Account"
-                className={`h-10 w-10 flex items-center justify-center rounded-full transition-colors ${textColor} ${iconHover}`}
+              <Show
+                when="signed-in"
+                fallback={
+                  <Link
+                    href="/sign-in"
+                    aria-label="Sign in"
+                    className={`h-10 w-10 flex items-center justify-center rounded-full transition-colors ${textColor} ${iconHover}`}
+                  >
+                    <User className="h-5 w-5" />
+                  </Link>
+                }
               >
-                <User className="h-5 w-5" />
-              </Link>
+                <Link
+                  href="/account"
+                  aria-label="Account"
+                  className={`h-10 w-10 flex items-center justify-center rounded-full transition-colors ${textColor} ${iconHover}`}
+                >
+                  <User className="h-5 w-5" />
+                </Link>
+              </Show>
               <WishlistIcon textColor={textColor} iconHover={iconHover} />
               <CartIcon scrolled={scrolled} />
             </div>
@@ -344,9 +358,18 @@ export default function Navbar() {
                     </Link>
                   </motion.div>
                 ))}
-                <Link href="/account" className="font-body text-lg font-semibold text-charcoal/80 hover:text-fnc-red transition-colors py-3 flex items-center gap-3" onClick={() => setOpen(false)}>
-                  <User className="h-5 w-5" /> Account
-                </Link>
+                <Show
+                  when="signed-in"
+                  fallback={
+                    <Link href="/sign-in" className="font-body text-lg font-semibold text-charcoal/80 hover:text-fnc-red transition-colors py-3 flex items-center gap-3" onClick={() => setOpen(false)}>
+                      <User className="h-5 w-5" /> Sign In
+                    </Link>
+                  }
+                >
+                  <Link href="/account" className="font-body text-lg font-semibold text-charcoal/80 hover:text-fnc-red transition-colors py-3 flex items-center gap-3" onClick={() => setOpen(false)}>
+                    <User className="h-5 w-5" /> Account
+                  </Link>
+                </Show>
                 <Link href="/wishlist" className="font-body text-lg font-semibold text-charcoal/80 hover:text-fnc-red transition-colors py-3 flex items-center gap-3" onClick={() => setOpen(false)}>
                   <Heart className="h-5 w-5" /> Wishlist
                 </Link>

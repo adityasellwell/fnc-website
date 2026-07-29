@@ -759,7 +759,17 @@ async function seedBanners() {
   }
 }
 
+async function seedRoles() {
+  const names = ["admin", "store_manager", "staff", "customer"];
+  for (const name of names) {
+    await db.role.upsert({ where: { name }, update: {}, create: { name } });
+  }
+}
+
 async function main() {
+  console.log("Seeding roles...");
+  await seedRoles();
+
   console.log("Seeding categories...");
   const categorySlugToId = await seedCategories();
 

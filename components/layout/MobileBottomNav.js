@@ -2,16 +2,16 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useAuth } from "@clerk/nextjs";
 import { Home, Store, ShoppingCart, Heart, User } from "lucide-react";
 import { useCartStore } from "@/lib/store/cart";
 import { useWishlistStore } from "@/lib/store/wishlist";
 
-const TABS = [
+const BASE_TABS = [
   { href: "/", label: "Home", icon: Home, match: (p) => p === "/" },
   { href: "/shop", label: "Shop", icon: Store, match: (p) => p.startsWith("/shop") || p.startsWith("/product") },
   { href: "/cart", label: "Cart", icon: ShoppingCart, match: (p) => p.startsWith("/cart"), badgeKey: "cart" },
   { href: "/wishlist", label: "Wishlist", icon: Heart, match: (p) => p.startsWith("/wishlist"), badgeKey: "wishlist" },
-  { href: "/account", label: "Account", icon: User, match: (p) => p.startsWith("/account") },
 ];
 
 /**
@@ -21,9 +21,17 @@ const TABS = [
  */
 export default function MobileBottomNav() {
   const pathname = usePathname();
+  const { isSignedIn } = useAuth();
   const cartCount = useCartStore((s) => s.items.reduce((sum, i) => sum + i.qty, 0));
   const wishlistCount = useWishlistStore((s) => s.items.length);
   const badges = { cart: cartCount, wishlist: wishlistCount };
+
+  const TABS = [
+    ...BASE_TABS,
+    isSignedIn
+      ? { href: "/account", label: "Account", icon: User, match: (p) => p.startsWith("/account") }
+      : { href: "/sign-in", label: "Account", icon: User, match: (p) => p.startsWith("/sign-in") || p.startsWith("/account") },
+  ];
 
   return (
     <nav
