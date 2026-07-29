@@ -24,16 +24,30 @@ const orderItemInputSchema = z.object({
   quantity: z.coerce.number().int().positive("quantity must be a positive integer"),
 });
 
+// Guest checkout contact details — used to find-or-create a Customer row
+// when there's no authenticated session yet (pre-Clerk). Once Clerk lands,
+// `customerId` will come from the session instead of either of these paths.
+const guestSchema = z.object({
+  name: z.string().min(1, "name is required"),
+  email: z.string().email("a valid email is required"),
+  phone: z.string().min(1, "phone is required"),
+});
+
 const createOrderSchema = z
   .object({
-    // Placeholder for the authenticated customer until Clerk lands — see
-    // module note above.
-    customerId: z.string().min(1, "customerId is required"),
+    // Either an existing customerId OR guest contact details — see module
+    // note above.
+    customerId: z.string().min(1).optional(),
+    guest: guestSchema.optional(),
     items: z.array(orderItemInputSchema).min(1, "At least one item is required"),
     fulfillmentType: z.enum(["DELIVERY", "PICKUP"]),
     storeId: z.string().min(1).optional(),
     deliveryAddress: addressSchema.optional(),
     couponCode: z.string().min(1).optional(),
+  })
+  .refine((data) => Boolean(data.customerId) || Boolean(data.guest), {
+    message: "Either customerId or guest contact details are required",
+    path: ["customerId"],
   })
   .refine((data) => data.fulfillmentType !== "PICKUP" || Boolean(data.storeId), {
     message: "storeId is required when fulfillmentType is PICKUP",
@@ -120,13 +134,27 @@ export async function POST(request) {
     );
   }
 
-  const { customerId, items, fulfillmentType, storeId, deliveryAddress, couponCode } =
+  const { items, fulfillmentType, storeId, deliveryAddress, couponCode, guest } =
     parsed.data;
+  let { customerId } = parsed.data;
 
   try {
-    const customer = await db.customer.findUnique({ where: { id: customerId } });
-    if (!customer) {
-      return NextResponse.json({ error: "Customer not found" }, { status: 400 });
+    if (customerId) {
+      const customer = await db.customer.findUnique({ where: { id: customerId } });
+      if (!customer) {
+        return NextResponse.json({ error: "Customer not found" }, { status: 400 });
+      }
+    } else {
+      // Guest checkout — find-or-create by email (Customer.email is unique).
+      // Reusing the same customer record across guest orders placed with
+      // the same email keeps order history intact once Clerk links a real
+      // account to it later.
+      const customer = await db.customer.upsert({
+        where: { email: guest.email },
+        update: { name: guest.name, phone: guest.phone },
+        create: { name: guest.name, email: guest.email, phone: guest.phone },
+      });
+      customerId = customer.id;
     }
 
     if (fulfillmentType === "PICKUP") {

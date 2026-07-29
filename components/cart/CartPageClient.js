@@ -2,11 +2,10 @@
 
 import Link from "next/link";
 import Image from "next/image";
-import { Minus, Plus, Trash2, ShoppingBag, MessageCircle } from "lucide-react";
+import { Minus, Plus, Trash2, ShoppingBag, ArrowRight } from "lucide-react";
 import Section from "@/components/layout/Section";
 import Button from "@/components/ui/Button";
 import { useCartStore } from "@/lib/store/cart";
-import { BRAND } from "@/lib/constants";
 
 function CartLine({ item }) {
   const updateQty = useCartStore((s) => s.updateQty);
@@ -69,20 +68,6 @@ export default function CartPageClient() {
   const clear = useCartStore((s) => s.clear);
   const subtotal = items.reduce((sum, i) => sum + i.price * i.qty, 0);
 
-  function handleWhatsAppCheckout() {
-    const lines = items.map((i) => `• ${i.name} (${i.unit}) x${i.qty} — ₹${i.price * i.qty}`);
-    const message = [
-      "Hi! I'd like to place an order:",
-      ...lines,
-      "",
-      `Subtotal: ₹${subtotal}`,
-      "",
-      "Please confirm availability and delivery details.",
-    ].join("\n");
-    const digits = BRAND.whatsapp.replace(/\D/g, "");
-    window.open(`https://wa.me/${digits}?text=${encodeURIComponent(message)}`, "_blank", "noopener,noreferrer");
-  }
-
   return (
     <Section background="offwhite" spacing="md">
       <h1 className="font-display text-section-heading font-bold text-charcoal mb-8">
@@ -119,11 +104,11 @@ export default function CartPageClient() {
               <span className="font-semibold text-charcoal">₹{subtotal}</span>
             </div>
             <p className="font-body text-xs text-slate">
-              Delivery charges and exact total confirmed on WhatsApp before dispatch.
+              Delivery charges are calculated at checkout based on fulfillment type.
             </p>
-            <Button type="button" size="lg" className="w-full" onClick={handleWhatsAppCheckout}>
-              <MessageCircle className="h-5 w-5" />
-              Checkout on WhatsApp
+            <Button href="/checkout" size="lg" className="w-full">
+              Proceed to Checkout
+              <ArrowRight className="h-5 w-5" />
             </Button>
             <button
               type="button"
