@@ -20,6 +20,11 @@ then does the next one start. Don't jump ahead.
   summary, and explicit owner approval before starting the next one.
   (No "TypeScript passes" check — this project is JS-only per
   Project-instructions.md §3/§10.)
+- **Git: commit locally after each milestone. Do not `git push` until the
+  owner explicitly approves that milestone.** This is a standing rule, not
+  a one-off — don't push automatically going forward.
+- **Process for every milestone:** Audit → Plan → Permission → Build →
+  Verify → Local Commit (then wait — push only on explicit approval).
 
 ---
 
