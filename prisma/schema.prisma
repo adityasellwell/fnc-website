@@ -230,10 +230,18 @@ model Review {
   store     Store?   @relation(fields: [storeId], references: [id])
   storeId   String?
 
+  // Nullable so seeded/legacy reviews (written before this field existed)
+  // stay valid — but /api/reviews POST now requires a signed-in customer
+  // and always sets this, so every new review is a real, accountable
+  // account rather than an anonymous typed name.
+  customer   Customer? @relation(fields: [customerId], references: [id])
+  customerId String?
+
   createdAt DateTime @default(now())
 
   @@index([productId])
   @@index([storeId])
+  @@index([customerId])
 }
 
 // ---------------------------------------------------------------------
@@ -258,6 +266,7 @@ model Customer {
   addresses Address[]
   orders    Order[]
   wishlist  Wishlist[]
+  reviews   Review[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -596,5 +605,22 @@ model SearchLog {
 
   @@index([query])
   @@index([timestamp])
+}
+
+// Admin-editable static content (policy pages today — Privacy/Terms/
+// Refund/Shipping — extensible to any other static page later just by
+// adding a new slug, no schema change needed). `content` uses a simple
+// line-based convention (see lib/utils/pageContent.js) rather than a full
+// rich-text/HTML editor: "## " starts a heading, "- " starts a bullet
+// list item, blank lines separate blocks, everything else is a paragraph.
+// Deliberately simple — a full WYSIWYG editor would be overkill for
+// legal-copy pages that change rarely.
+model Page {
+  id        String   @id @default(cuid())
+  slug      String   @unique
+  title     String
+  content   String   @db.Text
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
 

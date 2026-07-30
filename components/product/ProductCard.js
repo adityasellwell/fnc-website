@@ -4,6 +4,7 @@ import { Star } from "lucide-react";
 import Card from "@/components/ui/Card";
 import PlaceholderMedia from "@/components/ui/PlaceholderMedia";
 import WishlistButton from "@/components/product/WishlistButton";
+import QuickAddToCartButton from "@/components/product/QuickAddToCartButton";
 import { CATEGORY_META } from "@/lib/constants";
 import { cn } from "@/lib/utils";
 
@@ -84,6 +85,12 @@ export default function ProductCard({ product, variant = "editorial", className 
           product={product}
           image={meta.image}
           className="absolute top-3 right-3 z-10"
+        />
+
+        <QuickAddToCartButton
+          product={product}
+          image={meta.image}
+          className="absolute bottom-3 right-3 z-10 h-10 w-10 opacity-0 group-hover:opacity-100 focus-visible:opacity-100 transition-opacity"
         />
       </div>
 

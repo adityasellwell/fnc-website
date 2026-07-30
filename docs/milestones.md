@@ -47,3 +47,15 @@ then does the next one start. Don't jump ahead.
 
 All 10 planned milestones (0–9) are functionally complete. See
 `docs/changelog.md` for full detail per milestone.
+
+---
+
+## 10 — Admin CMS, Real Reviews, Storefront Polish (2026-07-30)
+
+Owner-requested batch, planned and confirmed before starting: password
+show/hide toggle, a "Buy Now" direct-checkout button alongside Add to
+Cart, real Firebase Storage image uploads in admin (no more pasting
+URLs), admin visual polish (logo/brand colors, collapsible sidebar), and
+a lightweight CMS layer — Banners, Stores, and the 4 policy pages are now
+all admin-editable, plus real customer reviews (sign-in required) with
+an admin moderation screen. Full detail in `docs/changelog.md`.

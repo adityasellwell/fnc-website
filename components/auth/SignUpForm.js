@@ -5,6 +5,7 @@ import { createUserWithEmailAndPassword, sendEmailVerification, signOut, updateP
 import { auth } from "@/lib/firebase/client";
 import Link from "next/link";
 import Button from "@/components/ui/Button";
+import PasswordInput from "@/components/ui/PasswordInput";
 
 export default function SignUpForm() {
   const [name, setName] = useState("");
@@ -150,13 +151,11 @@ export default function SignUpForm() {
           <label className="block font-body text-xs font-bold text-charcoal uppercase tracking-wider mb-1">
             Password
           </label>
-          <input
-            type="password"
+          <PasswordInput
             required
             placeholder="Min. 6 characters"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
-            className="w-full h-12 px-4 rounded-xl border border-bordergray font-body text-sm text-charcoal focus:border-fnc-red focus:outline-none transition-colors"
           />
         </div>
 

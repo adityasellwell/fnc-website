@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useFormStatus } from "react-dom";
 import { Loader2 } from "lucide-react";
 import Modal from "./Modal";
+import ImageUploadField from "./ImageUploadField";
 
 const inputClasses =
   "w-full h-11 px-3.5 rounded-xl border border-bordergray bg-white font-body text-sm text-charcoal placeholder:text-slate focus:border-fnc-red focus:outline-none transition-colors";
@@ -45,11 +46,8 @@ export default function CategoryFormModal({ trigger, categories, category, actio
             <label className="font-body text-xs font-semibold text-charcoal">Description</label>
             <textarea name="description" defaultValue={category?.description} rows={2} className={`${inputClasses} h-auto py-2.5 resize-none`} />
           </div>
-          <div className="grid sm:grid-cols-3 gap-4">
-            <div className="flex flex-col gap-1.5">
-              <label className="font-body text-xs font-semibold text-charcoal">Image URL</label>
-              <input name="image" defaultValue={category?.image} className={inputClasses} />
-            </div>
+          <div className="grid sm:grid-cols-3 gap-4 items-start">
+            <ImageUploadField name="image" label="Category Image" defaultValue={category?.image} folder="categories" />
             <div className="flex flex-col gap-1.5">
               <label className="font-body text-xs font-semibold text-charcoal">Sort order</label>
               <input name="order" type="number" defaultValue={category?.order ?? 0} className={inputClasses} />

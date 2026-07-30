@@ -4,6 +4,80 @@ Milestone-level log per `Project-instructions.md` §10 process. Newest first.
 
 ---
 
+## Milestone 10 — Admin CMS, Real Reviews, Storefront Polish (2026-07-30)
+
+**Password visibility toggle:** new shared `components/ui/PasswordInput.js`
+(eye/eye-off icon), used by both SignInForm and SignUpForm instead of
+duplicating the logic.
+
+**"Buy Now" direct checkout:** `components/product/BuyNowButton.js` — adds
+the item to cart and jumps straight to `/checkout`, sitting next to (not
+replacing) `AddToCartButton` on the PDP. Also added
+`components/product/QuickAddToCartButton.js` to `ProductCard` — the grid
+cards had zero cart action at all before this (only the PDP did).
+
+**Real image uploads (Firebase Storage):** `/api/admin/upload` — admin-only
+(gated the same way every other admin action is, via `requireAdminUser()`),
+uploads via the Firebase **Admin** SDK (`lib/firebase/admin.js`'s new
+`uploadToStorage()`), which bypasses Storage security rules entirely —
+authorization happens in our own route, not Console-configured rules. New
+`components/admin/ImageUploadField.js` renders a hidden input so it drops
+into existing `<form action={serverAction}>` patterns as a straight
+replacement for the old raw-URL text field — no schema changes needed
+(every image field already just stores a URL string). Wired into
+Products and Categories.
+
+**Admin panel visual polish:** new `components/admin/AdminShell.js` client
+wrapper — real F&C logo, brand-red active nav highlighting, and a
+collapsible sidebar (icon-only when collapsed). `app/admin/layout.js` is
+now a thin server component that fetches the admin user and role-gates
+the Team nav item, handing rendering off to AdminShell.
+
+**Admin CMS additions:**
+- **Banners** (`/admin/banners`) — full CRUD for homepage hero banners
+  (image via the new upload, title/subtitle/CTA/link/priority/schedule).
+- **Stores** (`/admin/stores`) — full CRUD; there was previously no admin
+  screen for store address/hours/phone/images at all.
+- **Pages** (`/admin/pages`) — new `Page` Prisma model (slug/title/content)
+  makes Privacy Policy, Terms, Refund Policy, and Shipping Policy
+  admin-editable. Content uses a deliberately simple line-based convention
+  (`## ` = heading, `- ` = bullet, blank line = new block) rather than a
+  full rich-text editor — parsed by `lib/utils/pageContent.js`, rendered by
+  `components/layout/PolicyContent.js`. All 4 pages now fetch from the DB
+  with the original hardcoded copy kept as an in-file fallback if no DB
+  row exists yet. Seeded via `prisma/seed.js`'s new `seedPages()`.
+
+**Real customer reviews:** `/api/reviews` POST previously had **no
+authentication at all** — anyone could submit a review under any typed
+name. Now requires a signed-in, email-verified customer; `authorName` is
+no longer accepted from the client at all, it's always the real account
+name. Added `Review.customerId` (nullable FK to Customer, migration
+`20260730114518_review_customer`) so every new review is tied to a real
+account, plus duplicate-review prevention (one review per customer per
+product/store). New `components/product/ReviewForm.js` on the PDP — shows
+a sign-in prompt for guests, a star-rating + comment form for signed-in
+customers. New `/admin/reviews` moderation screen — view and delete any
+review, with `Product.rating`/`reviewCount` correctly recalculated on
+delete (previously only recalculated on create).
+
+**Bug fixed along the way:** `/admin/banners`, `/admin/stores`,
+`/admin/pages`, and `/admin/reviews` initially crashed the build with
+"Functions cannot be passed directly to Client Components" — the same
+class of bug already fixed for Products/Categories/Coupons during the
+Firebase migration, just not yet applied to these four new sections.
+Fixed the same way: a thin server `page.js` that fetches + serializes
+data, handing off to a `*ClientPage.js` client component that does the
+actual Table/Modal/trigger-prop composition (Orders/Customers/Inventory/
+Team were checked and don't have this issue — their trigger-prop usage is
+already contained within their own client components).
+
+**Verified:** `next build` passes (99/99 pages), lint clean on every file
+touched. Migrations for `Page` and `Review.customerId` applied directly
+against the live production database (local now has direct DB + Firebase
+Admin access, confirmed working this session).
+
+---
+
 ## Milestone 9 — Zomato / Swiggy Link-Out (2026-07-29)
 
 **Built:** "Order on Zomato" / "Order on Swiggy" buttons in the `/checkout`

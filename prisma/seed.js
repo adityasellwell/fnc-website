@@ -766,6 +766,99 @@ async function seedRoles() {
   }
 }
 
+// Admin-editable content for the 4 policy pages — upserted so the admin's
+// edits (via /admin/pages) are never overwritten by a later deploy; only
+// creates the row if it doesn't already exist.
+const pagesData = [
+  {
+    slug: "privacy-policy",
+    title: "Privacy Policy",
+    content: `## 1. Information We Collect
+We collect information you provide directly to us when placing an order or registering an account. This includes your name, email address, phone number, and delivery address. We also keep a record of your order history, transaction logs, and support queries.
+
+## 2. How We Use Your Information
+We use the information we collect to process orders, initiate payment gateways (via Razorpay), verify delivery coordinates, coordinate pickups, communicate order updates, and respond to customer support inquiries.
+
+## 3. Third-Party Integrations
+We share your data with trusted partners only to the extent necessary to perform checkout and authentication services:
+- Firebase Authentication: Provides user authentication and account sign-in.
+- Razorpay: Handles cryptographic payment processing. We do not store or transmit raw card numbers or CVVs on our own servers.
+- OpenStreetMap (Nominatim): Resolves typed addresses to verify store delivery serviceability.
+
+## 4. Data Security
+We implement standard security measures to safeguard transaction records, audit logs, and account details. However, no internet transmission is 100% secure. You are responsible for keeping your login credentials confidential.
+
+## 5. Your Choices & Contact
+You may access and update your account details by visiting your Account dashboard. For questions about this policy, please contact us at hello@fncfresh.in.`,
+  },
+  {
+    slug: "terms",
+    title: "Terms of Service",
+    content: `## 1. Acceptance of Terms
+By accessing the F&C website and purchasing proteins, you agree to comply with and be bound by these Terms of Service. If you do not agree, please do not use our services.
+
+## 2. Ordering & Pricing
+Product availability is subject to change based on daily supply. Prices listed are in Indian Rupees (INR). We verify item weights and prepare cuts fresh daily. If a product becomes unavailable after placing an order, we will reach out to offer a replacement or process a refund.
+
+## 3. Delivery Area & Verification
+We enforce a settings-driven delivery radius (configured at 5.0 km by default) centered around our active Thane store coordinates. Delivery serviceability is checked at checkout using geo-location coordinates resolved by OpenStreetMap's Nominatim service. Address inputs that cannot be verified or exceed the radius limits will be rejected.
+
+## 4. Online Payments
+Online payments are processed securely through Razorpay checkout integration. The payment status changes in our database only when verified by a signature-checked Razorpay webhook. Mismatched amounts or failed checkouts will automatically trigger manual audit flags.
+
+## 5. Limitation of Liability
+F&C is not liable for delayed deliveries caused by inaccurate address coordinates, heavy traffic, weather, or server-side API outages beyond our control.`,
+  },
+  {
+    slug: "refund-policy",
+    title: "Refund Policy",
+    content: `## 1. Freshness Guarantee
+We source, cut, and pack all fish, chicken, and other proteins daily to guarantee the highest quality. Due to the perishable nature of our products, refund claims must be filed within 4 hours of receiving delivery or store pickup.
+
+## 2. Refund & Replacement Criteria
+You are eligible for a replacement or store refund in the following scenarios:
+- The product packaging is ruptured or leaked upon arrival.
+- Incorrect items or weights were delivered.
+- Quality standards or freshness are not met.
+
+## 3. How to Request a Refund
+To request a refund, please send a message to our WhatsApp support line (+91 98765 43210) or email us at hello@fncfresh.in. You must include:
+- Your local order ID (visible in your account/checkout screen).
+- A clear photograph of the product and its packaging.
+- A brief description of the issue.
+
+## 4. Processing & Settlement Timelines
+Approved refunds will be processed directly back to the original source account via Razorpay. Online refund settlements typically reflect in your bank account or card statement within 5-7 business days as per standard banking terms.`,
+  },
+  {
+    slug: "shipping-policy",
+    title: "Shipping & Delivery Policy",
+    content: `## 1. Delivery Service Coverage
+We operate a temperature-controlled local delivery fleet from our store in Hiranandani Estate, Thane West. We only deliver to addresses within our designated delivery radius (configured to 5.0 km by default). Address coordinates are verified at checkout. Orders outside this radius are not serviceable.
+
+## 2. Delivery Charges & Thresholds
+Delivery charges are dynamically computed based on your order subtotal:
+- Minimum Order Value: Orders must meet a minimum subtotal of ₹200 to qualify for delivery.
+- Standard Delivery Fee: A flat charge of ₹50 applies to all orders under the free-delivery threshold.
+- Free Delivery: All orders with a subtotal of ₹500 or more are delivered free of charge.
+
+## 3. Delivery Timings & Cutoffs
+We offer daily delivery slots to keep the cold chain intact. Orders placed before 2:00 PM are scheduled for same-day evening delivery. Orders placed after the cutoff time will be delivered the following morning.
+
+## 4. Store Pickup Alternative
+If your address is outside our delivery radius or fails geocoding validation, you can select the Store Pickup option at checkout. Pickups are free and can be collected during our regular store operating hours (7:00 AM – 9:00 PM).`,
+  },
+];
+
+async function seedPages() {
+  for (const p of pagesData) {
+    const existing = await db.page.findUnique({ where: { slug: p.slug } });
+    if (!existing) {
+      await db.page.create({ data: p });
+    }
+  }
+}
+
 async function main() {
   console.log("Seeding roles...");
   await seedRoles();
@@ -787,6 +880,9 @@ async function main() {
 
   console.log("Seeding banners...");
   await seedBanners();
+
+  console.log("Seeding pages...");
+  await seedPages();
 
   console.log("Seed complete.");
 }

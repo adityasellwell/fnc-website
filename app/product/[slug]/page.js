@@ -11,6 +11,8 @@ import ProductCard from "@/components/product/ProductCard";
 import RecipeCard from "@/components/recipe/RecipeCard";
 import PlaceholderMedia from "@/components/ui/PlaceholderMedia";
 import AddToCartButton from "@/components/product/AddToCartButton";
+import BuyNowButton from "@/components/product/BuyNowButton";
+import ReviewForm from "@/components/product/ReviewForm";
 import { getProductBySlug, getProducts } from "@/lib/data/products";
 import { getCategoryBySlug } from "@/lib/data/categories";
 import { getRecipeBySlug } from "@/lib/data/recipes";
@@ -257,7 +259,10 @@ export default async function ProductDetailPage({ params }) {
                 </div>
               )}
 
-              <AddToCartButton product={product} image={meta.image} className="w-full sm:w-auto" />
+              <div className="flex flex-col sm:flex-row gap-3">
+                <AddToCartButton product={product} image={meta.image} className="w-full sm:w-auto" />
+                <BuyNowButton product={product} image={meta.image} className="w-full sm:w-auto" />
+              </div>
 
               {/* Nutrition */}
               <div className="rounded-2xl border border-bordergray bg-white p-5 sm:p-6">
@@ -359,6 +364,10 @@ export default async function ProductDetailPage({ params }) {
               </span>
             </div>
           </Reveal>
+
+          <div className="mb-6">
+            <ReviewForm productId={product.id} />
+          </div>
 
           {reviews.length === 0 ? (
             <p className="font-body text-sm text-slate">

@@ -2,14 +2,19 @@ import { z } from "zod";
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { checkRateLimit, rateLimitResponse } from "@/lib/rate-limit";
+import { getCurrentCustomer } from "@/lib/auth";
 
+// `authorName` is deliberately NOT accepted here — a review's displayed
+// name always comes from the signed-in customer's real account (see
+// POST below), never a client-supplied string. Anyone could otherwise
+// post a review under any name they typed, which is exactly what made
+// this endpoint not "legit" before.
 const createReviewSchema = z
   .object({
     productId: z.string().min(1).optional(),
     storeId: z.string().min(1).optional(),
     rating: z.coerce.number().int().min(1, "rating must be between 1 and 5").max(5, "rating must be between 1 and 5"),
     comment: z.string().min(1, "comment is required").max(5000),
-    authorName: z.string().min(1, "authorName is required").max(200),
   })
   .refine((data) => Boolean(data.productId) !== Boolean(data.storeId), {
     message: "Exactly one of productId or storeId must be provided",
@@ -81,6 +86,14 @@ export async function POST(request) {
   const rateLimit = await checkRateLimit(request);
   if (!rateLimit.success) return rateLimitResponse();
 
+  const customer = await getCurrentCustomer();
+  if (!customer) {
+    return NextResponse.json(
+      { error: "Please sign in (and verify your email) to leave a review." },
+      { status: 401 }
+    );
+  }
+
   let body;
   try {
     body = await request.json();
@@ -96,15 +109,26 @@ export async function POST(request) {
     );
   }
 
-  const { productId, storeId, rating, comment, authorName } = parsed.data;
+  const { productId, storeId, rating, comment } = parsed.data;
 
   try {
+    const existing = await db.review.findFirst({
+      where: { customerId: customer.id, productId: productId ?? null, storeId: storeId ?? null },
+    });
+    if (existing) {
+      return NextResponse.json(
+        { error: "You've already reviewed this — edit or delete your existing review instead." },
+        { status: 409 }
+      );
+    }
+
     const review = await db.$transaction(async (tx) => {
       const created = await tx.review.create({
         data: {
           rating,
           comment,
-          authorName,
+          authorName: customer.name,
+          customerId: customer.id,
           productId: productId ?? null,
           storeId: storeId ?? null,
         },
