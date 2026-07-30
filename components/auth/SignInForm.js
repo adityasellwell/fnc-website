@@ -140,7 +140,7 @@ export default function SignInForm() {
           />
         </div>
 
-        <Button type="submit" size="lg" className="w-full mt-2" loading={loading}>
+        <Button type="submit" size="lg" className="w-full mt-2" disabled={loading}>
           {loading ? "Signing In..." : "Sign In"}
         </Button>
       </form>

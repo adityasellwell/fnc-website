@@ -160,7 +160,7 @@ export default function SignUpForm() {
           />
         </div>
 
-        <Button type="submit" size="lg" className="w-full mt-2" loading={loading}>
+        <Button type="submit" size="lg" className="w-full mt-2" disabled={loading}>
           {loading ? "Registering..." : "Create Account"}
         </Button>
       </form>
