@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import Image from "next/image";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { Show } from "@clerk/nextjs";
 import { motion, useReducedMotion } from "framer-motion";
 import {
@@ -40,17 +41,32 @@ function getDistance(lat1, lon1, lat2, lon2) {
   return R * c;
 }
 
-function SearchBar({ className }) {
+function SearchBar({ className, onSubmitted }) {
+  const router = useRouter();
+  const [query, setQuery] = useState("");
+
+  function handleSubmit(e) {
+    e.preventDefault();
+    const trimmed = query.trim();
+    if (!trimmed) return;
+    router.push(`/shop?search=${encodeURIComponent(trimmed)}`);
+    onSubmitted?.();
+  }
+
   return (
-    <div className={`flex items-center gap-3 h-11 md:h-12 rounded-full border border-bordergray bg-white/90 backdrop-blur-sm px-5 ${className ?? ""}`}>
+    <form
+      onSubmit={handleSubmit}
+      className={`flex items-center gap-3 h-11 md:h-12 rounded-full border border-bordergray bg-white/90 backdrop-blur-sm px-5 ${className ?? ""}`}
+    >
       <Search className="h-4 w-4 text-slate shrink-0" />
       <input
-        type="text"
+        type="search"
+        value={query}
+        onChange={(e) => setQuery(e.target.value)}
         placeholder="Search for fish, chicken, eggs..."
-        disabled
         className="w-full bg-transparent font-body text-sm text-charcoal placeholder:text-slate focus:outline-none"
       />
-    </div>
+    </form>
   );
 }
 
@@ -329,7 +345,7 @@ export default function Navbar() {
         {open && (
           <div className="lg:hidden border-t border-bordergray bg-offwhite">
             <Container className="flex flex-col gap-5 py-6">
-              <SearchBar />
+              <SearchBar onSubmitted={() => setOpen(false)} />
 
               <button
                 type="button"

@@ -63,6 +63,12 @@ model Product {
   rating              Float    @default(0)
   reviewCount         Int      @default(0)
 
+  // Single-store stock count. Deliberately simple for now (one physical
+  // store, per Project-instructions.md §1) — if/when multi-store inventory
+  // is needed, this should migrate to a separate per-store Inventory model
+  // (Product x Store -> quantity) rather than growing more fields here.
+  stock Int @default(0)
+
   category   Category @relation(fields: [categoryId], references: [id])
   categoryId String
 
@@ -337,6 +343,19 @@ model Order {
 
   statusHistory OrderStatusHistory[]
 
+  // Razorpay Integration
+  razorpayOrderId   String? @unique
+  razorpayPaymentId String? @unique
+  razorpaySignature String?
+
+  // Analytics Capture
+  device           String?
+  browser          String?
+  ipAddress        String?
+  deliveryDistance Float?
+
+  paymentAuditLogs PaymentAuditLog[]
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
@@ -527,3 +546,53 @@ model AuditLog {
   @@index([entityType, entityId])
   @@index([timestamp])
 }
+
+model PaymentAuditLog {
+  id                String   @id @default(cuid())
+  orderId           String
+  order             Order    @relation(fields: [orderId], references: [id])
+  action            String   // e.g. "ORDER_CREATED", "WEBHOOK_PAYMENT_CAPTURED", "WEBHOOK_PAYMENT_FAILED", "AMOUNT_MISMATCH"
+  status            String   // e.g. "PENDING", "PAID", "FAILED"
+  amount            Decimal  @db.Decimal(10, 2)
+  provider          String   @default("RAZORPAY")
+  eventId           String?
+  eventType         String?
+  payload           Json?
+  signature         String?
+  processingResult  String?
+  timestamp         DateTime @default(now())
+
+  @@index([orderId])
+  @@index([timestamp])
+}
+
+model Settings {
+  id                    String   @id @default("singleton")
+  deliveryRadiusKm      Float    @default(5.0)
+  deliveryCharge        Decimal  @default(50.00) @db.Decimal(10, 2)
+  minOrderValue         Decimal  @default(200.00) @db.Decimal(10, 2)
+  freeDeliveryThreshold Decimal  @default(500.00) @db.Decimal(10, 2)
+  zomatoUrl             String?
+  swiggyUrl             String?
+  socialLinks           Json?    // e.g. { facebook, instagram, twitter }
+  businessInfo          Json?    // e.g. { name, email, phone, address }
+  seoTitle              String?
+  seoDescription        String?
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
+}
+
+model SearchLog {
+  id        String   @id @default(cuid())
+  query     String
+  results   Int      @default(0)
+  userId    String?
+  device    String?
+  browser   String?
+  ipAddress String?
+  timestamp DateTime @default(now())
+
+  @@index([query])
+  @@index([timestamp])
+}
+

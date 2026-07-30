@@ -7,6 +7,7 @@ import Reveal from "@/components/motion/Reveal";
 import ProductCard from "@/components/product/ProductCard";
 import { getProducts } from "@/lib/data/products";
 import { getCategories } from "@/lib/data/categories";
+import { logProductSearch } from "@/lib/utils/analytics";
 import { cn } from "@/lib/utils";
 
 const PAGE_SIZE = 12;
@@ -26,10 +27,11 @@ function pillClasses(active) {
   );
 }
 
-function buildHref(category, page) {
+function buildHref(category, page, search) {
   const params = new URLSearchParams();
   if (category) params.set("category", category);
   if (page && page > 1) params.set("page", String(page));
+  if (search) params.set("search", search);
   const qs = params.toString();
   return qs ? `/shop?${qs}` : "/shop";
 }
@@ -37,6 +39,7 @@ function buildHref(category, page) {
 export default async function ShopPage({ searchParams }) {
   const sp = await searchParams;
   const activeCategory = sp?.category ?? null;
+  const searchQuery = sp?.search?.trim() || null;
   const requestedPage = Math.max(1, parseInt(sp?.page ?? "1", 10) || 1);
 
   const [allProducts, categories] = await Promise.all([
@@ -44,9 +47,19 @@ export default async function ShopPage({ searchParams }) {
     getCategories(),
   ]);
 
-  const filtered = activeCategory
+  let filtered = activeCategory
     ? allProducts.filter((product) => product.categoryId === `cat-${activeCategory}`)
     : allProducts;
+
+  if (searchQuery) {
+    const q = searchQuery.toLowerCase();
+    filtered = filtered.filter(
+      (p) => p.name.toLowerCase().includes(q) || p.description?.toLowerCase().includes(q)
+    );
+    // Fire-and-forget — mirrors the same capture /api/products does, so
+    // every real search (not just API callers) shows up in SearchLog.
+    logProductSearch({ query: searchQuery, results: filtered.length });
+  }
 
   const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
   const currentPage = Math.min(requestedPage, totalPages);
@@ -92,13 +105,13 @@ export default async function ShopPage({ searchParams }) {
         <Section background="offwhite" spacing="md">
           {/* Category filter row */}
           <div className="flex gap-2 sm:gap-3 mb-8 overflow-x-auto scrollbar-none -mx-5 px-5 sm:mx-0 sm:px-0 sm:flex-wrap">
-            <Link href={buildHref(null, 1)} className={pillClasses(!activeCategory)}>
+            <Link href={buildHref(null, 1, searchQuery)} className={pillClasses(!activeCategory)}>
               All
             </Link>
             {categories.map((category) => (
               <Link
                 key={category.id}
-                href={buildHref(category.slug, 1)}
+                href={buildHref(category.slug, 1, searchQuery)}
                 className={pillClasses(activeCategory === category.slug)}
               >
                 {category.name}
@@ -106,9 +119,24 @@ export default async function ShopPage({ searchParams }) {
             ))}
           </div>
 
-          <p className="font-body text-sm text-slate mb-6">
-            {filtered.length} product{filtered.length === 1 ? "" : "s"}
-          </p>
+          <div className="flex items-center justify-between gap-4 mb-6 flex-wrap">
+            <p className="font-body text-sm text-slate">
+              {searchQuery ? (
+                <>
+                  {filtered.length} result{filtered.length === 1 ? "" : "s"} for &ldquo;{searchQuery}&rdquo;
+                </>
+              ) : (
+                <>
+                  {filtered.length} product{filtered.length === 1 ? "" : "s"}
+                </>
+              )}
+            </p>
+            {searchQuery && (
+              <Link href={buildHref(activeCategory, 1, null)} className="font-body text-xs font-semibold text-fnc-red hover:underline">
+                Clear search
+              </Link>
+            )}
+          </div>
 
           {paginated.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-16 text-center border border-dashed border-bordergray rounded-2xl">
@@ -116,8 +144,9 @@ export default async function ShopPage({ searchParams }) {
                 No products found
               </p>
               <p className="font-body text-sm text-slate mt-1 max-w-xs">
-                Try a different category, or check back soon — we&apos;re adding
-                new products all the time.
+                {searchQuery
+                  ? `Nothing matched "${searchQuery}" — try a different search term or browse a category.`
+                  : "Try a different category, or check back soon — we're adding new products all the time."}
               </p>
             </div>
           ) : (
@@ -141,7 +170,7 @@ export default async function ShopPage({ searchParams }) {
                 return (
                   <Link
                     key={page}
-                    href={buildHref(activeCategory, page)}
+                    href={buildHref(activeCategory, page, searchQuery)}
                     aria-current={page === currentPage ? "page" : undefined}
                     className={cn(
                       "h-10 w-10 flex items-center justify-center rounded-full font-body text-sm font-semibold border transition-colors",

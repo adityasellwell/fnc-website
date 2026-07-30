@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { useUser } from "@clerk/nextjs";
-import { Loader2, CheckCircle2, XCircle, Truck, Store as StoreIcon, UserCircle2 } from "lucide-react";
+import { Loader2, CheckCircle2, XCircle, Truck, Store as StoreIcon, UserCircle2, ExternalLink } from "lucide-react";
 import Section from "@/components/layout/Section";
 import Button from "@/components/ui/Button";
 import { useCartStore } from "@/lib/store/cart";
@@ -22,7 +22,21 @@ const initialValues = {
 const inputClasses =
   "w-full h-12 px-4 rounded-xl border border-bordergray bg-white font-body text-base text-charcoal placeholder:text-slate focus:border-fnc-red focus:outline-none transition-colors";
 
-function validate(values, fulfillmentType, isSignedIn) {
+function calculateDistance(lat1, lon1, lat2, lon2) {
+  const R = 6371; // km
+  const dLat = ((lat2 - lat1) * Math.PI) / 180;
+  const dLon = ((lon2 - lon1) * Math.PI) / 180;
+  const a =
+    Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+    Math.cos((lat1 * Math.PI) / 180) *
+      Math.cos((lat2 * Math.PI) / 180) *
+      Math.sin(dLon / 2) *
+      Math.sin(dLon / 2);
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+  return R * c;
+}
+
+function validate(values, fulfillmentType, isSignedIn, settings, subtotal) {
   const errors = {};
   if (!isSignedIn) {
     if (!values.name.trim()) errors.name = "Please enter your full name.";
@@ -38,6 +52,9 @@ function validate(values, fulfillmentType, isSignedIn) {
     errors.phone = "Please enter a valid phone number.";
   }
   if (fulfillmentType === "DELIVERY") {
+    if (settings && settings.minOrderValue && subtotal < settings.minOrderValue) {
+      errors.subtotal = `Order subtotal must be at least ₹${settings.minOrderValue} for delivery.`;
+    }
     if (!values.line1.trim()) errors.line1 = "Please enter your address.";
     if (!values.city.trim()) errors.city = "Please enter your city.";
     if (!values.state.trim()) errors.state = "Please enter your state.";
@@ -46,7 +63,7 @@ function validate(values, fulfillmentType, isSignedIn) {
   return errors;
 }
 
-export default function CheckoutPageClient({ stores = [] }) {
+export default function CheckoutPageClient({ stores = [], settings = {} }) {
   const { isLoaded, isSignedIn, user } = useUser();
   const items = useCartStore((s) => s.items);
   const clear = useCartStore((s) => s.clear);
@@ -59,13 +76,25 @@ export default function CheckoutPageClient({ stores = [] }) {
   const [serverError, setServerError] = useState("");
   const [orderId, setOrderId] = useState(null);
 
+  // Delivery radius & charge verification states
+  const [checkingDelivery, setCheckingDelivery] = useState(false);
+  const [deliveryError, setDeliveryError] = useState("");
+  const [deliveryDistance, setDeliveryDistance] = useState(null);
+  const [coords, setCoords] = useState(null);
+
   const store = stores[0];
 
-  // Prefill from the signed-in Clerk profile — the name/email fields are
-  // then hidden (server derives the real customer from the session anyway,
-  // see /api/orders), but phone stays editable since Clerk may not have one.
+  const deliveryFee =
+    fulfillmentType === "DELIVERY" && !deliveryError && deliveryDistance !== null
+      ? subtotal >= (settings.freeDeliveryThreshold ?? 500)
+        ? 0
+        : settings.deliveryCharge ?? 50
+      : 0;
+
+  // Prefill from the signed-in Clerk profile
   useEffect(() => {
     if (!isSignedIn || !user) return;
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setValues((v) => ({
       ...v,
       name: [user.firstName, user.lastName].filter(Boolean).join(" ") || v.name,
@@ -74,18 +103,115 @@ export default function CheckoutPageClient({ stores = [] }) {
     }));
   }, [isSignedIn, user]);
 
+  async function checkDeliveryServiceability(addressObj) {
+    if (!addressObj.line1.trim() || !addressObj.city.trim() || !addressObj.state.trim() || !addressObj.pincode.trim()) {
+      return null;
+    }
+
+    setCheckingDelivery(true);
+    setDeliveryError("");
+
+    const addressStr = `${addressObj.line1}, ${addressObj.line2 || ""}, ${addressObj.city}, ${addressObj.state} ${addressObj.pincode}`;
+
+    try {
+      const res = await fetch(
+        `https://nominatim.openstreetmap.org/search?format=json&limit=1&q=${encodeURIComponent(addressStr)}`,
+        {
+          headers: {
+            Accept: "application/json",
+            "User-Agent": "FncWebsiteDeliveryRadiusEnforcement/1.0",
+          },
+        }
+      );
+      if (!res.ok) throw new Error();
+      const data = await res.json();
+      if (!data || data.length === 0) {
+        setDeliveryError("We couldn't verify this address. Please refine your address or choose Store Pickup.");
+        setDeliveryDistance(null);
+        setCoords(null);
+        return null;
+      }
+
+      const lat = parseFloat(data[0].lat);
+      const lng = parseFloat(data[0].lon);
+      setCoords({ lat, lng });
+
+      // Calculate distance to active store
+      if (store?.geo?.lat && store?.geo?.lng) {
+        const dist = calculateDistance(store.geo.lat, store.geo.lng, lat, lng);
+        setDeliveryDistance(dist);
+
+        const radius = settings.deliveryRadiusKm ?? 5.0;
+        if (dist > radius) {
+          setDeliveryError(`Your address is outside our delivery area of ${radius} km. (Calculated distance: ${dist.toFixed(1)} km)`);
+          return null;
+        } else {
+          setDeliveryError("");
+          return { lat, lng, dist };
+        }
+      }
+      return null;
+    } catch (err) {
+      setDeliveryError("Address verification failed. Please check your internet connection, or choose Store Pickup.");
+      setDeliveryDistance(null);
+      setCoords(null);
+      return null;
+    } finally {
+      setCheckingDelivery(false);
+    }
+  }
+
+  const handleAddressBlur = () => {
+    if (values.line1.trim() && values.city.trim() && values.state.trim() && values.pincode.trim()) {
+      checkDeliveryServiceability(values);
+    }
+  };
+
   function handleChange(field) {
-    return (e) => setValues((v) => ({ ...v, [field]: e.target.value }));
+    return (e) => {
+      const val = e.target.value;
+      setValues((v) => {
+        const next = { ...v, [field]: val };
+        // Clear verification if any address components are updated
+        if (["line1", "city", "state", "pincode"].includes(field)) {
+          setDeliveryDistance(null);
+          setCoords(null);
+          setDeliveryError("");
+        }
+        return next;
+      });
+    };
   }
 
   async function handleSubmit(e) {
     e.preventDefault();
-    const nextErrors = validate(values, fulfillmentType, isSignedIn);
+    setServerError("");
+
+    let currentCoords = coords;
+    if (fulfillmentType === "DELIVERY" && !currentCoords) {
+      const result = await checkDeliveryServiceability(values);
+      if (!result) {
+        setServerError("Please resolve address verification errors before placing your order.");
+        return;
+      }
+      currentCoords = result;
+    }
+
+    if (fulfillmentType === "DELIVERY" && deliveryError) {
+      setServerError(deliveryError);
+      return;
+    }
+
+    const nextErrors = validate(values, fulfillmentType, isSignedIn, settings, subtotal);
     setErrors(nextErrors);
-    if (Object.keys(nextErrors).length > 0) return;
+    if (Object.keys(nextErrors).length > 0) {
+      if (nextErrors.subtotal) {
+        setServerError(nextErrors.subtotal);
+      }
+      return;
+    }
 
     setStatus("submitting");
-    setServerError("");
 
     try {
       const res = await fetch("/api/orders", {
@@ -116,9 +242,76 @@ export default function CheckoutPageClient({ stores = [] }) {
         throw new Error(json.error || "Request failed");
       }
 
-      setOrderId(json.data.id);
-      setStatus("success");
-      clear();
+      const orderData = json.data;
+      const razorpayData = json.razorpay;
+
+      if (!razorpayData) {
+        throw new Error("Payment gateway could not be initialized.");
+      }
+
+      setStatus("paying");
+
+      const options = {
+        key: razorpayData.keyId,
+        amount: razorpayData.amount,
+        currency: "INR",
+        name: "F&C — Fresh Proteins & More",
+        description: `Order #${orderData.id.slice(-8)}`,
+        order_id: razorpayData.orderId,
+        handler: async function (response) {
+          setStatus("verifying");
+
+          let verified = false;
+          const maxAttempts = 15;
+          const pollInterval = 1500; // 1.5 seconds
+
+          for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+            try {
+              const verifyRes = await fetch(`/api/orders/${orderData.id}/verify-payment`);
+              const verifyJson = await verifyRes.json();
+              if (verifyRes.ok && verifyJson.success) {
+                verified = true;
+                break;
+              }
+            } catch (err) {
+              console.error("Verification poll error:", err);
+            }
+            await new Promise((resolve) => setTimeout(resolve, pollInterval));
+          }
+
+          if (verified) {
+            setOrderId(orderData.id);
+            setStatus("success");
+            clear();
+          } else {
+            setStatus("error");
+            setServerError(
+              "We received your payment, but are still confirming details. Please check your account dashboard in a few minutes or contact support."
+            );
+          }
+        },
+        prefill: {
+          name: values.name || (user ? [user.firstName, user.lastName].filter(Boolean).join(" ") : ""),
+          email: values.email || (user ? user.primaryEmailAddress?.emailAddress : ""),
+          contact: values.phone,
+        },
+        modal: {
+          ondismiss: function () {
+            setStatus("error");
+            setServerError("Payment was cancelled. You can try placing the order again.");
+          },
+        },
+        theme: {
+          color: "#DC2F26", // F&C brand red Hex color
+        },
+      };
+
+      if (typeof window !== "undefined" && window.Razorpay) {
+        const rzp = new window.Razorpay(options);
+        rzp.open();
+      } else {
+        throw new Error("Razorpay SDK could not be loaded. Please reload the page and try again.");
+      }
     } catch (err) {
       setStatus("error");
       setServerError(err.message || "We couldn't place your order right now. Please try again.");
@@ -256,38 +449,63 @@ export default function CheckoutPageClient({ stores = [] }) {
                 <label htmlFor="line1" className="font-body text-sm font-semibold text-charcoal">
                   Address line 1
                 </label>
-                <input id="line1" type="text" value={values.line1} onChange={handleChange("line1")} placeholder="House/flat no., street" className={inputClasses} />
+                <input id="line1" type="text" value={values.line1} onChange={handleChange("line1")} onBlur={handleAddressBlur} placeholder="House/flat no., street" className={inputClasses} />
                 {errors.line1 && <p className="font-body text-xs text-fnc-red">{errors.line1}</p>}
               </div>
               <div className="flex flex-col gap-1.5">
                 <label htmlFor="line2" className="font-body text-sm font-semibold text-charcoal">
                   Address line 2 (optional)
                 </label>
-                <input id="line2" type="text" value={values.line2} onChange={handleChange("line2")} placeholder="Landmark, apartment, etc." className={inputClasses} />
+                <input id="line2" type="text" value={values.line2} onChange={handleChange("line2")} onBlur={handleAddressBlur} placeholder="Landmark, apartment, etc." className={inputClasses} />
               </div>
               <div className="grid sm:grid-cols-3 gap-5">
                 <div className="flex flex-col gap-1.5">
                   <label htmlFor="city" className="font-body text-sm font-semibold text-charcoal">
                     City
                   </label>
-                  <input id="city" type="text" value={values.city} onChange={handleChange("city")} placeholder="City" className={inputClasses} />
+                  <input id="city" type="text" value={values.city} onChange={handleChange("city")} onBlur={handleAddressBlur} placeholder="City" className={inputClasses} />
                   {errors.city && <p className="font-body text-xs text-fnc-red">{errors.city}</p>}
                 </div>
                 <div className="flex flex-col gap-1.5">
                   <label htmlFor="state" className="font-body text-sm font-semibold text-charcoal">
                     State
                   </label>
-                  <input id="state" type="text" value={values.state} onChange={handleChange("state")} placeholder="State" className={inputClasses} />
+                  <input id="state" type="text" value={values.state} onChange={handleChange("state")} onBlur={handleAddressBlur} placeholder="State" className={inputClasses} />
                   {errors.state && <p className="font-body text-xs text-fnc-red">{errors.state}</p>}
                 </div>
                 <div className="flex flex-col gap-1.5">
                   <label htmlFor="pincode" className="font-body text-sm font-semibold text-charcoal">
                     Pincode
                   </label>
-                  <input id="pincode" type="text" value={values.pincode} onChange={handleChange("pincode")} placeholder="400607" className={inputClasses} />
+                  <input id="pincode" type="text" value={values.pincode} onChange={handleChange("pincode")} onBlur={handleAddressBlur} placeholder="400607" className={inputClasses} />
                   {errors.pincode && <p className="font-body text-xs text-fnc-red">{errors.pincode}</p>}
                 </div>
               </div>
+
+              {/* Address Serviceability / Geocoding Status */}
+              {(checkingDelivery || deliveryError || (deliveryDistance !== null && !deliveryError)) && (
+                <div className="pt-4 border-t border-bordergray flex flex-col gap-1.5 font-body text-sm">
+                  {checkingDelivery && (
+                    <span className="text-slate flex items-center gap-1.5">
+                      <Loader2 className="h-4.5 w-4.5 animate-spin" />
+                      Verifying delivery address serviceability...
+                    </span>
+                  )}
+                  {deliveryError && (
+                    <span className="text-fnc-red flex items-center gap-1.5">
+                      <XCircle className="h-4.5 w-4.5 shrink-0" />
+                      {deliveryError}
+                    </span>
+                  )}
+                  {deliveryDistance !== null && !deliveryError && (
+                    <span className="text-fnc-green flex items-center gap-1.5">
+                      <CheckCircle2 className="h-4.5 w-4.5 shrink-0" />
+                      Address verified! Distance to store: {deliveryDistance.toFixed(1)} km.
+                      {deliveryFee === 0 ? " (Free Delivery)" : ` (Delivery Fee: ₹${deliveryFee})`}
+                    </span>
+                  )}
+                </div>
+              )}
             </div>
           )}
 
@@ -298,19 +516,29 @@ export default function CheckoutPageClient({ stores = [] }) {
             </p>
           )}
 
-          <Button type="submit" size="lg" disabled={status === "submitting" || !isLoaded} className="w-full sm:w-fit">
-            {status === "submitting" ? (
+          <Button type="submit" size="lg" disabled={status === "submitting" || status === "paying" || status === "verifying" || !isLoaded} className="w-full sm:w-fit">
+            {status === "submitting" && (
               <>
                 <Loader2 className="h-5 w-5 animate-spin" />
                 Placing order...
               </>
-            ) : (
-              "Place Order"
             )}
+            {status === "paying" && (
+              <>
+                <Loader2 className="h-5 w-5 animate-spin" />
+                Waiting for payment...
+              </>
+            )}
+            {status === "verifying" && (
+              <>
+                <Loader2 className="h-5 w-5 animate-spin" />
+                Verifying payment...
+              </>
+            )}
+            {status !== "submitting" && status !== "paying" && status !== "verifying" && "Place Order & Pay"}
           </Button>
           <p className="font-body text-xs text-slate">
-            Payment is confirmed after order placement — our team will reach out to complete
-            payment before dispatch. Online payment at checkout is coming soon.
+            Secure payment powered by Razorpay. Cards, UPI, Netbanking, and Wallets are accepted.
           </p>
         </form>
 
@@ -331,12 +559,57 @@ export default function CheckoutPageClient({ stores = [] }) {
             <span>Subtotal ({items.reduce((s, i) => s + i.qty, 0)} items)</span>
             <span className="font-semibold text-charcoal">₹{subtotal}</span>
           </div>
-          <p className="font-body text-xs text-slate">
-            Delivery charges, if any, are confirmed by our team after order placement.
-          </p>
+          {fulfillmentType === "DELIVERY" && (
+            <div className="flex items-center justify-between font-body text-sm text-slate">
+              <span>Delivery Fee</span>
+              <span className="font-semibold text-charcoal">
+                {deliveryDistance === null ? (
+                  <span className="text-xs text-slate font-normal italic">Pending verification</span>
+                ) : deliveryFee === 0 ? (
+                  "Free"
+                ) : (
+                  `₹${deliveryFee}`
+                )}
+              </span>
+            </div>
+          )}
+          <div className="flex items-center justify-between font-body text-base font-bold text-charcoal pt-3 border-t border-bordergray">
+            <span>Order Total</span>
+            <span>₹{subtotal + (fulfillmentType === "DELIVERY" ? deliveryFee : 0)}</span>
+          </div>
           <Link href="/cart" className="font-body text-xs text-slate hover:text-fnc-red transition-colors text-center">
             Edit cart
           </Link>
+
+          {(settings.zomatoUrl || settings.swiggyUrl) && (
+            <div className="pt-4 border-t border-bordergray flex flex-col gap-2">
+              <p className="font-body text-xs text-slate text-center">Prefer ordering elsewhere?</p>
+              <div className="flex flex-col sm:flex-row gap-2">
+                {settings.zomatoUrl && (
+                  <a
+                    href={settings.zomatoUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex-1 flex items-center justify-center gap-1.5 h-10 rounded-xl border border-bordergray font-body text-xs font-semibold text-charcoal hover:border-charcoal transition-colors"
+                  >
+                    Order on Zomato
+                    <ExternalLink className="h-3.5 w-3.5" />
+                  </a>
+                )}
+                {settings.swiggyUrl && (
+                  <a
+                    href={settings.swiggyUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex-1 flex items-center justify-center gap-1.5 h-10 rounded-xl border border-bordergray font-body text-xs font-semibold text-charcoal hover:border-charcoal transition-colors"
+                  >
+                    Order on Swiggy
+                    <ExternalLink className="h-3.5 w-3.5" />
+                  </a>
+                )}
+              </div>
+            </div>
+          )}
         </div>
       </div>
     </Section>

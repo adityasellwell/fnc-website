@@ -1,9 +1,16 @@
 import { z } from "zod";
 import { NextResponse } from "next/server";
 import { auth } from "@clerk/nextjs/server";
+import Razorpay from "razorpay";
 import { db } from "@/lib/db";
 import { checkRateLimit, rateLimitResponse } from "@/lib/rate-limit";
 import { getOrCreateCustomerForClerkUser } from "@/lib/auth";
+import { geocodeAddress } from "@/lib/utils/geocode";
+import { getSettings } from "@/services/settings";
+import { parseUserAgent } from "@/lib/utils/analytics";
+
+
+
 
 /**
  * `customerId` is NEVER accepted from the client (that would let anyone
@@ -244,6 +251,93 @@ export async function POST(request) {
       total = Math.max(0, subtotal - discount);
     }
 
+    const settings = await getSettings();
+    let calculatedDistance = null;
+
+    // Settings-driven Delivery Radius & Fees Enforcement
+    if (fulfillmentType === "DELIVERY") {
+      if (subtotal < Number(settings.minOrderValue)) {
+        return NextResponse.json(
+          { error: `Order subtotal must be at least ₹${settings.minOrderValue} for delivery.` },
+          { status: 400 }
+        );
+      }
+
+      const activeStore = await db.store.findFirst({
+        where: { status: "ACTIVE", deliveryAvailable: true },
+      });
+
+      if (!activeStore) {
+        return NextResponse.json(
+          { error: "No active store found to handle delivery." },
+          { status: 400 }
+        );
+      }
+
+      const addressStr = `${deliveryAddress.line1}, ${deliveryAddress.line2 || ""}, ${deliveryAddress.city}, ${deliveryAddress.state} ${deliveryAddress.pincode}`;
+      const coords = await geocodeAddress(addressStr);
+
+      if (!coords) {
+        return NextResponse.json(
+          { error: "We couldn't verify this address. Please refine your address or choose Store Pickup." },
+          { status: 400 }
+        );
+      }
+
+      // Calculate Haversine distance
+      const R = 6371; // Earth's radius in km
+      const dLat = ((coords.lat - activeStore.latitude) * Math.PI) / 180;
+      const dLon = ((coords.lng - activeStore.longitude) * Math.PI) / 180;
+      const a =
+        Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+        Math.cos((activeStore.latitude * Math.PI) / 180) *
+          Math.cos((coords.lat * Math.PI) / 180) *
+          Math.sin(dLon / 2) *
+          Math.sin(dLon / 2);
+      const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+      const distance = R * c;
+
+      if (distance > settings.deliveryRadiusKm) {
+        return NextResponse.json(
+          {
+            error: `Your address is outside our delivery area of ${settings.deliveryRadiusKm} km. (Calculated distance: ${distance.toFixed(1)} km)`,
+          },
+          { status: 400 }
+        );
+      }
+
+      calculatedDistance = distance;
+
+      const deliveryCharge =
+        subtotal >= Number(settings.freeDeliveryThreshold) ? 0 : Number(settings.deliveryCharge);
+      total += deliveryCharge;
+    }
+
+    // Resolve client device, browser and IP address for analytics
+    const ip = request.headers.get("x-forwarded-for")?.split(",")[0] || request.headers.get("x-real-ip") || null;
+    const ua = request.headers.get("user-agent") || "";
+    const { browser, device } = parseUserAgent(ua);
+
+    let rzpOrder = null;
+    try {
+      const razorpay = new Razorpay({
+        key_id: process.env.RAZORPAY_KEY_ID,
+        key_secret: process.env.RAZORPAY_KEY_SECRET,
+      });
+
+      rzpOrder = await razorpay.orders.create({
+        amount: Math.round(total * 100), // in paise
+        currency: "INR",
+        receipt: `rcpt_${Date.now().toString().slice(-10)}`,
+      });
+    } catch (rzpErr) {
+      console.error("Razorpay order creation failed:", rzpErr);
+      return NextResponse.json(
+        { error: "Failed to initiate payment gateway. Please try again." },
+        { status: 500 }
+      );
+    }
+
     const order = await db.$transaction(async (tx) => {
       const created = await tx.order.create({
         data: {
@@ -253,6 +347,11 @@ export async function POST(request) {
           deliveryAddress: fulfillmentType === "DELIVERY" ? deliveryAddress : null,
           couponCode: couponCode ?? null,
           total,
+          razorpayOrderId: rzpOrder.id,
+          device,
+          browser,
+          ipAddress: ip,
+          deliveryDistance: calculatedDistance,
           items: { create: orderItemsData },
           statusHistory: { create: { status: "PLACED" } },
         },
@@ -284,11 +383,31 @@ export async function POST(request) {
         }
       }
 
+      // Log the order created event in PaymentAuditLog
+      await tx.paymentAuditLog.create({
+        data: {
+          orderId: created.id,
+          action: "ORDER_CREATED",
+          status: "PENDING",
+          amount: total,
+          providerOrderId: rzpOrder.id,
+          processingResult: "Razorpay order created and linked to local order successfully.",
+        },
+      });
+
       return created;
     });
 
     return NextResponse.json(
-      { data: order, message: "Order placed successfully." },
+      {
+        data: order,
+        razorpay: {
+          orderId: rzpOrder.id,
+          amount: rzpOrder.amount,
+          keyId: process.env.RAZORPAY_KEY_ID,
+        },
+        message: "Order placed successfully. Redirecting to payment...",
+      },
       { status: 201 }
     );
   } catch (err) {

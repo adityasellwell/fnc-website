@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { db } from "@/lib/db";
+import { logProductSearch } from "@/lib/utils/analytics";
+
 
 // GET /api/products?page=1&pageSize=20&category=<slug>&tag=<tag>&search=<text>
 //
@@ -36,9 +38,13 @@ export async function GET(request) {
   if (category) where.category = { slug: category };
   if (tag) where.tags = { has: tag };
   if (search) {
+    // No `mode: "insensitive"` — that's a Postgres/Mongo-only Prisma option
+    // and throws on this project's MySQL provider. MySQL's default
+    // collation (utf8mb4_unicode_ci, set in the initial migration) is
+    // already case-insensitive, so plain `contains` is correct here.
     where.OR = [
-      { name: { contains: search, mode: "insensitive" } },
-      { description: { contains: search, mode: "insensitive" } },
+      { name: { contains: search } },
+      { description: { contains: search } },
     ];
   }
 
@@ -53,6 +59,12 @@ export async function GET(request) {
       }),
       db.product.count({ where }),
     ]);
+
+    if (search) {
+      // Fire-and-forget — a search log write failing must never block the
+      // actual search response.
+      logProductSearch({ query: search, results: total });
+    }
 
     const data = products.map((product) => ({
       ...product,

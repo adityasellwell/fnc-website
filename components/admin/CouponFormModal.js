@@ -1,0 +1,103 @@
+"use client";
+
+import { useState } from "react";
+import { useFormStatus } from "react-dom";
+import { Loader2 } from "lucide-react";
+import Modal from "./Modal";
+
+const inputClasses =
+  "w-full h-11 px-3.5 rounded-xl border border-bordergray bg-white font-body text-sm text-charcoal placeholder:text-slate focus:border-fnc-red focus:outline-none transition-colors";
+
+function SubmitButton({ label }) {
+  const { pending } = useFormStatus();
+  return (
+    <button type="submit" disabled={pending} className="h-11 px-5 rounded-xl bg-fnc-red text-white font-body text-sm font-semibold hover:bg-fnc-red/90 transition-colors disabled:opacity-60 flex items-center gap-2">
+      {pending && <Loader2 className="h-4 w-4 animate-spin" />}
+      {label}
+    </button>
+  );
+}
+
+function toDateInputValue(date) {
+  if (!date) return "";
+  return new Date(date).toISOString().slice(0, 10);
+}
+
+export default function CouponFormModal({ trigger, coupon, action, title }) {
+  const [open, setOpen] = useState(false);
+
+  async function handleSubmit(formData) {
+    await action(formData);
+    setOpen(false);
+  }
+
+  return (
+    <>
+      {trigger({ onClick: () => setOpen(true) })}
+      <Modal open={open} onClose={() => setOpen(false)} title={title} maxWidth="max-w-xl">
+        <form action={handleSubmit} className="flex flex-col gap-4">
+          <div className="grid sm:grid-cols-2 gap-4">
+            <div className="flex flex-col gap-1.5">
+              <label className="font-body text-xs font-semibold text-charcoal">Code</label>
+              <input name="code" defaultValue={coupon?.code} placeholder="WELCOME10" required className={`${inputClasses} uppercase`} />
+            </div>
+            <div className="flex flex-col gap-1.5">
+              <label className="font-body text-xs font-semibold text-charcoal">Type</label>
+              <select name="type" defaultValue={coupon?.type ?? "PERCENT"} className={inputClasses}>
+                <option value="PERCENT">Percent off</option>
+                <option value="FLAT">Flat amount off</option>
+              </select>
+            </div>
+          </div>
+
+          <div className="grid sm:grid-cols-2 gap-4">
+            <div className="flex flex-col gap-1.5">
+              <label className="font-body text-xs font-semibold text-charcoal">Value</label>
+              <input name="value" type="number" step="0.01" defaultValue={coupon ? Number(coupon.value) : ""} required className={inputClasses} />
+            </div>
+            <div className="flex flex-col gap-1.5">
+              <label className="font-body text-xs font-semibold text-charcoal">Min. order value (optional)</label>
+              <input name="minOrderValue" type="number" step="0.01" defaultValue={coupon?.minOrderValue ? Number(coupon.minOrderValue) : ""} className={inputClasses} />
+            </div>
+          </div>
+
+          <div className="flex flex-col gap-1.5">
+            <label className="font-body text-xs font-semibold text-charcoal">Applies to</label>
+            <select name="appliesTo" defaultValue={coupon?.appliesTo ?? "CART"} className={inputClasses}>
+              <option value="CART">Whole cart</option>
+              <option value="PRODUCT">Specific products</option>
+              <option value="CATEGORY">Specific category</option>
+            </select>
+            <p className="font-body text-xs text-slate">
+              Product/category scoping is set up in the schema but not yet pickable here — for now
+              those apply cart-wide until scoping UI is added.
+            </p>
+          </div>
+
+          <div className="grid sm:grid-cols-2 gap-4">
+            <div className="flex flex-col gap-1.5">
+              <label className="font-body text-xs font-semibold text-charcoal">Expiry date</label>
+              <input name="expiryDate" type="date" defaultValue={toDateInputValue(coupon?.expiryDate)} required className={inputClasses} />
+            </div>
+            <div className="flex flex-col gap-1.5">
+              <label className="font-body text-xs font-semibold text-charcoal">Usage limit (optional)</label>
+              <input name="usageLimit" type="number" defaultValue={coupon?.usageLimit ?? ""} className={inputClasses} />
+            </div>
+          </div>
+
+          <label className="flex items-center gap-2.5 font-body text-sm text-charcoal">
+            <input type="checkbox" name="active" defaultChecked={coupon?.active ?? true} className="h-4 w-4 rounded accent-fnc-red" />
+            Active
+          </label>
+
+          <div className="flex justify-end gap-3 pt-2">
+            <button type="button" onClick={() => setOpen(false)} className="h-11 px-4 font-body text-sm font-semibold text-charcoal hover:bg-warmwhite rounded-xl transition-colors">
+              Cancel
+            </button>
+            <SubmitButton label={coupon ? "Save Changes" : "Create Coupon"} />
+          </div>
+        </form>
+      </Modal>
+    </>
+  );
+}
