@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { UserButton } from "@clerk/nextjs";
+import SignOutButton from "@/components/auth/SignOutButton";
 import { Heart, Package, MapPin, ChevronRight } from "lucide-react";
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
@@ -57,7 +57,7 @@ export default async function AccountPage() {
             <h1 className="font-display text-section-heading font-bold text-charcoal">
               My Account
             </h1>
-            <UserButton afterSignOutUrl="/" />
+            <SignOutButton />
           </div>
 
           <div className="grid lg:grid-cols-3 gap-8 items-start">

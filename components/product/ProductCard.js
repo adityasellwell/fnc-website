@@ -3,9 +3,8 @@ import Image from "next/image";
 import { Star } from "lucide-react";
 import Card from "@/components/ui/Card";
 import PlaceholderMedia from "@/components/ui/PlaceholderMedia";
-import QuickOrderButton from "@/components/product/QuickOrderButton";
 import WishlistButton from "@/components/product/WishlistButton";
-import { CATEGORY_META, BRAND } from "@/lib/constants";
+import { CATEGORY_META } from "@/lib/constants";
 import { cn } from "@/lib/utils";
 
 const toneOverlay = {
@@ -22,11 +21,10 @@ const toneOverlay = {
  * Photo-dominant, food-ecommerce-style card: a large square image carries
  * the appetite appeal, rating sits as a small badge on the photo, and only
  * name/unit/price sit below — no long description, so price stays the
- * most prominent text on the card. A WhatsApp quick-order button overlays
- * the photo so a shopper can act immediately, not just browse.
+ * most prominent text on the card.
  *
  * Two separate links (image, text block) both point to the PDP rather than
- * one link wrapping everything — that keeps QuickOrderButton a sibling
+ * one link wrapping everything — that keeps WishlistButton a sibling
  * instead of nested inside an <a>, which HTML/React disallow.
  *
  * Shows the product's category photo as a stand-in until real
@@ -81,12 +79,6 @@ export default function ProductCard({ product, variant = "editorial", className 
           <Star className="h-3 w-3 fill-fnc-red text-fnc-red" />
           {product.rating}
         </div>
-
-        <QuickOrderButton
-          phone={BRAND.whatsapp}
-          message={`Hi! I'd like to order ${product.name} (${product.unit}).`}
-          className="absolute bottom-3 right-3 z-10 h-10 w-10 opacity-0 group-hover:opacity-100 focus-visible:opacity-100 transition-opacity"
-        />
 
         <WishlistButton
           product={product}

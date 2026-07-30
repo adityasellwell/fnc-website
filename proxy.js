@@ -1,18 +1,25 @@
-import { clerkMiddleware, createRouteMatcher } from "@clerk/nextjs/server";
 import { NextResponse } from "next/server";
 
-// /account needs a signed-in shopper. /admin needs a signed-in staff/admin
-// user — actual role-check happens in app/admin/layout.js (once built),
-// this just gates "signed in at all" at the edge.
-const isProtectedRoute = createRouteMatcher(["/account(.*)", "/admin(.*)"]);
+const PROTECTED_ROUTES = ["/account", "/checkout", "/orders", "/admin"];
 
-export default clerkMiddleware(async (auth, req) => {
-  if (isProtectedRoute(req)) {
-    const { userId, redirectToSignIn } = await auth();
-    if (!userId) return redirectToSignIn();
+export function proxy(request) {
+  const { pathname } = request.nextUrl;
+
+  const isProtected = PROTECTED_ROUTES.some(
+    (route) => pathname === route || pathname.startsWith(`${route}/`)
+  );
+
+  if (isProtected) {
+    const session = request.cookies.get("fnc_session")?.value;
+    if (!session) {
+      const signInUrl = new URL("/sign-in", request.url);
+      signInUrl.searchParams.set("redirect", pathname);
+      return NextResponse.redirect(signInUrl);
+    }
   }
+
   return NextResponse.next();
-});
+}
 
 export const config = {
   matcher: [

@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Show } from "@clerk/nextjs";
+import { useAuth } from "@/components/auth/AuthProvider";
 import { motion, useReducedMotion } from "framer-motion";
 import {
   MapPin,
@@ -111,6 +111,7 @@ function WishlistIcon({ className, textColor, iconHover }) {
 }
 
 export default function Navbar() {
+  const { isSignedIn } = useAuth();
   const [open, setOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
   const [locationLabel, setLocationLabel] = useState(CURRENT_LOCATION.label);
@@ -293,18 +294,7 @@ export default function Navbar() {
                 <span>Stores</span>
                 <span className="absolute bottom-1 left-4 right-4 h-px bg-fnc-red scale-x-0 group-hover:scale-x-100 transition-transform duration-250 origin-left rounded-full" />
               </Link>
-              <Show
-                when="signed-in"
-                fallback={
-                  <Link
-                    href="/sign-in"
-                    aria-label="Sign in"
-                    className={`h-10 w-10 flex items-center justify-center rounded-full transition-colors ${textColor} ${iconHover}`}
-                  >
-                    <User className="h-5 w-5" />
-                  </Link>
-                }
-              >
+              {isSignedIn ? (
                 <Link
                   href="/account"
                   aria-label="Account"
@@ -312,7 +302,15 @@ export default function Navbar() {
                 >
                   <User className="h-5 w-5" />
                 </Link>
-              </Show>
+              ) : (
+                <Link
+                  href="/sign-in"
+                  aria-label="Sign in"
+                  className={`h-10 w-10 flex items-center justify-center rounded-full transition-colors ${textColor} ${iconHover}`}
+                >
+                  <User className="h-5 w-5" />
+                </Link>
+              )}
               <WishlistIcon textColor={textColor} iconHover={iconHover} />
               <CartIcon scrolled={scrolled} />
             </div>
@@ -374,18 +372,15 @@ export default function Navbar() {
                     </Link>
                   </motion.div>
                 ))}
-                <Show
-                  when="signed-in"
-                  fallback={
-                    <Link href="/sign-in" className="font-body text-lg font-semibold text-charcoal/80 hover:text-fnc-red transition-colors py-3 flex items-center gap-3" onClick={() => setOpen(false)}>
-                      <User className="h-5 w-5" /> Sign In
-                    </Link>
-                  }
-                >
+                {isSignedIn ? (
                   <Link href="/account" className="font-body text-lg font-semibold text-charcoal/80 hover:text-fnc-red transition-colors py-3 flex items-center gap-3" onClick={() => setOpen(false)}>
                     <User className="h-5 w-5" /> Account
                   </Link>
-                </Show>
+                ) : (
+                  <Link href="/sign-in" className="font-body text-lg font-semibold text-charcoal/80 hover:text-fnc-red transition-colors py-3 flex items-center gap-3" onClick={() => setOpen(false)}>
+                    <User className="h-5 w-5" /> Sign In
+                  </Link>
+                )}
                 <Link href="/wishlist" className="font-body text-lg font-semibold text-charcoal/80 hover:text-fnc-red transition-colors py-3 flex items-center gap-3" onClick={() => setOpen(false)}>
                   <Heart className="h-5 w-5" /> Wishlist
                 </Link>

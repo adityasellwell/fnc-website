@@ -1,10 +1,10 @@
 import { z } from "zod";
 import { NextResponse } from "next/server";
-import { auth } from "@clerk/nextjs/server";
+// Removed Clerk auth import
 import Razorpay from "razorpay";
 import { db } from "@/lib/db";
 import { checkRateLimit, rateLimitResponse } from "@/lib/rate-limit";
-import { getOrCreateCustomerForClerkUser } from "@/lib/auth";
+import { getCurrentCustomer } from "@/lib/auth";
 import { geocodeAddress } from "@/lib/utils/geocode";
 import { getSettings } from "@/services/settings";
 import { parseUserAgent } from "@/lib/utils/analytics";
@@ -69,8 +69,8 @@ const listOrdersQuerySchema = z.object({
 });
 
 export async function GET(request) {
-  const { userId } = await auth();
-  if (!userId) {
+  const customer = await getCurrentCustomer();
+  if (!customer) {
     return NextResponse.json({ error: "Sign in required" }, { status: 401 });
   }
 
@@ -91,10 +91,6 @@ export async function GET(request) {
   const { page, pageSize } = parsed.data;
 
   try {
-    const customer = await getOrCreateCustomerForClerkUser(userId);
-    if (!customer) {
-      return NextResponse.json({ data: [], pagination: { page, pageSize, totalCount: 0, totalPages: 1 } });
-    }
     const customerId = customer.id;
 
     const [orders, totalCount] = await Promise.all([
@@ -149,19 +145,10 @@ export async function POST(request) {
     parsed.data;
 
   try {
-    const { userId } = await auth();
+    const customer = await getCurrentCustomer();
     let customerId;
 
-    if (userId) {
-      // Signed in — always use the session's own customer, never a
-      // client-supplied one. Guest details in the body, if any, are ignored.
-      const customer = await getOrCreateCustomerForClerkUser(userId);
-      if (!customer) {
-        return NextResponse.json(
-          { error: "Unable to resolve your account. Please try again." },
-          { status: 400 }
-        );
-      }
+    if (customer) {
       customerId = customer.id;
     } else {
       if (!guest) {

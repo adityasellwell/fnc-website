@@ -2,11 +2,22 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
-import { useUser } from "@clerk/nextjs";
-import { Loader2, CheckCircle2, XCircle, Truck, Store as StoreIcon, UserCircle2, ExternalLink } from "lucide-react";
+import { useAuth } from "@/components/auth/AuthProvider";
+import {
+  Loader2,
+  CheckCircle2,
+  XCircle,
+  Truck,
+  Store as StoreIcon,
+  UserCircle2,
+  ExternalLink,
+  Navigation,
+  MapPin,
+} from "lucide-react";
 import Section from "@/components/layout/Section";
 import Button from "@/components/ui/Button";
 import { useCartStore } from "@/lib/store/cart";
+import { reverseGeocode } from "@/lib/utils/geocode";
 
 const initialValues = {
   name: "",
@@ -36,16 +47,8 @@ function calculateDistance(lat1, lon1, lat2, lon2) {
   return R * c;
 }
 
-function validate(values, fulfillmentType, isSignedIn, settings, subtotal) {
+function validate(values, fulfillmentType, settings, subtotal) {
   const errors = {};
-  if (!isSignedIn) {
-    if (!values.name.trim()) errors.name = "Please enter your full name.";
-    if (!values.email.trim()) {
-      errors.email = "Please enter your email.";
-    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(values.email)) {
-      errors.email = "Please enter a valid email address.";
-    }
-  }
   if (!values.phone.trim()) {
     errors.phone = "Please enter your phone number.";
   } else if (!/^[\d+\s-]{7,15}$/.test(values.phone.trim())) {
@@ -64,7 +67,8 @@ function validate(values, fulfillmentType, isSignedIn, settings, subtotal) {
 }
 
 export default function CheckoutPageClient({ stores = [], settings = {} }) {
-  const { isLoaded, isSignedIn, user } = useUser();
+  const { user, isSignedIn, loading } = useAuth();
+  const isLoaded = !loading;
   const items = useCartStore((s) => s.items);
   const clear = useCartStore((s) => s.clear);
   const subtotal = items.reduce((sum, i) => sum + i.price * i.qty, 0);
@@ -81,6 +85,8 @@ export default function CheckoutPageClient({ stores = [], settings = {} }) {
   const [deliveryError, setDeliveryError] = useState("");
   const [deliveryDistance, setDeliveryDistance] = useState(null);
   const [coords, setCoords] = useState(null);
+  const [locating, setLocating] = useState(false);
+  const [locateError, setLocateError] = useState("");
 
   const store = stores[0];
 
@@ -91,17 +97,38 @@ export default function CheckoutPageClient({ stores = [], settings = {} }) {
         : settings.deliveryCharge ?? 50
       : 0;
 
-  // Prefill from the signed-in Clerk profile
+  // Prefill from the signed-in Firebase profile
   useEffect(() => {
     if (!isSignedIn || !user) return;
     // eslint-disable-next-line react-hooks/set-state-in-effect
     setValues((v) => ({
       ...v,
-      name: [user.firstName, user.lastName].filter(Boolean).join(" ") || v.name,
-      email: user.primaryEmailAddress?.emailAddress ?? v.email,
-      phone: v.phone || user.primaryPhoneNumber?.phoneNumber || "",
+      name: user.displayName || v.name,
+      email: user.email || v.email,
+      phone: v.phone || user.phoneNumber || "",
     }));
   }, [isSignedIn, user]);
+
+  // Shared by both verification paths: typed-address forward-geocoding and
+  // live "Use My Current Location" — either way, once we have coordinates,
+  // checking them against the store's radius is identical.
+  function applyDistanceCheck(lat, lng) {
+    setCoords({ lat, lng });
+    if (!store?.geo?.lat || !store?.geo?.lng) return null;
+
+    const dist = calculateDistance(store.geo.lat, store.geo.lng, lat, lng);
+    setDeliveryDistance(dist);
+
+    const radius = settings.deliveryRadiusKm ?? 5.0;
+    if (dist > radius) {
+      setDeliveryError(
+        `Sorry, we can't deliver this far — your location is ${dist.toFixed(1)} km from our store, outside our ${radius} km delivery area. Please choose Store Pickup or visit us in person.`
+      );
+      return null;
+    }
+    setDeliveryError("");
+    return { lat, lng, dist };
+  }
 
   async function checkDeliveryServiceability(addressObj) {
     if (!addressObj.line1.trim() || !addressObj.city.trim() || !addressObj.state.trim() || !addressObj.pincode.trim()) {
@@ -132,25 +159,7 @@ export default function CheckoutPageClient({ stores = [], settings = {} }) {
         return null;
       }
 
-      const lat = parseFloat(data[0].lat);
-      const lng = parseFloat(data[0].lon);
-      setCoords({ lat, lng });
-
-      // Calculate distance to active store
-      if (store?.geo?.lat && store?.geo?.lng) {
-        const dist = calculateDistance(store.geo.lat, store.geo.lng, lat, lng);
-        setDeliveryDistance(dist);
-
-        const radius = settings.deliveryRadiusKm ?? 5.0;
-        if (dist > radius) {
-          setDeliveryError(`Your address is outside our delivery area of ${radius} km. (Calculated distance: ${dist.toFixed(1)} km)`);
-          return null;
-        } else {
-          setDeliveryError("");
-          return { lat, lng, dist };
-        }
-      }
-      return null;
+      return applyDistanceCheck(parseFloat(data[0].lat), parseFloat(data[0].lon));
     } catch (err) {
       setDeliveryError("Address verification failed. Please check your internet connection, or choose Store Pickup.");
       setDeliveryDistance(null);
@@ -166,6 +175,54 @@ export default function CheckoutPageClient({ stores = [], settings = {} }) {
       checkDeliveryServiceability(values);
     }
   };
+
+  // "Use My Current Location" — fetches the browser's live position,
+  // reverse-geocodes it into a real street address (same Nominatim helper
+  // the Navbar's location picker uses), prefills the form, and immediately
+  // checks it against the store's delivery radius — no need to also type
+  // the address out, since we already have exact coordinates.
+  function handleUseCurrentLocation() {
+    if (!navigator.geolocation) {
+      setLocateError("Your browser doesn't support location detection — please enter your address manually.");
+      return;
+    }
+
+    setLocating(true);
+    setLocateError("");
+
+    navigator.geolocation.getCurrentPosition(
+      async (position) => {
+        const { latitude, longitude } = position.coords;
+        const address = await reverseGeocode(latitude, longitude);
+
+        if (!address) {
+          setLocateError("Couldn't determine your address from your location — please enter it manually.");
+          setLocating(false);
+          return;
+        }
+
+        setValues((v) => ({
+          ...v,
+          line1: address.line1 || v.line1,
+          city: address.city || v.city,
+          state: address.state || v.state,
+          pincode: address.postcode || v.pincode,
+        }));
+
+        applyDistanceCheck(latitude, longitude);
+        setLocating(false);
+      },
+      (error) => {
+        setLocateError(
+          error.code === error.PERMISSION_DENIED
+            ? "Location access was denied — please enter your address manually or allow location access and try again."
+            : "Couldn't get your location — please enter your address manually."
+        );
+        setLocating(false);
+      },
+      { enableHighAccuracy: true, timeout: 8000 }
+    );
+  }
 
   function handleChange(field) {
     return (e) => {
@@ -202,7 +259,7 @@ export default function CheckoutPageClient({ stores = [], settings = {} }) {
       return;
     }
 
-    const nextErrors = validate(values, fulfillmentType, isSignedIn, settings, subtotal);
+    const nextErrors = validate(values, fulfillmentType, settings, subtotal);
     setErrors(nextErrors);
     if (Object.keys(nextErrors).length > 0) {
       if (nextErrors.subtotal) {
@@ -218,9 +275,6 @@ export default function CheckoutPageClient({ stores = [], settings = {} }) {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          ...(isSignedIn
-            ? {}
-            : { guest: { name: values.name, email: values.email, phone: values.phone } }),
           items: items.map((i) => ({ productId: i.productId, quantity: i.qty })),
           fulfillmentType,
           storeId: fulfillmentType === "PICKUP" ? store?.id : undefined,
@@ -331,6 +385,29 @@ export default function CheckoutPageClient({ stores = [], settings = {} }) {
     );
   }
 
+  if (isLoaded && !isSignedIn) {
+    return (
+      <Section background="offwhite" spacing="md">
+        <div className="max-w-md mx-auto flex flex-col items-center text-center gap-4 bg-white border border-bordergray rounded-3xl p-10">
+          <div className="h-14 w-14 rounded-full bg-fnc-red/10 flex items-center justify-center">
+            <UserCircle2 className="h-7 w-7 text-fnc-red" />
+          </div>
+          <h1 className="font-display text-xl font-bold text-charcoal">Sign in to check out</h1>
+          <p className="font-body text-sm text-slate">
+            Please sign in or create an account to place your order — this keeps your order
+            history, addresses, and payment confirmation all in one place.
+          </p>
+          <Button href="/sign-in?redirect_url=/checkout" size="lg" className="w-full">
+            Sign In to Continue
+          </Button>
+          <Link href="/cart" className="font-body text-xs text-slate hover:text-fnc-red transition-colors">
+            Back to cart
+          </Link>
+        </div>
+      </Section>
+    );
+  }
+
   if (status === "success") {
     return (
       <Section background="offwhite" spacing="md">
@@ -403,42 +480,20 @@ export default function CheckoutPageClient({ stores = [], settings = {} }) {
           <div className="bg-white border border-bordergray rounded-3xl p-6 flex flex-col gap-5">
             <h2 className="font-display text-lg font-bold text-charcoal">Your Details</h2>
 
-            {isSignedIn && (
-              <div className="flex items-center gap-3 rounded-2xl bg-warmwhite px-4 py-3">
-                <UserCircle2 className="h-5 w-5 text-fnc-red shrink-0" />
-                <p className="font-body text-sm text-charcoal">
-                  Ordering as <span className="font-semibold">{values.name}</span> ({values.email})
-                </p>
-              </div>
-            )}
-
-            <div className="grid sm:grid-cols-2 gap-5">
-              {!isSignedIn && (
-                <div className="flex flex-col gap-1.5">
-                  <label htmlFor="name" className="font-body text-sm font-semibold text-charcoal">
-                    Full name
-                  </label>
-                  <input id="name" type="text" value={values.name} onChange={handleChange("name")} placeholder="Your full name" className={inputClasses} />
-                  {errors.name && <p className="font-body text-xs text-fnc-red">{errors.name}</p>}
-                </div>
-              )}
-              <div className="flex flex-col gap-1.5">
-                <label htmlFor="phone" className="font-body text-sm font-semibold text-charcoal">
-                  Phone number
-                </label>
-                <input id="phone" type="tel" value={values.phone} onChange={handleChange("phone")} placeholder="+91 98765 43210" className={inputClasses} />
-                {errors.phone && <p className="font-body text-xs text-fnc-red">{errors.phone}</p>}
-              </div>
+            <div className="flex items-center gap-3 rounded-2xl bg-warmwhite px-4 py-3">
+              <UserCircle2 className="h-5 w-5 text-fnc-red shrink-0" />
+              <p className="font-body text-sm text-charcoal">
+                Ordering as <span className="font-semibold">{values.name}</span> ({values.email})
+              </p>
             </div>
-            {!isSignedIn && (
-              <div className="flex flex-col gap-1.5">
-                <label htmlFor="email" className="font-body text-sm font-semibold text-charcoal">
-                  Email
-                </label>
-                <input id="email" type="email" value={values.email} onChange={handleChange("email")} placeholder="you@example.com" className={inputClasses} />
-                {errors.email && <p className="font-body text-xs text-fnc-red">{errors.email}</p>}
-              </div>
-            )}
+
+            <div className="flex flex-col gap-1.5">
+              <label htmlFor="phone" className="font-body text-sm font-semibold text-charcoal">
+                Phone number
+              </label>
+              <input id="phone" type="tel" value={values.phone} onChange={handleChange("phone")} placeholder="+91 98765 43210" className={inputClasses} />
+              {errors.phone && <p className="font-body text-xs text-fnc-red">{errors.phone}</p>}
+            </div>
           </div>
 
           {/* Delivery address */}

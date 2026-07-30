@@ -1,4 +1,4 @@
-import { UserButton } from "@clerk/nextjs";
+import SignOutButton from "@/components/auth/SignOutButton";
 import Link from "next/link";
 import {
   LayoutDashboard,
@@ -66,7 +66,7 @@ export default async function AdminLayout({ children }) {
               {user.role.name.replace("_", " ")}
             </span>
           </div>
-          <UserButton afterSignOutUrl="/" />
+          <SignOutButton />
         </header>
 
         {/* Mobile nav */}

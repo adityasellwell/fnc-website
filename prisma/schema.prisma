@@ -247,7 +247,8 @@ model Customer {
   // same email later signing in via Clerk gets this backfilled rather
   // than creating a duplicate row. Staff/admin auth is a SEPARATE model
   // (User + Role below) — this field is customer-facing only.
-  clerkId String? @unique
+  authProvider String? // "firebase", "google", etc.
+  authUid      String? @unique
   name    String
   email   String  @unique
   phone   String?
@@ -511,7 +512,8 @@ model Role {
 // identity to our app-specific role/store assignment.
 model User {
   id      String  @id @default(cuid())
-  clerkId String  @unique
+  authProvider String? // "firebase", "google", etc.
+  authUid      String? @unique
   name    String
   email   String  @unique
   role    Role    @relation(fields: [roleId], references: [id])

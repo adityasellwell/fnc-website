@@ -1,4 +1,4 @@
-import { ClerkProvider } from "@clerk/nextjs";
+import { FirebaseAuthProvider } from "@/components/auth/AuthProvider";
 import { Bricolage_Grotesque, Inter } from "next/font/google";
 import SmoothScrollProvider from "@/components/motion/SmoothScrollProvider";
 import MobileBottomNav from "@/components/layout/MobileBottomNav";
@@ -51,15 +51,7 @@ export const metadata = {
 
 export default function RootLayout({ children }) {
   return (
-    <ClerkProvider
-      appearance={{
-        variables: {
-          colorPrimary: "#DC2F26",
-          fontFamily: "var(--font-inter)",
-          borderRadius: "0.75rem",
-        },
-      }}
-    >
+    <FirebaseAuthProvider>
       <html
         lang="en"
         className={`${bricolage.variable} ${inter.variable} h-full antialiased overflow-x-hidden`}
@@ -72,6 +64,6 @@ export default function RootLayout({ children }) {
           <MobileBottomNav />
         </body>
       </html>
-    </ClerkProvider>
+    </FirebaseAuthProvider>
   );
 }
