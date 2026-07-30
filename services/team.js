@@ -14,8 +14,8 @@ export async function listStaffRoles() {
 }
 
 /**
- * Creates a "pending" team member — a User row with no clerkId yet. The
- * moment someone signs in via Clerk with this exact email, getAdminUser()
+ * Creates a "pending" team member — a User row with no authUid yet. The
+ * moment someone signs in via Firebase with this exact email, getAdminUser()
  * (lib/admin-auth.js) links it automatically. No invite email is sent yet
  * (Resend isn't wired up for this) — the owner tells them directly to sign
  * up with this email.

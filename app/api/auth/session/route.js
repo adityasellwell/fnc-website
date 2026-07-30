@@ -1,7 +1,13 @@
 import { NextResponse } from "next/server";
 import { createSession, destroySession } from "@/lib/auth-jwt";
+import { checkRateLimit, rateLimitResponse } from "@/lib/rate-limit";
 
 export async function POST(request) {
+  const limitRes = await checkRateLimit(request);
+  if (!limitRes.success) {
+    return rateLimitResponse();
+  }
+
   try {
     const body = await request.json();
     const { idToken } = body;
