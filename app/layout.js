@@ -64,7 +64,10 @@ export default function RootLayout({ children }) {
         lang="en"
         className={`${bricolage.variable} ${inter.variable} h-full antialiased overflow-x-hidden`}
       >
-        <body className="min-h-full flex flex-col bg-offwhite text-charcoal overflow-x-hidden pb-16 lg:pb-0">
+        <body
+          className="min-h-full flex flex-col bg-offwhite text-charcoal overflow-x-hidden pb-16 lg:pb-0"
+          suppressHydrationWarning
+        >
           <SmoothScrollProvider>{children}</SmoothScrollProvider>
           <MobileBottomNav />
         </body>

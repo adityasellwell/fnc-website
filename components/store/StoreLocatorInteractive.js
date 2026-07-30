@@ -72,7 +72,11 @@ export default function StoreLocatorInteractive({ store }) {
         setDistance(dist);
       },
       (error) => {
-        console.error("Geolocation error:", error);
+        // GeolocationPositionError's own properties aren't enumerable, so
+        // logging the raw object prints "{}" — log the actual fields
+        // instead. Denied/unavailable are expected, handled outcomes (see
+        // below), not real errors, so this is a warn, not an error.
+        console.warn(`Geolocation unavailable (code ${error.code}): ${error.message}`);
         if (error.code === error.PERMISSION_DENIED) {
           setLocationState("denied");
         } else {
