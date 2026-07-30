@@ -345,8 +345,8 @@ export default function CheckoutPageClient({ stores = [], settings = {} }) {
           }
         },
         prefill: {
-          name: values.name || (user ? [user.firstName, user.lastName].filter(Boolean).join(" ") : ""),
-          email: values.email || (user ? user.primaryEmailAddress?.emailAddress : ""),
+          name: values.name || user?.displayName || "",
+          email: values.email || user?.email || "",
           contact: values.phone,
         },
         modal: {
@@ -397,7 +397,7 @@ export default function CheckoutPageClient({ stores = [], settings = {} }) {
             Please sign in or create an account to place your order — this keeps your order
             history, addresses, and payment confirmation all in one place.
           </p>
-          <Button href="/sign-in?redirect_url=/checkout" size="lg" className="w-full">
+          <Button href="/sign-in?redirect=/checkout" size="lg" className="w-full">
             Sign In to Continue
           </Button>
           <Link href="/cart" className="font-body text-xs text-slate hover:text-fnc-red transition-colors">
@@ -499,7 +499,34 @@ export default function CheckoutPageClient({ stores = [], settings = {} }) {
           {/* Delivery address */}
           {fulfillmentType === "DELIVERY" && (
             <div className="bg-white border border-bordergray rounded-3xl p-6 flex flex-col gap-5">
-              <h2 className="font-display text-lg font-bold text-charcoal">Delivery Address</h2>
+              <div className="flex items-center justify-between gap-4 flex-wrap">
+                <h2 className="font-display text-lg font-bold text-charcoal">Delivery Address</h2>
+                <button
+                  type="button"
+                  onClick={handleUseCurrentLocation}
+                  disabled={locating}
+                  className="flex items-center gap-1.5 h-9 px-3.5 rounded-full border border-fnc-red text-fnc-red font-body text-xs font-semibold hover:bg-fnc-red/5 transition-colors disabled:opacity-60"
+                >
+                  {locating ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Navigation className="h-3.5 w-3.5" />}
+                  {locating ? "Detecting..." : "Use My Current Location"}
+                </button>
+              </div>
+
+              {locateError && (
+                <p className="font-body text-xs text-fnc-red flex items-center gap-1.5">
+                  <XCircle className="h-3.5 w-3.5 shrink-0" />
+                  {locateError}
+                </p>
+              )}
+
+              {store?.name && (
+                <p className="font-body text-xs text-slate flex items-center gap-1.5 -mt-1">
+                  <MapPin className="h-3.5 w-3.5 shrink-0 text-fnc-red" />
+                  Delivering from {store.name}
+                  {store.address ? `, ${store.address}` : ""}
+                </p>
+              )}
+
               <div className="flex flex-col gap-1.5">
                 <label htmlFor="line1" className="font-body text-sm font-semibold text-charcoal">
                   Address line 1

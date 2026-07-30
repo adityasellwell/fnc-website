@@ -34,7 +34,7 @@ export default async function AdminCustomerDetailPage({ params }) {
         <h1 className="font-display text-xl font-bold text-charcoal">{customer.name}</h1>
         <p className="font-body text-sm text-slate mt-1">
           {customer.email} · {customer.phone ?? "No phone on file"} ·{" "}
-          {customer.clerkId ? "Registered account" : "Guest"}
+          {customer.authUid ? "Registered account" : "Guest"}
         </p>
       </div>
 

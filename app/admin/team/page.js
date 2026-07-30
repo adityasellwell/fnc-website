@@ -30,10 +30,10 @@ export default async function AdminTeamPage() {
             accessor: (m) => (
               <span
                 className={`font-body text-xs font-semibold px-2.5 py-1 rounded-full ${
-                  m.clerkId ? "text-fnc-green bg-fnc-green/10" : "text-fnc-blue bg-fnc-blue/10"
+                  m.authUid ? "text-fnc-green bg-fnc-green/10" : "text-fnc-blue bg-fnc-blue/10"
                 }`}
               >
-                {m.clerkId ? "Active" : "Pending — awaiting sign-up"}
+                {m.authUid ? "Active" : "Pending — awaiting sign-up"}
               </span>
             ),
           },

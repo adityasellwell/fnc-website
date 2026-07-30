@@ -15,9 +15,9 @@ import { parseUserAgent } from "@/lib/utils/analytics";
 /**
  * `customerId` is NEVER accepted from the client (that would let anyone
  * attach orders to, or read order history for, an arbitrary customer just
- * by guessing/knowing an id). It's always derived server-side: from the
- * Clerk session if signed in, or from find-or-create-by-email guest
- * contact details if not.
+ * by guessing/knowing an id) — always derived server-side from the signed-
+ * in session. Checkout requires an authenticated, email-verified account;
+ * there is no guest checkout.
  */
 
 const addressSchema = z.object({
@@ -33,18 +33,8 @@ const orderItemInputSchema = z.object({
   quantity: z.coerce.number().int().positive("quantity must be a positive integer"),
 });
 
-// Guest checkout contact details — used to find-or-create a Customer row
-// when there's no authenticated session. Ignored entirely if the request
-// is authenticated (the session's own customer is used instead).
-const guestSchema = z.object({
-  name: z.string().min(1, "name is required"),
-  email: z.string().email("a valid email is required"),
-  phone: z.string().min(1, "phone is required"),
-});
-
 const createOrderSchema = z
   .object({
-    guest: guestSchema.optional(),
     items: z.array(orderItemInputSchema).min(1, "At least one item is required"),
     fulfillmentType: z.enum(["DELIVERY", "PICKUP"]),
     storeId: z.string().min(1).optional(),
@@ -141,33 +131,18 @@ export async function POST(request) {
     );
   }
 
-  const { items, fulfillmentType, storeId, deliveryAddress, couponCode, guest } =
+  const { items, fulfillmentType, storeId, deliveryAddress, couponCode } =
     parsed.data;
 
   try {
     const customer = await getCurrentCustomer();
-    let customerId;
-
-    if (customer) {
-      customerId = customer.id;
-    } else {
-      if (!guest) {
-        return NextResponse.json(
-          { error: "Guest contact details are required when not signed in", issues: [{ path: ["guest"], message: "required" }] },
-          { status: 400 }
-        );
-      }
-      // Guest checkout — find-or-create by email (Customer.email is unique).
-      // Reusing the same customer record across guest orders placed with
-      // the same email keeps order history intact if they later sign in
-      // with that same email (see lib/auth.js).
-      const customer = await db.customer.upsert({
-        where: { email: guest.email },
-        update: { name: guest.name, phone: guest.phone },
-        create: { name: guest.name, email: guest.email, phone: guest.phone },
-      });
-      customerId = customer.id;
+    if (!customer) {
+      return NextResponse.json(
+        { error: "Please sign in (and verify your email) to place an order." },
+        { status: 401 }
+      );
     }
+    const customerId = customer.id;
 
     if (fulfillmentType === "PICKUP") {
       const store = await db.store.findUnique({ where: { id: storeId } });
@@ -355,11 +330,11 @@ export async function POST(request) {
         });
       }
 
-      // Save a reusable Address row for signed-in customers (skip guests —
-      // no account for it to be useful in later) so /account's saved
-      // addresses list actually populates, in addition to the immutable
-      // JSON snapshot on the order itself.
-      if (userId && fulfillmentType === "DELIVERY") {
+      // Save a reusable Address row so /account's saved addresses list
+      // actually populates, in addition to the immutable JSON snapshot on
+      // the order itself. Every order is authenticated now, so no guest
+      // branch is needed here.
+      if (fulfillmentType === "DELIVERY") {
         const existing = await tx.address.findFirst({
           where: { customerId, line1: deliveryAddress.line1, pincode: deliveryAddress.pincode },
         });

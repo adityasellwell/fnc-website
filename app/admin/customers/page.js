@@ -24,7 +24,7 @@ export default async function AdminCustomersPage({ searchParams }) {
           { header: "Email", accessor: (c) => c.email },
           { header: "Phone", accessor: (c) => c.phone ?? "—" },
           { header: "Orders", accessor: (c) => c._count.orders },
-          { header: "Account", accessor: (c) => (c.clerkId ? "Registered" : "Guest") },
+          { header: "Account", accessor: (c) => (c.authUid ? "Registered" : "Guest") },
           {
             header: "",
             className: "text-right",

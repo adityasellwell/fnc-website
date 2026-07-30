@@ -11,9 +11,9 @@ import { NextResponse } from "next/server";
  * stable `{ data: [] }` response today and swapped for real data later
  * without changing call sites.
  *
- * NOTE: `customerId` is accepted as a placeholder identity mechanism. Once
- * Clerk auth lands, this becomes the authenticated session's customer id
- * instead of a client-supplied query param.
+ * NOTE: `customerId` is accepted as a placeholder identity mechanism —
+ * this stub predates real cart persistence and isn't called by the app
+ * (cart is fully client-side Zustand today, see lib/store/cart.js).
  */
 
 const getCartQuerySchema = z.object({

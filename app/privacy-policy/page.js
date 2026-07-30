@@ -28,7 +28,7 @@ export default function PrivacyPolicyPage() {
           We share your data with trusted partners only to the extent necessary to perform checkout and authentication services:
         </p>
         <ul className="list-disc pl-5 flex flex-col gap-1">
-          <li><strong>Clerk:</strong> Provides user authentication and account portal management.</li>
+          <li><strong>Firebase Authentication:</strong> Provides user authentication and account sign-in.</li>
           <li><strong>Razorpay:</strong> Handles cryptographic payment processing. We do not store or transmit raw card numbers or CVVs on our own servers.</li>
           <li><strong>OpenStreetMap (Nominatim):</strong> Resolves typed addresses to verify store delivery serviceability.</li>
         </ul>
