@@ -38,6 +38,15 @@ export default function SignUpForm() {
       // Update name profile in Firebase
       await updateProfile(user, { displayName: name });
 
+      // Firebase's updateProfile() has no phoneNumber field, so persist it
+      // ourselves via our own Customer record before signing back out.
+      const idToken = await user.getIdToken();
+      await fetch("/api/auth/register-profile", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ idToken, phone: `+91${cleanPhone}`, name }),
+      });
+
       // Send verification email
       await sendEmailVerification(user);
 

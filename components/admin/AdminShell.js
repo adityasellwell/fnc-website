@@ -4,9 +4,41 @@ import { useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { PanelLeftClose, PanelLeftOpen } from "lucide-react";
+import {
+  PanelLeftClose,
+  PanelLeftOpen,
+  LayoutDashboard,
+  BarChart3,
+  Package,
+  Layers,
+  Boxes,
+  Users,
+  Ticket,
+  Settings as SettingsIcon,
+  UserCog,
+  Image as ImageIcon,
+  Store as StoreIcon,
+  Star,
+  FileText,
+} from "lucide-react";
 import SignOutButton from "@/components/auth/SignOutButton";
 import { BRAND } from "@/lib/constants";
+
+const ICONS = {
+  LayoutDashboard,
+  BarChart3,
+  Package,
+  Layers,
+  Boxes,
+  Users,
+  Ticket,
+  SettingsIcon,
+  UserCog,
+  ImageIcon,
+  StoreIcon,
+  Star,
+  FileText,
+};
 
 export default function AdminShell({ user, nav, children }) {
   const pathname = usePathname();
@@ -26,7 +58,8 @@ export default function AdminShell({ user, nav, children }) {
         </div>
 
         <nav className="flex-1 flex flex-col gap-1 p-3">
-          {nav.map(({ href, label, icon: Icon }) => {
+          {nav.map(({ href, label, icon }) => {
+            const Icon = ICONS[icon];
             const active = pathname === href || pathname.startsWith(`${href}/`);
             return (
               <Link
@@ -80,7 +113,8 @@ export default function AdminShell({ user, nav, children }) {
 
         {/* Mobile nav */}
         <nav className="md:hidden flex overflow-x-auto gap-1 px-4 py-3 bg-white border-b border-bordergray">
-          {nav.map(({ href, label, icon: Icon }) => {
+          {nav.map(({ href, label, icon }) => {
+            const Icon = ICONS[icon];
             const active = pathname === href || pathname.startsWith(`${href}/`);
             return (
               <Link
