@@ -9,6 +9,7 @@ import {
   Users,
   Ticket,
   Settings as SettingsIcon,
+  UserCog,
 } from "lucide-react";
 import { requireAdminUser } from "@/lib/admin-auth";
 
@@ -23,8 +24,11 @@ const NAV = [
   { href: "/admin/settings", label: "Settings", icon: SettingsIcon },
 ];
 
+const ADMIN_ONLY_NAV = [{ href: "/admin/team", label: "Team", icon: UserCog }];
+
 export default async function AdminLayout({ children }) {
   const user = await requireAdminUser();
+  const nav = user.role.name === "admin" ? [...NAV, ...ADMIN_ONLY_NAV] : NAV;
 
   return (
     <div className="min-h-screen flex bg-warmwhite">
@@ -34,7 +38,7 @@ export default async function AdminLayout({ children }) {
           <span className="font-display text-lg font-bold">F&amp;C Admin</span>
         </div>
         <nav className="flex-1 flex flex-col gap-1 p-4">
-          {NAV.map(({ href, label, icon: Icon }) => (
+          {nav.map(({ href, label, icon: Icon }) => (
             <Link
               key={href}
               href={href}
@@ -67,7 +71,7 @@ export default async function AdminLayout({ children }) {
 
         {/* Mobile nav */}
         <nav className="md:hidden flex overflow-x-auto gap-1 px-4 py-3 bg-white border-b border-bordergray">
-          {NAV.map(({ href, label, icon: Icon }) => (
+          {nav.map(({ href, label, icon: Icon }) => (
             <Link
               key={href}
               href={href}
