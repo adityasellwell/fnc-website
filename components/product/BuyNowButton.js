@@ -6,6 +6,7 @@ import { Loader2, Zap } from "lucide-react";
 import Button from "@/components/ui/Button";
 import { useCartStore } from "@/lib/store/cart";
 import { useLocationStore } from "@/lib/store/location";
+import { ENFORCE_STOCK_GATING } from "@/lib/constants";
 
 /**
  * Adds the item to cart and jumps straight to /checkout — a shortcut for
@@ -25,7 +26,7 @@ export default function BuyNowButton({ product, image, className }) {
   }, []);
 
   const storeInv = product.storeInventory?.find((i) => i.storeId === storeId);
-  const isOutOfStock = mounted && storeId && (!storeInv || storeInv.stock <= 0);
+  const isOutOfStock = ENFORCE_STOCK_GATING && mounted && storeId && (!storeInv || storeInv.stock <= 0);
 
   function handleBuyNow(force = false) {
     const item = {

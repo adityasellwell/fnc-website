@@ -5,21 +5,27 @@ import Image from "next/image";
 import { Play, Volume2, VolumeX } from "lucide-react";
 import { cn } from "@/lib/utils";
 
-export default function ProductMediaGallery({ media = [], fallbackImage, productName }) {
+export default function ProductMediaGallery({ media = [], fallbackImage, secondaryFallbackImage, productName }) {
   const [activeIndex, setActiveIndex] = useState(0);
   const [isMuted, setIsMuted] = useState(true);
+  const [fallbackErrored, setFallbackErrored] = useState(false);
 
   if (!media || media.length === 0) {
+    // fallbackImage (the product's own, possibly-broken URL) is tried
+    // first; if it 404s, drop to secondaryFallbackImage (the known-good
+    // category photo) instead of a blank box.
+    const shown = fallbackErrored ? secondaryFallbackImage : fallbackImage || secondaryFallbackImage;
     return (
       <div className="relative aspect-square w-full rounded-3xl overflow-hidden bg-warmwhite border border-bordergray">
-        {fallbackImage ? (
+        {shown ? (
           <Image
-            src={fallbackImage}
+            src={shown}
             alt={productName}
             fill
             sizes="(min-width: 1024px) 45vw, 100vw"
             className="object-cover"
             priority
+            onError={() => setFallbackErrored(true)}
           />
         ) : (
           <div className="flex h-full w-full items-center justify-center text-slate font-body text-sm">

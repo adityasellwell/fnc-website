@@ -8,7 +8,7 @@ import Card from "@/components/ui/Card";
 import PlaceholderMedia from "@/components/ui/PlaceholderMedia";
 import WishlistButton from "@/components/product/WishlistButton";
 import QuickAddToCartButton from "@/components/product/QuickAddToCartButton";
-import { CATEGORY_META } from "@/lib/constants";
+import { CATEGORY_META, ENFORCE_STOCK_GATING } from "@/lib/constants";
 import { cn } from "@/lib/utils";
 import { useLocationStore } from "@/lib/store/location";
 
@@ -50,9 +50,13 @@ export default function ProductCard({ product, variant = "editorial", className 
 
   // Check store-specific stock
   const storeInv = product.storeInventory?.find((i) => i.storeId === storeId);
-  const isOutOfStock = mounted && storeId && (!storeInv || storeInv.stock <= 0);
+  const isOutOfStock = ENFORCE_STOCK_GATING && mounted && storeId && (!storeInv || storeInv.stock <= 0);
 
-  const primaryImage = (product.images && product.images[0]) || meta.image;
+  const [imgError, setImgError] = useState(false);
+  // Falls back to the category photo (or the placeholder icon) if the
+  // product's own image URL 404s — real for every pre-existing product
+  // today, since public/images/products/ was never actually populated.
+  const primaryImage = imgError ? meta.image : (product.images && product.images[0]) || meta.image;
 
   return (
     <Card
@@ -73,6 +77,7 @@ export default function ProductCard({ product, variant = "editorial", className 
               fill
               sizes="(min-width: 1024px) 22vw, 45vw"
               className="object-cover transition-transform duration-500 group-hover:scale-105"
+              onError={() => setImgError(true)}
             />
           ) : (
             <PlaceholderMedia

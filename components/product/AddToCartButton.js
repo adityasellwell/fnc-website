@@ -5,6 +5,7 @@ import { ShoppingCart, Check } from "lucide-react";
 import Button from "@/components/ui/Button";
 import { useCartStore } from "@/lib/store/cart";
 import { useLocationStore } from "@/lib/store/location";
+import { ENFORCE_STOCK_GATING } from "@/lib/constants";
 
 /**
  * Small client island so the product detail page (mostly static content)
@@ -26,7 +27,7 @@ export default function AddToCartButton({ product, image, className }) {
   // (persisted Zustand store), so checking it during SSR would always
   // read the pre-hydration default and mismatch on first render.
   const storeInv = product.storeInventory?.find((i) => i.storeId === storeId);
-  const isOutOfStock = mounted && storeId && (!storeInv || storeInv.stock <= 0);
+  const isOutOfStock = ENFORCE_STOCK_GATING && mounted && storeId && (!storeInv || storeInv.stock <= 0);
 
   function handleAddToCart(force = false) {
     const item = {

@@ -185,7 +185,8 @@ export default async function ProductDetailPage({ params }) {
             <Reveal y={16} className="relative w-full">
               <ProductMediaGallery
                 media={product.media}
-                fallbackImage={product.images?.[0] || meta.image}
+                fallbackImage={product.images?.[0]}
+                secondaryFallbackImage={meta.image}
                 productName={product.name}
               />
               {product.tags?.includes("bestseller") && (
