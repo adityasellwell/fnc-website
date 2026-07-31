@@ -17,6 +17,7 @@ import {
 import Section from "@/components/layout/Section";
 import Button from "@/components/ui/Button";
 import { useCartStore } from "@/lib/store/cart";
+import { useLocationStore } from "@/lib/store/location";
 import { reverseGeocode } from "@/lib/utils/geocode";
 
 const initialValues = {
@@ -88,7 +89,31 @@ export default function CheckoutPageClient({ stores = [], settings = {} }) {
   const [locating, setLocating] = useState(false);
   const [locateError, setLocateError] = useState("");
 
-  const store = stores[0];
+  const cartStoreId = useCartStore((s) => s.storeId);
+  const locationStoreId = useLocationStore((s) => s.storeId);
+  const initialStoreId = cartStoreId || locationStoreId || (stores[0]?.id || null);
+  const initialStore = stores.find((s) => s.id === initialStoreId) || stores[0] || null;
+  const [selectedStore, setSelectedStore] = useState(initialStore);
+
+  const store = selectedStore;
+
+  const handleFulfillmentChange = (type) => {
+    setFulfillmentType(type);
+    if (type === "PICKUP") {
+      const targetId = cartStoreId || locationStoreId || (stores[0]?.id || null);
+      const target = stores.find((s) => s.id === targetId) || stores[0] || null;
+      setSelectedStore(target);
+    } else {
+      if (coords) {
+        applyDistanceCheck(coords.lat, coords.lng);
+      } else {
+        const locationStore = stores.find((s) => s.id === locationStoreId);
+        if (locationStore) {
+          setSelectedStore(locationStore);
+        }
+      }
+    }
+  };
 
   const deliveryFee =
     fulfillmentType === "DELIVERY" && !deliveryError && deliveryDistance !== null
@@ -114,20 +139,37 @@ export default function CheckoutPageClient({ stores = [], settings = {} }) {
   // checking them against the store's radius is identical.
   function applyDistanceCheck(lat, lng) {
     setCoords({ lat, lng });
-    if (!store?.geo?.lat || !store?.geo?.lng) return null;
 
-    const dist = calculateDistance(store.geo.lat, store.geo.lng, lat, lng);
-    setDeliveryDistance(dist);
+    let nearest = null;
+    let minDist = Infinity;
+    stores.forEach((s) => {
+      if (!s.deliveryAvailable) return;
+      const dist = calculateDistance(s.geo.lat, s.geo.lng, lat, lng);
+      if (dist < minDist) {
+        minDist = dist;
+        nearest = s;
+      }
+    });
+
+    if (!nearest) {
+      setDeliveryError("No active store found to handle delivery.");
+      setSelectedStore(null);
+      setDeliveryDistance(null);
+      return null;
+    }
+
+    setDeliveryDistance(minDist);
+    setSelectedStore(nearest);
 
     const radius = settings.deliveryRadiusKm ?? 5.0;
-    if (dist > radius) {
+    if (minDist > radius) {
       setDeliveryError(
-        `Sorry, we can't deliver this far — your location is ${dist.toFixed(1)} km from our store, outside our ${radius} km delivery area. Please choose Store Pickup or visit us in person.`
+        `Sorry, we can't deliver this far — your location is ${minDist.toFixed(1)} km from ${nearest.name}, outside our ${radius} km delivery area. Please choose Store Pickup or visit us in person.`
       );
       return null;
     }
     setDeliveryError("");
-    return { lat, lng, dist };
+    return { lat, lng, dist: minDist };
   }
 
   async function checkDeliveryServiceability(addressObj) {
@@ -442,7 +484,7 @@ export default function CheckoutPageClient({ stores = [], settings = {} }) {
             <div className="grid sm:grid-cols-2 gap-3">
               <button
                 type="button"
-                onClick={() => setFulfillmentType("DELIVERY")}
+                onClick={() => handleFulfillmentChange("DELIVERY")}
                 className={`flex items-center gap-3 rounded-2xl border-2 p-4 text-left transition-colors ${
                   fulfillmentType === "DELIVERY"
                     ? "border-fnc-red bg-fnc-red/5"
@@ -457,8 +499,8 @@ export default function CheckoutPageClient({ stores = [], settings = {} }) {
               </button>
               <button
                 type="button"
-                onClick={() => setFulfillmentType("PICKUP")}
-                disabled={!store}
+                onClick={() => handleFulfillmentChange("PICKUP")}
+                disabled={stores.length === 0}
                 className={`flex items-center gap-3 rounded-2xl border-2 p-4 text-left transition-colors disabled:opacity-40 disabled:cursor-not-allowed ${
                   fulfillmentType === "PICKUP"
                     ? "border-fnc-red bg-fnc-red/5"
@@ -474,6 +516,29 @@ export default function CheckoutPageClient({ stores = [], settings = {} }) {
                 </div>
               </button>
             </div>
+
+            {fulfillmentType === "PICKUP" && stores.length > 1 && (
+              <div className="mt-5 pt-5 border-t border-bordergray flex flex-col gap-3">
+                <p className="font-display text-sm font-bold text-charcoal">Select pickup location:</p>
+                <div className="grid sm:grid-cols-2 gap-3">
+                  {stores.map((s) => (
+                    <button
+                      key={s.id}
+                      type="button"
+                      onClick={() => setSelectedStore(s)}
+                      className={`flex flex-col gap-1.5 rounded-2xl border-2 p-4 text-left transition-colors ${
+                        selectedStore?.id === s.id
+                          ? "border-fnc-red bg-fnc-red/5"
+                          : "border-bordergray hover:border-charcoal/30"
+                      }`}
+                    >
+                      <p className="font-display font-semibold text-charcoal text-sm">{s.name}</p>
+                      <p className="font-body text-xs text-slate">{s.address}</p>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
 
           {/* Contact details */}

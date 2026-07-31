@@ -7,8 +7,17 @@ import Filters from "@/components/admin/Filters";
 import ConfirmDialog from "@/components/admin/ConfirmDialog";
 import ProductFormModal from "@/components/admin/ProductFormModal";
 import { createProductAction, updateProductAction, deleteProductAction } from "./actions";
+import StockAdjuster from "@/components/admin/StockAdjuster";
 
-export default function ProductsClientPage({ initialProducts, categories, page, totalPages, searchParams }) {
+export default function ProductsClientPage({
+  initialProducts,
+  categories,
+  stores = [],
+  currentUser,
+  page,
+  totalPages,
+  searchParams,
+}) {
   return (
     <div>
       <div className="flex items-center justify-between gap-4 mb-6">
@@ -49,10 +58,30 @@ export default function ProductsClientPage({ initialProducts, categories, page, 
           { header: "Category", accessor: (p) => p.category.name },
           { header: "Price", accessor: (p) => `₹${Number(p.price).toFixed(0)}` },
           {
-            header: "Stock",
-            accessor: (p) => (
-              <span className={p.stock <= 0 ? "text-fnc-red font-semibold" : ""}>{p.stock}</span>
-            ),
+            header: "Inventory Stock",
+            accessor: (p) => {
+              if (currentUser?.role?.name !== "admin") {
+                const storeId = currentUser.storeId;
+                const inv = p.storeInventory?.find((i) => i.storeId === storeId);
+                const stock = inv ? inv.stock : 0;
+                return <StockAdjuster productId={p.id} storeId={storeId} stock={stock} />;
+              }
+              // Super Admin: Show all stores stock adjusters
+              return (
+                <div className="flex flex-col gap-1.5 py-1">
+                  {stores.map((s) => {
+                    const inv = p.storeInventory?.find((i) => i.storeId === s.id);
+                    const stock = inv ? inv.stock : 0;
+                    return (
+                      <div key={s.id} className="flex items-center justify-between gap-3 text-xs">
+                        <span className="text-slate font-medium">{s.name}:</span>
+                        <StockAdjuster productId={p.id} storeId={s.id} stock={stock} />
+                      </div>
+                    );
+                  })}
+                </div>
+              );
+            },
           },
           { header: "Rating", accessor: (p) => `${p.rating.toFixed(1)} (${p.reviewCount})` },
           {

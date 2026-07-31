@@ -74,11 +74,21 @@ export default function ProductFormModal({ trigger, categories, product, action,
           </div>
 
           <div className="grid sm:grid-cols-2 gap-4 items-start">
-            <ImageUploadField name="image" label="Product Image" defaultValue={product?.images?.[0]} folder="products" />
+            <ImageUploadField name="image" label="Primary Product Image" defaultValue={product?.images?.[0]} folder="products" />
             <div className="flex flex-col gap-1.5">
-              <label className="font-body text-xs font-semibold text-charcoal">Stock</label>
-              <input name="stock" type="number" defaultValue={product?.stock ?? 0} required className={inputClasses} />
+              <label className="font-body text-xs font-semibold text-charcoal">Additional Gallery Images (comma-separated URLs)</label>
+              <input
+                name="additionalImages"
+                defaultValue={product?.images ? product.images.slice(1).join(", ") : ""}
+                placeholder="https://img1.jpg, https://img2.jpg"
+                className={inputClasses}
+              />
             </div>
+          </div>
+
+          <div className="flex flex-col gap-1.5">
+            <label className="font-body text-xs font-semibold text-charcoal">Global Base Stock (compatibility fallback)</label>
+            <input name="stock" type="number" defaultValue={product?.stock ?? 0} required className={inputClasses} />
           </div>
 
           <div className="grid sm:grid-cols-2 gap-4">

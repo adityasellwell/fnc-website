@@ -1,11 +1,11 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { requireAdminUser } from "@/lib/admin-auth";
+import { requireFullAdminUser } from "@/lib/admin-auth";
 import { upsertPage, deletePage } from "@/services/pages";
 
 export async function savePageAction(formData) {
-  await requireAdminUser();
+  await requireFullAdminUser();
   const slug = formData.get("slug").toString().trim();
   await upsertPage({
     slug,
@@ -17,7 +17,7 @@ export async function savePageAction(formData) {
 }
 
 export async function deletePageAction(id) {
-  await requireAdminUser();
+  await requireFullAdminUser();
   await deletePage(id);
   revalidatePath("/admin/pages");
 }

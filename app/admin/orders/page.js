@@ -3,30 +3,24 @@ import Pagination from "@/components/admin/Pagination";
 import Filters from "@/components/admin/Filters";
 import OrderRowActions from "@/components/admin/OrderRowActions";
 import { listOrders } from "@/services/orders";
+import { requireAdminUser, getScopedStoreId } from "@/lib/admin-auth";
+import Link from "next/link";
+import { statusLabels } from "@/lib/orderStatus";
 
 export const metadata = { title: "Orders — Admin" };
-
-const statusLabels = {
-  PLACED: "Placed",
-  CONFIRMED: "Confirmed",
-  PREPARING: "Preparing",
-  OUT_FOR_DELIVERY: "Out for Delivery",
-  DELIVERED: "Delivered",
-  READY_FOR_PICKUP: "Ready for Pickup",
-  COLLECTED: "Collected",
-  CANCELLED: "Cancelled",
-  REFUNDED: "Refunded",
-};
 
 const STATUS_OPTIONS = Object.entries(statusLabels).map(([value, label]) => ({ value, label }));
 
 export default async function AdminOrdersPage({ searchParams }) {
+  const admin = await requireAdminUser();
+  const storeId = getScopedStoreId(admin);
   const sp = await searchParams;
   const page = Number(sp.page) || 1;
   const { orders, totalPages } = await listOrders({
     status: sp.status || undefined,
     fulfillmentType: sp.fulfillmentType || undefined,
     page,
+    storeId: storeId || undefined,
   });
 
   return (
@@ -51,7 +45,14 @@ export default async function AdminOrdersPage({ searchParams }) {
       <Table
         emptyMessage="No orders match these filters."
         columns={[
-          { header: "Order", accessor: (o) => `#${o.id.slice(-8)}` },
+          {
+            header: "Order",
+            accessor: (o) => (
+              <Link href={`/admin/orders/${o.id}`} className="font-semibold text-fnc-red hover:underline">
+                #{o.id.slice(-8).toUpperCase()}
+              </Link>
+            ),
+          },
           { header: "Customer", accessor: (o) => o.customer?.name ?? "—" },
           { header: "Items", accessor: (o) => o.items.length },
           { header: "Total", accessor: (o) => `₹${Number(o.total).toFixed(0)}` },

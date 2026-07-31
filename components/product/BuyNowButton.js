@@ -15,17 +15,33 @@ export default function BuyNowButton({ product, image, className }) {
   const [pending, setPending] = useState(false);
   const router = useRouter();
   const addItem = useCartStore((s) => s.addItem);
+  const forceAddItem = useCartStore((s) => s.forceAddItem);
 
-  function handleBuyNow() {
-    setPending(true);
-    addItem({
+  function handleBuyNow(force = false) {
+    const item = {
       id: product.id,
       slug: product.slug,
       name: product.name,
       unit: product.unit,
       price: product.price,
       image,
-    });
+      availableAtStores: product.availableAtStores,
+    };
+    const result = force ? forceAddItem(item) : addItem(item);
+
+    if (!result.ok && result.reason === "UNAVAILABLE") {
+      alert("Sorry, this item isn't available at your delivery location.");
+      return;
+    }
+    if (!result.ok && result.reason === "STORE_CONFLICT") {
+      const confirmed = window.confirm(
+        "Your cart has items from a different store. Switching stores will clear your cart. Continue?"
+      );
+      if (confirmed) handleBuyNow(true);
+      return;
+    }
+
+    setPending(true);
     router.push("/checkout");
   }
 
@@ -34,7 +50,7 @@ export default function BuyNowButton({ product, image, className }) {
       type="button"
       size="lg"
       variant="secondary"
-      onClick={handleBuyNow}
+      onClick={() => handleBuyNow()}
       disabled={pending}
       className={className}
     >

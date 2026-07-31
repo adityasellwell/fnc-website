@@ -12,18 +12,34 @@ import { cn } from "@/lib/utils";
 export default function QuickAddToCartButton({ product, image, className }) {
   const [added, setAdded] = useState(false);
   const addItem = useCartStore((s) => s.addItem);
+  const forceAddItem = useCartStore((s) => s.forceAddItem);
 
-  function handleClick(e) {
+  function handleClick(e, force = false) {
     e.preventDefault();
     e.stopPropagation();
-    addItem({
+    const item = {
       id: product.id,
       slug: product.slug,
       name: product.name,
       unit: product.unit,
       price: product.price,
       image,
-    });
+      availableAtStores: product.availableAtStores,
+    };
+    const result = force ? forceAddItem(item) : addItem(item);
+
+    if (!result.ok && result.reason === "UNAVAILABLE") {
+      alert("Sorry, this item isn't available at your delivery location.");
+      return;
+    }
+    if (!result.ok && result.reason === "STORE_CONFLICT") {
+      const confirmed = window.confirm(
+        "Your cart has items from a different store. Switching stores will clear your cart. Continue?"
+      );
+      if (confirmed) handleClick(e, true);
+      return;
+    }
+
     setAdded(true);
     setTimeout(() => setAdded(false), 1500);
   }

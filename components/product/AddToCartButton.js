@@ -13,16 +13,32 @@ import { useCartStore } from "@/lib/store/cart";
 export default function AddToCartButton({ product, image, className }) {
   const [added, setAdded] = useState(false);
   const addItem = useCartStore((s) => s.addItem);
+  const forceAddItem = useCartStore((s) => s.forceAddItem);
 
-  function handleAddToCart() {
-    addItem({
+  function handleAddToCart(force = false) {
+    const item = {
       id: product.id,
       slug: product.slug,
       name: product.name,
       unit: product.unit,
       price: product.price,
       image,
-    });
+      availableAtStores: product.availableAtStores,
+    };
+    const result = force ? forceAddItem(item) : addItem(item);
+
+    if (!result.ok && result.reason === "UNAVAILABLE") {
+      alert("Sorry, this item isn't available at your delivery location.");
+      return;
+    }
+    if (!result.ok && result.reason === "STORE_CONFLICT") {
+      const confirmed = window.confirm(
+        "Your cart has items from a different store. Switching stores will clear your cart. Continue?"
+      );
+      if (confirmed) handleAddToCart(true);
+      return;
+    }
+
     setAdded(true);
     setTimeout(() => setAdded(false), 1800);
   }
@@ -31,7 +47,7 @@ export default function AddToCartButton({ product, image, className }) {
     <Button
       type="button"
       size="lg"
-      onClick={handleAddToCart}
+      onClick={() => handleAddToCart()}
       aria-live="polite"
       className={className}
     >

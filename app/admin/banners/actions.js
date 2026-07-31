@@ -1,7 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { requireAdminUser } from "@/lib/admin-auth";
+import { requireFullAdminUser } from "@/lib/admin-auth";
 import { createBanner, updateBanner, deleteBanner } from "@/services/banners";
 
 function parseBannerForm(formData) {
@@ -23,21 +23,21 @@ function parseBannerForm(formData) {
 }
 
 export async function createBannerAction(formData) {
-  await requireAdminUser();
+  await requireFullAdminUser();
   await createBanner(parseBannerForm(formData));
   revalidatePath("/admin/banners");
   revalidatePath("/");
 }
 
 export async function updateBannerAction(id, formData) {
-  await requireAdminUser();
+  await requireFullAdminUser();
   await updateBanner(id, parseBannerForm(formData));
   revalidatePath("/admin/banners");
   revalidatePath("/");
 }
 
 export async function deleteBannerAction(id) {
-  await requireAdminUser();
+  await requireFullAdminUser();
   await deleteBanner(id);
   revalidatePath("/admin/banners");
   revalidatePath("/");

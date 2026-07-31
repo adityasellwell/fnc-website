@@ -5,7 +5,10 @@ import {
   getTopProducts,
   getCustomerBreakdown,
   getPopularSearches,
+  getStoreBreakdown,
 } from "@/services/analytics";
+import { requireAdminUser, getScopedStoreId } from "@/lib/admin-auth";
+import { db } from "@/lib/db";
 
 export const metadata = { title: "Analytics — Admin" };
 
@@ -24,16 +27,32 @@ function StatCard({ icon: Icon, label, value }) {
 }
 
 export default async function AdminAnalyticsPage() {
-  const [revenue, topProducts, customers, popularSearches] = await Promise.all([
-    getRevenueStats(),
-    getTopProducts(),
-    getCustomerBreakdown(),
+  const admin = await requireAdminUser();
+  const storeId = getScopedStoreId(admin);
+
+  const [revenue, topProducts, customers, popularSearches, storeBreakdown] = await Promise.all([
+    getRevenueStats(storeId || undefined),
+    getTopProducts(5, storeId || undefined),
+    getCustomerBreakdown(storeId || undefined),
     getPopularSearches(),
+    !storeId ? getStoreBreakdown() : Promise.resolve(null),
   ]);
+
+  let lowStock = null;
+  if (storeId) {
+    lowStock = await db.storeInventory.findMany({
+      where: { storeId, stock: { lte: 5 } },
+      include: { product: true },
+      orderBy: { stock: "asc" },
+      take: 10,
+    });
+  }
 
   return (
     <div>
-      <h1 className="font-display text-2xl font-bold text-charcoal mb-6">Analytics</h1>
+      <h1 className="font-display text-2xl font-bold text-charcoal mb-6">
+        Analytics {storeId ? `— ${admin.store?.name || "My Store"}` : "— Platform Overview"}
+      </h1>
 
       <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
         <StatCard icon={TrendingUp} label="Revenue (paid orders)" value={`₹${revenue.revenue.toFixed(0)}`} />
@@ -69,6 +88,41 @@ export default async function AdminAnalyticsPage() {
           />
         </div>
       </div>
+
+      {storeBreakdown && (
+        <div className="mt-8 bg-white border border-bordergray rounded-2xl p-6">
+          <h2 className="font-display text-lg font-bold text-charcoal mb-4">Per-Store Sales Breakdown</h2>
+          <Table
+            emptyMessage="No store data available."
+            columns={[
+              { header: "Store", accessor: (s) => s.storeName },
+              { header: "Revenue", accessor: (s) => `₹${s.revenue.toFixed(0)}`, className: "text-right" },
+              { header: "Active Orders", accessor: (s) => s.orderCount, className: "text-right" },
+              { header: "Avg. Order Value", accessor: (s) => `₹${s.averageOrderValue.toFixed(0)}`, className: "text-right" },
+              { header: "Cancelled Orders", accessor: (s) => s.cancelledCount, className: "text-right" },
+            ]}
+            rows={storeBreakdown}
+            keyField="storeId"
+          />
+        </div>
+      )}
+
+      {lowStock && lowStock.length > 0 && (
+        <div className="mt-8 bg-white border border-bordergray rounded-2xl p-6">
+          <h2 className="font-display text-lg font-bold text-fnc-red mb-3">Low Stock Warnings ({lowStock.length})</h2>
+          <Table
+            emptyMessage="All items are well stocked!"
+            columns={[
+              { header: "Product", accessor: (i) => i.product.name },
+              { header: "Stock", accessor: (i) => (
+                <span className="font-semibold text-fnc-red">{i.stock} {i.product.unit}</span>
+              ), className: "text-right" }
+            ]}
+            rows={lowStock}
+            keyField="id"
+          />
+        </div>
+      )}
 
       <div className="bg-white border border-bordergray rounded-2xl p-6 mt-6">
         <h2 className="font-display text-lg font-bold text-charcoal mb-4">New vs. Returning Customers</h2>

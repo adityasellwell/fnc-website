@@ -5,15 +5,28 @@ import { db } from "@/lib/db";
  * products/new-vs-returning/popular searches. All-time totals, no date-range
  * picker or charting infra yet; add those only if actually needed later.
  */
-export async function getRevenueStats() {
+export async function getRevenueStats(storeId) {
+  const wherePaid = {
+    paymentStatus: "PAID",
+    ...(storeId ? { storeId } : {}),
+  };
+  const whereActive = {
+    status: { notIn: ["CANCELLED", "REFUNDED"] },
+    ...(storeId ? { storeId } : {}),
+  };
+  const whereCancelled = {
+    status: "CANCELLED",
+    ...(storeId ? { storeId } : {}),
+  };
+
   const [paidAgg, orderCount, cancelledCount] = await Promise.all([
     db.order.aggregate({
-      where: { paymentStatus: "PAID" },
+      where: wherePaid,
       _sum: { total: true },
       _count: true,
     }),
-    db.order.count({ where: { status: { notIn: ["CANCELLED", "REFUNDED"] } } }),
-    db.order.count({ where: { status: "CANCELLED" } }),
+    db.order.count({ where: whereActive }),
+    db.order.count({ where: whereCancelled }),
   ]);
 
   const revenue = Number(paidAgg._sum.total ?? 0);
@@ -27,9 +40,11 @@ export async function getRevenueStats() {
   };
 }
 
-export async function getTopProducts(limit = 5) {
+export async function getTopProducts(limit = 5, storeId) {
+  const where = storeId ? { order: { storeId } } : {};
   const grouped = await db.orderItem.groupBy({
     by: ["productId"],
+    where,
     _sum: { quantity: true },
     orderBy: { _sum: { quantity: "desc" } },
     take: limit,
@@ -48,11 +63,20 @@ export async function getTopProducts(limit = 5) {
   }));
 }
 
-export async function getCustomerBreakdown() {
+export async function getCustomerBreakdown(storeId) {
+  const where = storeId ? { orders: { some: { storeId } } } : {};
+
   const [totalCustomers, customersWithOrders] = await Promise.all([
-    db.customer.count(),
+    db.customer.count({ where }),
     db.customer.findMany({
-      select: { _count: { select: { orders: true } } },
+      where,
+      select: {
+        _count: {
+          select: {
+            orders: storeId ? { where: { storeId } } : true,
+          },
+        },
+      },
     }),
   ]);
 
@@ -71,4 +95,28 @@ export async function getPopularSearches(limit = 8) {
   });
 
   return grouped.map((g) => ({ query: g.query, count: g._count.query }));
+}
+
+export async function getStoreBreakdown() {
+  const stores = await db.store.findMany({ where: { status: "ACTIVE" } });
+
+  const results = [];
+  for (const store of stores) {
+    const stats = await getRevenueStats(store.id);
+    results.push({
+      storeId: store.id,
+      storeName: store.name,
+      ...stats,
+    });
+  }
+
+  // Calculate platform total
+  const platformStats = await getRevenueStats();
+  results.push({
+    storeId: "total",
+    storeName: "Platform Total",
+    ...platformStats,
+  });
+
+  return results;
 }

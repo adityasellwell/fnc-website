@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { ArrowLeft } from "lucide-react";
 import Table from "@/components/admin/Table";
 import { getCustomerWithOrders } from "@/services/customers";
+import { requireAdminUser, getScopedStoreId } from "@/lib/admin-auth";
 
 export const metadata = { title: "Customer — Admin" };
 
@@ -19,9 +20,16 @@ const statusLabels = {
 };
 
 export default async function AdminCustomerDetailPage({ params }) {
+  const admin = await requireAdminUser();
+  const storeId = getScopedStoreId(admin);
   const { id } = await params;
-  const customer = await getCustomerWithOrders(id);
+  const customer = await getCustomerWithOrders(id, storeId || undefined);
   if (!customer) notFound();
+  // getCustomerWithOrders only filters the *orders* list by store — the
+  // customer row itself has no store dimension, so without this a Store
+  // Admin could view any customer's name/email/phone/addresses by direct
+  // URL even if that customer never ordered from their store.
+  if (storeId && customer.orders.length === 0) notFound();
 
   return (
     <div>

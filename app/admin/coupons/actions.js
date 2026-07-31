@@ -1,7 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { requireAdminUser } from "@/lib/admin-auth";
+import { requireFullAdminUser } from "@/lib/admin-auth";
 import { createCoupon, updateCoupon, deleteCoupon } from "@/services/coupons";
 
 function parseCouponForm(formData) {
@@ -21,19 +21,19 @@ function parseCouponForm(formData) {
 }
 
 export async function createCouponAction(formData) {
-  await requireAdminUser();
+  await requireFullAdminUser();
   await createCoupon(parseCouponForm(formData));
   revalidatePath("/admin/coupons");
 }
 
 export async function updateCouponAction(id, formData) {
-  await requireAdminUser();
+  await requireFullAdminUser();
   await updateCoupon(id, parseCouponForm(formData));
   revalidatePath("/admin/coupons");
 }
 
 export async function deleteCouponAction(id) {
-  await requireAdminUser();
+  await requireFullAdminUser();
   await deleteCoupon(id);
   revalidatePath("/admin/coupons");
 }

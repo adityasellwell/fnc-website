@@ -8,6 +8,8 @@ import { getCurrentCustomer } from "@/lib/auth";
 import { geocodeAddress } from "@/lib/utils/geocode";
 import { getSettings } from "@/services/settings";
 import { parseUserAgent } from "@/lib/utils/analytics";
+import { getNearestActiveStore } from "@/lib/data/stores";
+import { haversineDistanceKm } from "@/lib/utils/geo";
 
 
 
@@ -215,23 +217,13 @@ export async function POST(request) {
 
     const settings = await getSettings();
     let calculatedDistance = null;
+    let deliveryStoreId = null;
 
     // Settings-driven Delivery Radius & Fees Enforcement
     if (fulfillmentType === "DELIVERY") {
       if (subtotal < Number(settings.minOrderValue)) {
         return NextResponse.json(
           { error: `Order subtotal must be at least ₹${settings.minOrderValue} for delivery.` },
-          { status: 400 }
-        );
-      }
-
-      const activeStore = await db.store.findFirst({
-        where: { status: "ACTIVE", deliveryAvailable: true },
-      });
-
-      if (!activeStore) {
-        return NextResponse.json(
-          { error: "No active store found to handle delivery." },
           { status: 400 }
         );
       }
@@ -246,18 +238,16 @@ export async function POST(request) {
         );
       }
 
-      // Calculate Haversine distance
-      const R = 6371; // Earth's radius in km
-      const dLat = ((coords.lat - activeStore.latitude) * Math.PI) / 180;
-      const dLon = ((coords.lng - activeStore.longitude) * Math.PI) / 180;
-      const a =
-        Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-        Math.cos((activeStore.latitude * Math.PI) / 180) *
-          Math.cos((coords.lat * Math.PI) / 180) *
-          Math.sin(dLon / 2) *
-          Math.sin(dLon / 2);
-      const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-      const distance = R * c;
+      const nearest = await getNearestActiveStore(coords.lat, coords.lng, { deliveryOnly: true });
+
+      if (!nearest) {
+        return NextResponse.json(
+          { error: "No active store found to handle delivery." },
+          { status: 400 }
+        );
+      }
+
+      const distance = haversineDistanceKm(coords.lat, coords.lng, nearest.store.geo.lat, nearest.store.geo.lng);
 
       if (distance > settings.deliveryRadiusKm) {
         return NextResponse.json(
@@ -269,6 +259,7 @@ export async function POST(request) {
       }
 
       calculatedDistance = distance;
+      deliveryStoreId = nearest.store.id;
 
       const deliveryCharge =
         subtotal >= Number(settings.freeDeliveryThreshold) ? 0 : Number(settings.deliveryCharge);
@@ -305,7 +296,7 @@ export async function POST(request) {
         data: {
           customerId,
           fulfillmentType,
-          storeId: fulfillmentType === "PICKUP" ? storeId : null,
+          storeId: fulfillmentType === "PICKUP" ? storeId : deliveryStoreId,
           deliveryAddress: fulfillmentType === "DELIVERY" ? deliveryAddress : null,
           couponCode: couponCode ?? null,
           total,

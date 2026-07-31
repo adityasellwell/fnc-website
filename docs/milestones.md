@@ -59,3 +59,17 @@ URLs), admin visual polish (logo/brand colors, collapsible sidebar), and
 a lightweight CMS layer — Banners, Stores, and the 4 policy pages are now
 all admin-editable, plus real customer reviews (sign-in required) with
 an admin moderation screen. Full detail in `docs/changelog.md`.
+
+---
+
+## 11 — Multi-Store Admin, Store-Scoped Inventory, Order Operations (2026-07-31)
+
+Owner-requested restructuring: a real Super Admin (head office, manages
+the whole platform/website) vs. Store Admin/Staff (scoped to one store's
+orders, inventory, team, reviews) model, per-store stock (`StoreInventory`
+replacing the old single global `Product.stock`), a customer-facing
+store-scoped cart (nearest-store resolution, per-store product
+availability), and an Order Operations workspace (status timeline,
+packing notes, rider assignment, print invoice, refund requests). Full
+detail in `docs/changelog.md`, including a list of real bugs found and
+fixed during a full audit pass before this was committed.

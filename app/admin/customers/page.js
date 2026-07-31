@@ -3,13 +3,20 @@ import Table from "@/components/admin/Table";
 import Pagination from "@/components/admin/Pagination";
 import Filters from "@/components/admin/Filters";
 import { listCustomers } from "@/services/customers";
+import { requireAdminUser, getScopedStoreId } from "@/lib/admin-auth";
 
 export const metadata = { title: "Customers — Admin" };
 
 export default async function AdminCustomersPage({ searchParams }) {
+  const admin = await requireAdminUser();
+  const storeId = getScopedStoreId(admin);
   const sp = await searchParams;
   const page = Number(sp.page) || 1;
-  const { customers, totalPages } = await listCustomers({ search: sp.search || undefined, page });
+  const { customers, totalPages } = await listCustomers({
+    search: sp.search || undefined,
+    page,
+    storeId: storeId || undefined,
+  });
 
   return (
     <div>

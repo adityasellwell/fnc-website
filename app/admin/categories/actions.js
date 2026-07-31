@@ -1,7 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { requireAdminUser } from "@/lib/admin-auth";
+import { requireFullAdminUser } from "@/lib/admin-auth";
 import { createCategory, updateCategory, deleteCategory } from "@/services/categories";
 
 function parseCategoryForm(formData) {
@@ -17,19 +17,19 @@ function parseCategoryForm(formData) {
 }
 
 export async function createCategoryAction(formData) {
-  await requireAdminUser();
+  await requireFullAdminUser();
   await createCategory(parseCategoryForm(formData));
   revalidatePath("/admin/categories");
 }
 
 export async function updateCategoryAction(id, formData) {
-  await requireAdminUser();
+  await requireFullAdminUser();
   await updateCategory(id, parseCategoryForm(formData));
   revalidatePath("/admin/categories");
 }
 
 export async function deleteCategoryAction(id) {
-  await requireAdminUser();
+  await requireFullAdminUser();
   await deleteCategory(id);
   revalidatePath("/admin/categories");
 }

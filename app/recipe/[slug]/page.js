@@ -168,11 +168,21 @@ export default async function RecipeDetailPage({ params }) {
                       hoverLift
                       className="group flex items-center gap-4 p-4"
                     >
-                      <div className="relative h-20 w-20 shrink-0 rounded-xl overflow-hidden bg-warmwhite">
-                        <ShoppingBasket
-                          className="h-8 w-8 text-fnc-red/40 absolute inset-0 m-auto"
-                          strokeWidth={1.25}
-                        />
+                      <div className="relative h-20 w-20 shrink-0 rounded-xl overflow-hidden bg-warmwhite border border-bordergray">
+                        {product.images && product.images[0] ? (
+                          <Image
+                            src={product.images[0]}
+                            alt={product.name}
+                            fill
+                            sizes="80px"
+                            className="object-cover"
+                          />
+                        ) : (
+                          <ShoppingBasket
+                            className="h-8 w-8 text-fnc-red/40 absolute inset-0 m-auto"
+                            strokeWidth={1.25}
+                          />
+                        )}
                       </div>
                       <div className="flex flex-col gap-1 min-w-0">
                         <h3 className="font-display text-base font-semibold text-charcoal truncate">

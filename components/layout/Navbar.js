@@ -25,21 +25,9 @@ import { BRAND, NAV_LINKS, CURRENT_LOCATION } from "@/lib/constants";
 import { getStores } from "@/lib/data/stores";
 import { useCartStore } from "@/lib/store/cart";
 import { useWishlistStore } from "@/lib/store/wishlist";
+import { useLocationStore } from "@/lib/store/location";
 import { reverseGeocode } from "@/lib/utils/geocode";
-
-function getDistance(lat1, lon1, lat2, lon2) {
-  const R = 6371;
-  const dLat = ((lat2 - lat1) * Math.PI) / 180;
-  const dLon = ((lon2 - lon1) * Math.PI) / 180;
-  const a =
-    Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-    Math.cos((lat1 * Math.PI) / 180) *
-      Math.cos((lat2 * Math.PI) / 180) *
-      Math.sin(dLon / 2) *
-      Math.sin(dLon / 2);
-  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-  return R * c;
-}
+import { haversineDistanceKm } from "@/lib/utils/geo";
 
 function SearchBar({ className, onSubmitted }) {
   const router = useRouter();
@@ -128,7 +116,7 @@ export default function Navbar() {
     let nearest = null;
     let minDist = Infinity;
     activeStores.forEach((s) => {
-      const dist = getDistance(uLat, uLng, s.geo.lat, s.geo.lng);
+      const dist = haversineDistanceKm(uLat, uLng, s.geo.lat, s.geo.lng);
       if (dist < minDist) { minDist = dist; nearest = s; }
     });
     const isServiceable = nearest !== null && minDist <= 15;
@@ -139,6 +127,11 @@ export default function Navbar() {
     setServiceable(isServiceable);
     localStorage.setItem("fnc_delivery_location", label);
     localStorage.setItem("fnc_delivery_address", geocoded?.full ?? label);
+    useLocationStore.getState().setLocation({
+      storeId: isServiceable ? nearest.id : null,
+      label,
+      isServiceable,
+    });
   };
 
   useEffect(() => {
@@ -207,27 +200,41 @@ export default function Navbar() {
     if (query === "thane" || query.startsWith("400607") || query.startsWith("4006")) label = "Hiranandani Estate, Thane";
     else if (query === "mumbai" || query === "bombay" || query.startsWith("400")) label = "Thane (nearby) — Coming Soon";
     if (label) {
+      const isServiceable = !label.includes("Soon");
       setLocationLabel(label);
       setFullAddress(null);
-      setServiceable(!label.includes("Soon"));
+      setServiceable(isServiceable);
       localStorage.setItem("fnc_delivery_location", label);
       localStorage.removeItem("fnc_delivery_address");
       setIsModalOpen(false);
       setPincodeQuery("");
       setPincodeError("");
+      const activeStore = storeList.find((s) => s.status === "active");
+      useLocationStore.getState().setLocation({
+        storeId: isServiceable ? (activeStore?.id ?? null) : null,
+        label,
+        isServiceable,
+      });
     } else {
       setPincodeError("F&C delivery is not yet serviceable here.");
     }
   };
 
   const selectPredefined = (label) => {
+    const isServiceable = !label.includes("Soon");
     setLocationLabel(label);
     setFullAddress(null);
-    setServiceable(!label.includes("Soon"));
+    setServiceable(isServiceable);
     localStorage.setItem("fnc_delivery_location", label);
     localStorage.removeItem("fnc_delivery_address");
     setIsModalOpen(false);
     setPincodeError("");
+    const activeStore = storeList.find((s) => s.status === "active");
+    useLocationStore.getState().setLocation({
+      storeId: isServiceable ? (activeStore?.id ?? null) : null,
+      label,
+      isServiceable,
+    });
   };
 
   // Navbar is always solid offwhite — matches homepage background, never

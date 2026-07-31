@@ -63,11 +63,15 @@ model Product {
   rating              Float    @default(0)
   reviewCount         Int      @default(0)
 
-  // Single-store stock count. Deliberately simple for now (one physical
-  // store, per Project-instructions.md §1) — if/when multi-store inventory
-  // is needed, this should migrate to a separate per-store Inventory model
-  // (Product x Store -> quantity) rather than growing more fields here.
+  // TEMPORARY compatibility field only, kept as a rollup (sum across
+  // StoreInventory rows) so existing storefront "in stock" reads didn't
+  // need touching during the multi-store migration. Not the source of
+  // truth anymore — StoreInventory is. Drop this field once every read
+  // path has moved to StoreInventory (tracked cleanup, not yet done).
   stock Int @default(0)
+
+  storeInventory StoreInventory[]
+  media          ProductMedia[]
 
   category   Category @relation(fields: [categoryId], references: [id])
   categoryId String
@@ -135,7 +139,8 @@ model Store {
   // formalizes what the mock data (lib/data/stores.js) already added.
   status StoreStatus @default(COMING_SOON)
 
-  productsAvailable Product[]  @relation("StoreProducts")
+  productsAvailable Product[]        @relation("StoreProducts")
+  inventory         StoreInventory[]
   reviews           Review[]
   orders            Order[]
   auditLogs         AuditLog[]
@@ -145,6 +150,22 @@ model Store {
   updatedAt DateTime @updatedAt
 
   @@index([status])
+}
+
+// Per-store on-hand quantity — replaces Product.stock as the source of
+// truth now that F&C runs multiple physical stores. One row per
+// store/product pair; a product's total stock is the sum across its rows.
+model StoreInventory {
+  id        String   @id @default(cuid())
+  store     Store    @relation(fields: [storeId], references: [id])
+  storeId   String
+  product   Product  @relation(fields: [productId], references: [id])
+  productId String
+  stock     Int      @default(0)
+  updatedAt DateTime @updatedAt
+
+  @@unique([storeId, productId])
+  @@index([productId])
 }
 
 // ---------------------------------------------------------------------
@@ -319,6 +340,7 @@ enum OrderStatus {
   COLLECTED
   CANCELLED
   REFUNDED
+  RETURNED
 }
 
 enum PaymentStatus {
@@ -337,10 +359,12 @@ model Order {
 
   fulfillmentType FulfillmentType
 
-  // Pickup: which store. Delivery: address is SNAPSHOTTED as Json at
-  // order time (not a live FK to Address) — an order's shipping record
-  // must stay accurate even if the customer later edits/deletes that
-  // saved address.
+  // The fulfilling store — always set now (pickup: the store picked;
+  // delivery: the nearest active store resolved at checkout), which is
+  // what lets a Store Admin see only their own store's orders. Delivery
+  // address is still SNAPSHOTTED as Json at order time (not a live FK to
+  // Address) — an order's shipping record must stay accurate even if the
+  // customer later edits/deletes that saved address.
   store           Store?  @relation(fields: [storeId], references: [id])
   storeId         String?
   deliveryAddress Json?
@@ -350,6 +374,14 @@ model Order {
   total         Decimal       @db.Decimal(10, 2)
 
   couponCode String?
+
+  // Order Operations page fields — kept as plain text on the order itself
+  // rather than a separate Rider/DeliveryPartner model, since there's no
+  // rider account/app at this stage, just a name and phone number staff
+  // jot down when handing an order off.
+  packingNotes String? @db.Text
+  riderName    String?
+  riderPhone   String?
 
   statusHistory OrderStatusHistory[]
 
@@ -365,6 +397,7 @@ model Order {
   deliveryDistance Float?
 
   paymentAuditLogs PaymentAuditLog[]
+  refundRequest    RefundRequest?
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -372,6 +405,7 @@ model Order {
   @@index([customerId])
   @@index([status])
   @@index([createdAt])
+  @@index([storeId])
 }
 
 // §7 described Order.items as a plain array; resolved into a proper join
@@ -530,6 +564,7 @@ model User {
   // Set for store_manager/staff — which store they're scoped to.
   store   Store?  @relation(fields: [storeId], references: [id])
   storeId String?
+  isActive Boolean @default(true)
 
   auditLogs          AuditLog[]
   orderStatusChanges OrderStatusHistory[]
@@ -622,5 +657,32 @@ model Page {
   content   String   @db.Text
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+}
+
+model ProductMedia {
+  id           String   @id @default(cuid())
+  product      Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  productId    String
+  type         String   // "IMAGE" | "VIDEO"
+  url          String
+  displayOrder Int      @default(0)
+  isPrimary    Boolean  @default(false)
+  createdAt    DateTime @default(now())
+
+  @@index([productId])
+  @@index([displayOrder])
+}
+
+model RefundRequest {
+  id          String        @id @default(cuid())
+  order       Order         @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  orderId     String        @unique
+  reason      String        @db.Text
+  status      String        // "PENDING" | "APPROVED" | "REJECTED" | "COMPLETED"
+  amount      Decimal       @db.Decimal(10, 2)
+  processedAt DateTime?
+  notes       String?       @db.Text
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
 }
 

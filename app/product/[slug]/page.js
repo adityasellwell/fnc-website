@@ -13,6 +13,7 @@ import PlaceholderMedia from "@/components/ui/PlaceholderMedia";
 import AddToCartButton from "@/components/product/AddToCartButton";
 import BuyNowButton from "@/components/product/BuyNowButton";
 import ReviewForm from "@/components/product/ReviewForm";
+import ProductMediaGallery from "@/components/product/ProductMediaGallery";
 import { getProductBySlug, getProducts } from "@/lib/data/products";
 import { getCategoryBySlug } from "@/lib/data/categories";
 import { getRecipeBySlug } from "@/lib/data/recipes";
@@ -181,30 +182,14 @@ export default async function ProductDetailPage({ params }) {
         <Section background="offwhite" spacing="md">
           <div className="grid lg:grid-cols-2 gap-8 lg:gap-16 items-start">
             {/* Image */}
-            <Reveal
-              y={16}
-              className="relative aspect-square w-full rounded-3xl overflow-hidden bg-warmwhite border border-bordergray"
-            >
-              {meta.image ? (
-                <Image
-                  src={meta.image}
-                  alt={product.name}
-                  fill
-                  sizes="(min-width: 1024px) 45vw, 100vw"
-                  className="object-cover"
-                  priority
-                />
-              ) : (
-                <PlaceholderMedia
-                  icon={meta.icon}
-                  tone={meta.tone}
-                  label={product.name}
-                  className="absolute inset-0"
-                  iconClassName="h-20 w-20"
-                />
-              )}
+            <Reveal y={16} className="relative w-full">
+              <ProductMediaGallery
+                media={product.media}
+                fallbackImage={meta.image}
+                productName={product.name}
+              />
               {product.tags?.includes("bestseller") && (
-                <span className="absolute top-4 left-4 rounded-full bg-fnc-red text-white font-body text-xs font-bold uppercase tracking-wide px-3 py-1.5 shadow-sm">
+                <span className="absolute top-4 left-4 rounded-full bg-fnc-red text-white font-body text-xs font-bold uppercase tracking-wide px-3 py-1.5 shadow-sm z-10">
                   Bestseller
                 </span>
               )}

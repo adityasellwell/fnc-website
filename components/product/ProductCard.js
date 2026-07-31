@@ -1,5 +1,8 @@
+"use client";
+
 import Link from "next/link";
 import Image from "next/image";
+import { useState, useEffect } from "react";
 import { Star } from "lucide-react";
 import Card from "@/components/ui/Card";
 import PlaceholderMedia from "@/components/ui/PlaceholderMedia";
@@ -7,6 +10,7 @@ import WishlistButton from "@/components/product/WishlistButton";
 import QuickAddToCartButton from "@/components/product/QuickAddToCartButton";
 import { CATEGORY_META } from "@/lib/constants";
 import { cn } from "@/lib/utils";
+import { useLocationStore } from "@/lib/store/location";
 
 const toneOverlay = {
   red: "bg-fnc-red",
@@ -32,25 +36,39 @@ const toneOverlay = {
  * per-product photography exists (see CATEGORY_META in lib/constants.js).
  */
 export default function ProductCard({ product, variant = "editorial", className }) {
+  const storeId = useLocationStore((s) => s.storeId);
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
   const categorySlug = product.categoryId.replace(/^cat-/, "");
   const meta = CATEGORY_META[categorySlug] ?? { icon: "Fish", tone: "red" };
   const isKinetic = variant === "kinetic";
   const href = `/product/${product.slug}`;
 
+  // Check store-specific stock
+  const storeInv = product.storeInventory?.find((i) => i.storeId === storeId);
+  const isOutOfStock = mounted && storeId && (!storeInv || storeInv.stock <= 0);
+
+  const primaryImage = (product.images && product.images[0]) || meta.image;
+
   return (
     <Card
       hoverLift
       className={cn(
-        "group flex flex-col",
+        "group flex flex-col relative",
         isKinetic && "rounded-3xl border-transparent shadow-sm hover:shadow-xl",
+        isOutOfStock && "opacity-80",
         className
       )}
     >
       <div className="relative aspect-square w-full overflow-hidden bg-warmwhite">
         <Link href={href} className="absolute inset-0" aria-label={product.name}>
-          {meta.image ? (
+          {primaryImage ? (
             <Image
-              src={meta.image}
+              src={primaryImage}
               alt={product.name}
               fill
               sizes="(min-width: 1024px) 22vw, 45vw"
@@ -65,7 +83,7 @@ export default function ProductCard({ product, variant = "editorial", className 
               iconClassName={isKinetic ? "h-14 w-14" : "h-10 w-10"}
             />
           )}
-          {isKinetic && meta.image && (
+          {isKinetic && primaryImage && (
             <div
               aria-hidden="true"
               className={cn(
@@ -76,22 +94,32 @@ export default function ProductCard({ product, variant = "editorial", className 
           )}
         </Link>
 
-        <div className="absolute top-3 left-3 flex items-center gap-1 rounded-full bg-white/90 backdrop-blur-sm px-2 py-1 font-body text-xs font-semibold text-charcoal shadow-sm pointer-events-none">
+        {isOutOfStock && (
+          <div className="absolute inset-0 bg-black/40 flex items-center justify-center pointer-events-none z-10">
+            <span className="bg-charcoal text-white font-display text-xs font-bold uppercase tracking-wider px-3 py-1.5 rounded-md shadow-md">
+              Out of Stock
+            </span>
+          </div>
+        )}
+
+        <div className="absolute top-3 left-3 flex items-center gap-1 rounded-full bg-white/90 backdrop-blur-sm px-2 py-1 font-body text-xs font-semibold text-charcoal shadow-sm pointer-events-none z-10">
           <Star className="h-3 w-3 fill-fnc-red text-fnc-red" />
           {product.rating}
         </div>
 
         <WishlistButton
           product={product}
-          image={meta.image}
+          image={primaryImage}
           className="absolute top-3 right-3 z-10"
         />
 
-        <QuickAddToCartButton
-          product={product}
-          image={meta.image}
-          className="absolute bottom-3 right-3 z-10 h-10 w-10 opacity-0 group-hover:opacity-100 focus-visible:opacity-100 transition-opacity"
-        />
+        {!isOutOfStock && (
+          <QuickAddToCartButton
+            product={product}
+            image={primaryImage}
+            className="absolute bottom-3 right-3 z-10 h-10 w-10 opacity-0 group-hover:opacity-100 focus-visible:opacity-100 transition-opacity"
+          />
+        )}
       </div>
 
       <Link href={href} className={cn("flex flex-col gap-1 p-4", isKinetic && "p-5")}>

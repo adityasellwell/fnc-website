@@ -4,6 +4,101 @@ Milestone-level log per `Project-instructions.md` §10 process. Newest first.
 
 ---
 
+## Milestone 11 — Multi-Store Admin, Store-Scoped Inventory, Order Operations (2026-07-31)
+
+**Schema:** `StoreInventory` (per-store product stock, replaces the old
+single global `Product.stock`, kept as a temporary rollup during
+migration), `Order.storeId` now set for delivery orders too (previously
+only pickup), `Order.packingNotes`/`riderName`/`riderPhone`, `RETURNED`
+order status, `User.isActive` (soft-deactivate instead of destructive
+delete), `ProductMedia` (multi-image/video per product, replacing the
+plain `images` JSON array going forward), `RefundRequest`.
+
+**Roles:** `admin` (Super Admin — unrestricted, only role that can touch
+Banners/Stores/Pages/Settings/Coupons) vs `store_manager`/`staff` (scoped
+to their own `User.storeId` for Orders/Products-inventory/Customers/
+Reviews/Team/Analytics). `lib/admin-auth.js` gained `isSuperAdmin()` /
+`getScopedStoreId()` helpers; every store-scoped service (`orders.js`,
+`team.js`, `reviews.js`, `customers.js`, `analytics.js`) now accepts and
+filters by `storeId`.
+
+**Customer-facing:** cart now belongs to a resolved store (`lib/store/
+location.js`, `lib/store/cart.js`) — the nearest active store is resolved
+via a new `getNearestActiveStore()` (`lib/data/stores.js`), replacing the
+`stores[0]`/`findFirst` shortcuts previously used independently in
+checkout UI and the order API. Adding a product not carried by the
+resolved store is blocked; switching stores with items already in cart
+prompts a clear-and-switch confirmation. Delivery orders now persist the
+resolved store's id (`app/api/orders/route.js`) instead of always `null`.
+
+**Admin — Order Operations (`/admin/orders/[id]`, new):** full status
+timeline (`OrderStatusHistory`, who/when), editable packing notes, rider
+name/phone assignment, print-friendly invoice (`@media print`), refund
+request initiation for cancelled/returned orders. Store-scoped: 404s for
+orders outside a Store Admin's own store, enforced on both the page view
+and every mutating server action.
+
+**Admin — Inventory folded into Products:** the standalone `/admin/
+inventory` screen is gone; `StockAdjuster` now takes a `storeId` and the
+Products table shows a per-store stock breakdown (Store Admins see only
+their store's row; Super Admin sees/adjusts all). New products are now
+auto-connected to every active store with zero-stock `StoreInventory`
+rows on creation (previously new products had no store connection or
+stock rows at all).
+
+**Real bugs found and fixed during a full audit pass** (this work was
+largely produced by another tool while the assistant was rate-limited;
+everything below was verified and corrected before this commit):
+- `updateTeamMemberRoleAction` had **no store-scoping or role-ceiling
+  check at all** — any store_manager could have promoted any user, in any
+  store, to Super Admin via a direct call. Now validates the target user
+  is in the caller's own store and rejects granting/touching the `admin`
+  role unless the caller already is one. Same class of gap closed in
+  `inviteTeamMemberAction` (a store_manager could otherwise invite a new
+  Super Admin outright).
+- `app/admin/orders/actions.js`'s mutating actions (advance/cancel status,
+  packing notes, rider assignment, refund requests) had **no store-
+  scoping check** — a Store Admin could mutate another store's orders via
+  a crafted request even though the page view was correctly scoped. Added
+  `assertOrderAccess()` (new `getOrderStoreId()` in `services/orders.js`).
+- `getCustomerWithOrders` only filtered the *orders* list by store, not
+  the customer row itself — a Store Admin could view any customer's name/
+  email/phone/addresses by direct URL even for customers who never
+  ordered from their store. Added a `notFound()` check.
+- `services/products.js`'s `listProducts`/`getProductById` overwrote
+  `product.images` unconditionally with (empty, for every pre-existing
+  product) `ProductMedia` rows, with no fallback to the legacy `images`
+  JSON column. Since `ProductFormModal` pre-fills its image field from
+  `product.images`, editing **any of the 33 real existing products**
+  would have shown an empty image field and silently wiped that
+  product's images on save. Added a fallback (`resolveImages()`) —
+  matches the fallback the storefront-facing `lib/data/products.js`
+  already had correctly.
+- `/admin/orders/[id]`'s Prisma query ordered `statusHistory` by
+  `createdAt`, a field that doesn't exist on `OrderStatusHistory` (it's
+  `timestamp`) — would have thrown on every page load. Same wrong-field
+  bug also referenced in the client's timeline render and price display
+  (`item.price` instead of `OrderItem.unitPrice`) — all `NaN`/crash paths
+  fixed.
+- The Order Operations totals card displayed `order.subtotal`/
+  `deliveryFee`/`discount`, none of which exist on `Order` (only `total`
+  is stored) — rendered as `₹NaN`. Replaced with a subtotal recomputed
+  from `order.items` plus the applied coupon code, rather than fabricating
+  fields that were never persisted.
+- Products list's per-store stock adjuster only branched on
+  `role.name === "store_manager"`, leaving `staff` users looking at (and
+  clicking, then silently failing on) every other store's adjuster.
+  Server-side mutation was already correctly blocked either way, but
+  fixed the UI to scope `staff` the same as `store_manager`.
+
+**Not yet built** (left as-is, flagged for a follow-up decision rather
+than built silently): product media gallery UI on the PDP, wishlist DB
+sync, and a proposed Coupon/Offer → single `Promotion` model rewrite —
+the last one involves dropping two working models and needs explicit
+sign-off before proceeding, not assumed.
+
+---
+
 ## Milestone 10 — Admin CMS, Real Reviews, Storefront Polish (2026-07-30)
 
 **Password visibility toggle:** new shared `components/ui/PasswordInput.js`

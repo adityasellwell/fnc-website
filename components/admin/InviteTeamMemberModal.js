@@ -19,7 +19,7 @@ function SubmitButton() {
   );
 }
 
-export default function InviteTeamMemberModal({ roles }) {
+export default function InviteTeamMemberModal({ roles, currentUser, stores = [] }) {
   const [open, setOpen] = useState(false);
 
   async function handleSubmit(formData) {
@@ -51,6 +51,19 @@ export default function InviteTeamMemberModal({ roles }) {
             <label className="font-body text-xs font-semibold text-charcoal">Email</label>
             <input name="email" type="email" required className={inputClasses} placeholder="them@example.com" />
           </div>
+          {currentUser?.role?.name === "admin" && (
+            <div className="flex flex-col gap-1.5">
+              <label className="font-body text-xs font-semibold text-charcoal">Store</label>
+              <select name="storeId" className={inputClasses}>
+                <option value="">Head Office / All Stores</option>
+                {stores.map((s) => (
+                  <option key={s.id} value={s.id}>
+                    {s.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+          )}
           <div className="flex flex-col gap-1.5">
             <label className="font-body text-xs font-semibold text-charcoal">Role</label>
             <select name="roleId" required className={inputClasses}>

@@ -1,5 +1,6 @@
 import { getSettings } from "@/services/settings";
 import { updateSettingsAction } from "./actions";
+import { requireFullAdminUser } from "@/lib/admin-auth";
 
 export const metadata = { title: "Settings — Admin" };
 
@@ -7,6 +8,7 @@ const inputClasses =
   "w-full h-11 px-3.5 rounded-xl border border-bordergray bg-white font-body text-sm text-charcoal placeholder:text-slate focus:border-fnc-red focus:outline-none transition-colors";
 
 export default async function AdminSettingsPage() {
+  await requireFullAdminUser();
   const settings = await getSettings();
 
   return (

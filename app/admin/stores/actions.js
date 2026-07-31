@@ -1,7 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { requireAdminUser } from "@/lib/admin-auth";
+import { requireFullAdminUser } from "@/lib/admin-auth";
 import { createStoreAdmin, updateStoreAdmin, deleteStoreAdmin } from "@/services/stores";
 
 const DAYS = ["mon", "tue", "wed", "thu", "fri", "sat", "sun"];
@@ -33,7 +33,7 @@ function parseStoreForm(formData) {
 }
 
 export async function createStoreAction(formData) {
-  await requireAdminUser();
+  await requireFullAdminUser();
   await createStoreAdmin(parseStoreForm(formData));
   revalidatePath("/admin/stores");
   revalidatePath("/stores");
@@ -41,7 +41,7 @@ export async function createStoreAction(formData) {
 }
 
 export async function updateStoreAction(id, formData) {
-  await requireAdminUser();
+  await requireFullAdminUser();
   await updateStoreAdmin(id, parseStoreForm(formData));
   revalidatePath("/admin/stores");
   revalidatePath("/stores");
@@ -49,7 +49,7 @@ export async function updateStoreAction(id, formData) {
 }
 
 export async function deleteStoreAction(id) {
-  await requireAdminUser();
+  await requireFullAdminUser();
   await deleteStoreAdmin(id);
   revalidatePath("/admin/stores");
   revalidatePath("/stores");

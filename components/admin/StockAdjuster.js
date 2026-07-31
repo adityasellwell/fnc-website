@@ -2,16 +2,16 @@
 
 import { useState, useTransition } from "react";
 import { Minus, Plus, Loader2 } from "lucide-react";
-import { updateStockAction } from "@/app/admin/inventory/actions";
+import { updateStoreStockAction } from "@/app/admin/products/actions";
 
-export default function StockAdjuster({ productId, stock }) {
+export default function StockAdjuster({ productId, storeId, stock }) {
   const [value, setValue] = useState(stock);
   const [pending, startTransition] = useTransition();
 
   function adjust(delta) {
     const next = Math.max(0, value + delta);
     setValue(next);
-    startTransition(() => updateStockAction(productId, next));
+    startTransition(() => updateStoreStockAction(productId, storeId, next));
   }
 
   return (

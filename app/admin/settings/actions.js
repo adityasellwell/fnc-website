@@ -1,11 +1,11 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { requireAdminUser } from "@/lib/admin-auth";
+import { requireFullAdminUser } from "@/lib/admin-auth";
 import { updateSettings } from "@/services/settings";
 
 export async function updateSettingsAction(formData) {
-  await requireAdminUser();
+  await requireFullAdminUser();
 
   const data = {
     deliveryRadiusKm: parseFloat(formData.get("deliveryRadiusKm")),
