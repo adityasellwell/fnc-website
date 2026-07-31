@@ -20,6 +20,7 @@ import {
   Store as StoreIcon,
   Star,
   FileText,
+  Undo2,
 } from "lucide-react";
 import SignOutButton from "@/components/auth/SignOutButton";
 import { BRAND } from "@/lib/constants";
@@ -38,6 +39,7 @@ const ICONS = {
   StoreIcon,
   Star,
   FileText,
+  Undo2,
 };
 
 export default function AdminShell({ user, nav, children }) {

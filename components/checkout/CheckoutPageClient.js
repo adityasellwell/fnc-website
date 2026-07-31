@@ -13,12 +13,14 @@ import {
   ExternalLink,
   Navigation,
   MapPin,
+  Tag,
 } from "lucide-react";
 import Section from "@/components/layout/Section";
 import Button from "@/components/ui/Button";
 import { useCartStore } from "@/lib/store/cart";
 import { useLocationStore } from "@/lib/store/location";
 import { reverseGeocode } from "@/lib/utils/geocode";
+import { validatePromoCodeAction } from "@/app/checkout/actions";
 
 const initialValues = {
   name: "",
@@ -88,6 +90,44 @@ export default function CheckoutPageClient({ stores = [], settings = {} }) {
   const [coords, setCoords] = useState(null);
   const [locating, setLocating] = useState(false);
   const [locateError, setLocateError] = useState("");
+
+  // Promo code
+  const [promoInput, setPromoInput] = useState("");
+  const [appliedPromo, setAppliedPromo] = useState(null); // { code, discount, title }
+  const [promoError, setPromoError] = useState("");
+  const [checkingPromo, setCheckingPromo] = useState(false);
+
+  async function handleApplyPromo() {
+    setCheckingPromo(true);
+    setPromoError("");
+    const result = await validatePromoCodeAction(promoInput, subtotal);
+    setCheckingPromo(false);
+    if (!result.ok) {
+      setPromoError(result.error);
+      setAppliedPromo(null);
+      return;
+    }
+    setAppliedPromo(result);
+  }
+
+  function handleRemovePromo() {
+    setAppliedPromo(null);
+    setPromoInput("");
+    setPromoError("");
+  }
+
+  // Auto-apply a code left behind by a /promo/[code] campaign page visit —
+  // one-shot, cleared immediately so it doesn't reapply on a later, unrelated visit.
+  useEffect(() => {
+    const pending = localStorage.getItem("fnc_pending_promo");
+    if (!pending || subtotal <= 0) return;
+    localStorage.removeItem("fnc_pending_promo");
+    setPromoInput(pending);
+    validatePromoCodeAction(pending, subtotal).then((result) => {
+      if (result.ok) setAppliedPromo(result);
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const cartStoreId = useCartStore((s) => s.storeId);
   const locationStoreId = useLocationStore((s) => s.storeId);
@@ -320,6 +360,7 @@ export default function CheckoutPageClient({ stores = [], settings = {} }) {
           items: items.map((i) => ({ productId: i.productId, quantity: i.qty })),
           fulfillmentType,
           storeId: fulfillmentType === "PICKUP" ? store?.id : undefined,
+          couponCode: appliedPromo?.code || undefined,
           deliveryAddress:
             fulfillmentType === "DELIVERY"
               ? {
@@ -720,9 +761,55 @@ export default function CheckoutPageClient({ stores = [], settings = {} }) {
               </span>
             </div>
           )}
-          <div className="flex items-center justify-between font-body text-base font-bold text-charcoal pt-3 border-t border-bordergray">
+
+          {/* Promo code */}
+          <div className="border-t border-bordergray pt-3">
+            {appliedPromo ? (
+              <div className="flex items-center justify-between font-body text-sm">
+                <span className="flex items-center gap-1.5 text-fnc-green font-semibold">
+                  <Tag className="h-3.5 w-3.5" />
+                  {appliedPromo.code} applied
+                </span>
+                <button type="button" onClick={handleRemovePromo} className="text-xs text-slate hover:text-fnc-red transition-colors">
+                  Remove
+                </button>
+              </div>
+            ) : (
+              <div className="flex flex-col gap-1.5">
+                <div className="flex gap-2">
+                  <input
+                    type="text"
+                    value={promoInput}
+                    onChange={(e) => setPromoInput(e.target.value)}
+                    placeholder="Promo code"
+                    className="flex-1 h-10 px-3 rounded-lg border border-bordergray bg-white font-body text-sm text-charcoal placeholder:text-slate focus:border-fnc-red focus:outline-none transition-colors uppercase"
+                  />
+                  <button
+                    type="button"
+                    onClick={handleApplyPromo}
+                    disabled={checkingPromo || !promoInput.trim()}
+                    className="h-10 px-4 rounded-lg border border-charcoal text-charcoal font-body text-xs font-semibold hover:bg-warmwhite transition-colors disabled:opacity-50"
+                  >
+                    {checkingPromo ? <Loader2 className="h-4 w-4 animate-spin" /> : "Apply"}
+                  </button>
+                </div>
+                {promoError && <p className="font-body text-xs text-fnc-red">{promoError}</p>}
+              </div>
+            )}
+          </div>
+
+          {appliedPromo && (
+            <div className="flex items-center justify-between font-body text-sm text-fnc-green font-semibold">
+              <span>Discount</span>
+              <span>-₹{appliedPromo.discount.toFixed(2)}</span>
+            </div>
+          )}
+
+          <div className="flex items-center justify-between font-display text-base font-bold text-charcoal pt-3 border-t border-bordergray">
             <span>Order Total</span>
-            <span>₹{subtotal + (fulfillmentType === "DELIVERY" ? deliveryFee : 0)}</span>
+            <span>
+              ₹{Math.max(0, subtotal + (fulfillmentType === "DELIVERY" ? deliveryFee : 0) - (appliedPromo?.discount ?? 0)).toFixed(2)}
+            </span>
           </div>
           <Link href="/cart" className="font-body text-xs text-slate hover:text-fnc-red transition-colors text-center">
             Edit cart

@@ -1,9 +1,10 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { ShoppingCart, Check } from "lucide-react";
 import Button from "@/components/ui/Button";
 import { useCartStore } from "@/lib/store/cart";
+import { useLocationStore } from "@/lib/store/location";
 
 /**
  * Small client island so the product detail page (mostly static content)
@@ -12,8 +13,20 @@ import { useCartStore } from "@/lib/store/cart";
  */
 export default function AddToCartButton({ product, image, className }) {
   const [added, setAdded] = useState(false);
+  const [mounted, setMounted] = useState(false);
   const addItem = useCartStore((s) => s.addItem);
   const forceAddItem = useCartStore((s) => s.forceAddItem);
+  const storeId = useLocationStore((s) => s.storeId);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  // Gated behind `mounted` — the resolved store only exists client-side
+  // (persisted Zustand store), so checking it during SSR would always
+  // read the pre-hydration default and mismatch on first render.
+  const storeInv = product.storeInventory?.find((i) => i.storeId === storeId);
+  const isOutOfStock = mounted && storeId && (!storeInv || storeInv.stock <= 0);
 
   function handleAddToCart(force = false) {
     const item = {
@@ -48,10 +61,13 @@ export default function AddToCartButton({ product, image, className }) {
       type="button"
       size="lg"
       onClick={() => handleAddToCart()}
+      disabled={isOutOfStock}
       aria-live="polite"
       className={className}
     >
-      {added ? (
+      {isOutOfStock ? (
+        "Out of Stock"
+      ) : added ? (
         <>
           <Check className="h-5 w-5" />
           Added to Cart

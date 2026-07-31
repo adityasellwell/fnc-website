@@ -4,6 +4,57 @@ Milestone-level log per `Project-instructions.md` §10 process. Newest first.
 
 ---
 
+## Milestone 12 — Product Media/Stock Gating, Wishlist Sync, Promotions Rewrite, Refunds (2026-07-31)
+
+Completes the phases left open at the end of Milestone 11.
+
+**Storefront:** `AddToCartButton`/`BuyNowButton` on the product detail page
+now disable (and label "Out of Stock") using the same per-store
+`StoreInventory` check `ProductCard` already had, gated behind a `mounted`
+flag so it never mismatches server-rendered HTML. PDP image fallback now
+tries the product's own legacy image before the generic category image
+(`ProductMediaGallery` still wins once a product has real `ProductMedia`
+rows).
+
+**Wishlist:** `app/wishlist/actions.js` (`getWishlistAction`,
+`toggleWishlistAction`, `syncWishlistAction`) — signed-in customers get a
+real DB-backed wishlist (`Wishlist` model already existed, just wasn't
+used) that follows them across devices. Guests keep the existing
+localStorage-only Zustand store unchanged. On sign-in, the wishlist page
+does a one-time merge of local items into the account, then loads the
+account's list as the source of truth.
+
+**Promotions:** `Coupon` and `Offer` — two overlapping models with zero
+live rows in production (checked before touching anything) — merged into
+one `Promotion` model (`type: COUPON | OFFER`, `discountType: PERCENT |
+FLAT | BOGO`, optional `code`, `bannerImage`, `startsAt`/`endsAt`).
+`/admin/coupons` (kept the URL/nav label to avoid unnecessary churn) now
+manages Promotions instead. Checkout gained an actual promo-code input
+(there wasn't one before, even though `/api/orders` already accepted
+`couponCode`) with live discount preview via a new
+`validatePromoCodeAction`, real order-total math replacing the input, and
+a `/promo/[code]` campaign landing page that auto-applies its code at
+checkout via a one-shot localStorage handoff.
+
+**Refunds:** `/admin/refunds` — a Super-Admin-only board (separation of
+duties: Store Admins can already *initiate* a refund from the Order
+Operations page, but approving one moves real money) to approve/reject
+pending `RefundRequest` rows; approval marks the order `REFUNDED` and
+writes an `OrderStatusHistory` entry, same mechanism every other status
+change uses.
+
+**Contact form:** now actually saves to a new `ContactMessage` model
+instead of a `setTimeout` that faked success (there was no backend for it
+at all before this).
+
+**Files:** `prisma/migrations/20260731154412_promotion_and_contact_message/`,
+`services/promotions.js` (replaces `services/coupons.js`), `services/
+refunds.js`, `app/admin/coupons/*`, `app/admin/refunds/*`, `app/checkout/
+actions.js`, `app/contact/actions.js`, `app/wishlist/actions.js`,
+`app/promo/[code]/page.js`, `components/promo/PromoAutoApply.js`.
+
+---
+
 ## Milestone 11 — Multi-Store Admin, Store-Scoped Inventory, Order Operations (2026-07-31)
 
 **Schema:** `StoreInventory` (per-store product stock, replaces the old

@@ -25,6 +25,7 @@ function toDateInputValue(date) {
 
 export default function CouponFormModal({ trigger, coupon, action, title }) {
   const [open, setOpen] = useState(false);
+  const [type, setType] = useState(coupon?.type ?? "COUPON");
 
   async function handleSubmit(formData) {
     await action(formData);
@@ -38,26 +39,53 @@ export default function CouponFormModal({ trigger, coupon, action, title }) {
         <form action={handleSubmit} className="flex flex-col gap-4">
           <div className="grid sm:grid-cols-2 gap-4">
             <div className="flex flex-col gap-1.5">
-              <label className="font-body text-xs font-semibold text-charcoal">Code</label>
-              <input name="code" defaultValue={coupon?.code} placeholder="WELCOME10" required className={`${inputClasses} uppercase`} />
+              <label className="font-body text-xs font-semibold text-charcoal">Promotion type</label>
+              <select name="type" value={type} onChange={(e) => setType(e.target.value)} className={inputClasses}>
+                <option value="COUPON">Coupon (customer types a code)</option>
+                <option value="OFFER">Offer (auto-applied campaign)</option>
+              </select>
             </div>
             <div className="flex flex-col gap-1.5">
-              <label className="font-body text-xs font-semibold text-charcoal">Type</label>
-              <select name="type" defaultValue={coupon?.type ?? "PERCENT"} className={inputClasses}>
+              <label className="font-body text-xs font-semibold text-charcoal">
+                Code{type === "OFFER" ? " (optional)" : ""}
+              </label>
+              <input name="code" defaultValue={coupon?.code ?? ""} placeholder="WELCOME10" required={type === "COUPON"} className={`${inputClasses} uppercase`} />
+            </div>
+          </div>
+
+          <div className="flex flex-col gap-1.5">
+            <label className="font-body text-xs font-semibold text-charcoal">Title</label>
+            <input name="title" defaultValue={coupon?.title} placeholder="Welcome offer" required className={inputClasses} />
+          </div>
+
+          <div className="flex flex-col gap-1.5">
+            <label className="font-body text-xs font-semibold text-charcoal">Description (optional)</label>
+            <input name="description" defaultValue={coupon?.description ?? ""} placeholder="10% off your first order" className={inputClasses} />
+          </div>
+
+          <div className="grid sm:grid-cols-2 gap-4">
+            <div className="flex flex-col gap-1.5">
+              <label className="font-body text-xs font-semibold text-charcoal">Discount type</label>
+              <select name="discountType" defaultValue={coupon?.discountType ?? "PERCENT"} className={inputClasses}>
                 <option value="PERCENT">Percent off</option>
                 <option value="FLAT">Flat amount off</option>
+                <option value="BOGO">Buy One Get One</option>
               </select>
+            </div>
+            <div className="flex flex-col gap-1.5">
+              <label className="font-body text-xs font-semibold text-charcoal">Value</label>
+              <input name="value" type="number" step="0.01" defaultValue={coupon ? Number(coupon.value) : ""} required className={inputClasses} />
             </div>
           </div>
 
           <div className="grid sm:grid-cols-2 gap-4">
             <div className="flex flex-col gap-1.5">
-              <label className="font-body text-xs font-semibold text-charcoal">Value</label>
-              <input name="value" type="number" step="0.01" defaultValue={coupon ? Number(coupon.value) : ""} required className={inputClasses} />
-            </div>
-            <div className="flex flex-col gap-1.5">
               <label className="font-body text-xs font-semibold text-charcoal">Min. order value (optional)</label>
               <input name="minOrderValue" type="number" step="0.01" defaultValue={coupon?.minOrderValue ? Number(coupon.minOrderValue) : ""} className={inputClasses} />
+            </div>
+            <div className="flex flex-col gap-1.5">
+              <label className="font-body text-xs font-semibold text-charcoal">Usage limit (optional)</label>
+              <input name="usageLimit" type="number" defaultValue={coupon?.usageLimit ?? ""} className={inputClasses} />
             </div>
           </div>
 
@@ -74,14 +102,19 @@ export default function CouponFormModal({ trigger, coupon, action, title }) {
             </p>
           </div>
 
+          <div className="flex flex-col gap-1.5">
+            <label className="font-body text-xs font-semibold text-charcoal">Banner image URL (optional)</label>
+            <input name="bannerImage" defaultValue={coupon?.bannerImage ?? ""} placeholder="/images/banners/welcome-offer.jpg" className={inputClasses} />
+          </div>
+
           <div className="grid sm:grid-cols-2 gap-4">
             <div className="flex flex-col gap-1.5">
-              <label className="font-body text-xs font-semibold text-charcoal">Expiry date</label>
-              <input name="expiryDate" type="date" defaultValue={toDateInputValue(coupon?.expiryDate)} required className={inputClasses} />
+              <label className="font-body text-xs font-semibold text-charcoal">Starts (optional)</label>
+              <input name="startsAt" type="date" defaultValue={toDateInputValue(coupon?.startsAt)} className={inputClasses} />
             </div>
             <div className="flex flex-col gap-1.5">
-              <label className="font-body text-xs font-semibold text-charcoal">Usage limit (optional)</label>
-              <input name="usageLimit" type="number" defaultValue={coupon?.usageLimit ?? ""} className={inputClasses} />
+              <label className="font-body text-xs font-semibold text-charcoal">Ends (optional)</label>
+              <input name="endsAt" type="date" defaultValue={toDateInputValue(coupon?.endsAt)} className={inputClasses} />
             </div>
           </div>
 
@@ -94,7 +127,7 @@ export default function CouponFormModal({ trigger, coupon, action, title }) {
             <button type="button" onClick={() => setOpen(false)} className="h-11 px-4 font-body text-sm font-semibold text-charcoal hover:bg-warmwhite rounded-xl transition-colors">
               Cancel
             </button>
-            <SubmitButton label={coupon ? "Save Changes" : "Create Coupon"} />
+            <SubmitButton label={coupon ? "Save Changes" : "Create Promotion"} />
           </div>
         </form>
       </Modal>

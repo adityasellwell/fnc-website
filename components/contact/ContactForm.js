@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { Loader2, CheckCircle2 } from "lucide-react";
 import Button from "@/components/ui/Button";
+import { submitContactMessageAction } from "@/app/contact/actions";
 
 const initialValues = { name: "", email: "", phone: "", message: "" };
 
@@ -38,10 +39,8 @@ export default function ContactForm() {
 
     setStatus("submitting");
     try {
-      // TODO: wire to a contact API route (e.g. POST /api/contact) once
-      // one exists. There isn't one in this codebase yet, so this only
-      // simulates the request rather than silently faking a real send.
-      await new Promise((resolve) => setTimeout(resolve, 700));
+      const result = await submitContactMessageAction(values);
+      if (!result.ok) throw new Error(result.error);
       setStatus("success");
       setValues(initialValues);
     } catch {

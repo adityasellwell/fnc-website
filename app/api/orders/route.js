@@ -185,9 +185,12 @@ export async function POST(request) {
     let coupon = null;
 
     if (couponCode) {
-      coupon = await db.coupon.findUnique({ where: { code: couponCode } });
+      coupon = await db.promotion.findUnique({ where: { code: couponCode } });
 
-      if (!coupon || !coupon.active || coupon.expiryDate < new Date()) {
+      const now = new Date();
+      const isExpired = coupon?.endsAt && coupon.endsAt < now;
+      const isNotStartedYet = coupon?.startsAt && coupon.startsAt > now;
+      if (!coupon || !coupon.active || isExpired || isNotStartedYet) {
         return NextResponse.json(
           { error: "Invalid or expired coupon code" },
           { status: 400 }
@@ -209,9 +212,11 @@ export async function POST(request) {
       }
 
       const discount =
-        coupon.type === "PERCENT"
+        coupon.discountType === "PERCENT"
           ? subtotal * (Number(coupon.value) / 100)
-          : Number(coupon.value);
+          : coupon.discountType === "FLAT"
+          ? Number(coupon.value)
+          : 0; // BOGO discounts aren't computed as a flat cart discount here
       total = Math.max(0, subtotal - discount);
     }
 
@@ -315,7 +320,7 @@ export async function POST(request) {
       });
 
       if (coupon) {
-        await tx.coupon.update({
+        await tx.promotion.update({
           where: { id: coupon.id },
           data: { usedCount: { increment: 1 } },
         });

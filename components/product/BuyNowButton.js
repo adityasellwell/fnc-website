@@ -1,10 +1,11 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { Loader2, Zap } from "lucide-react";
 import Button from "@/components/ui/Button";
 import { useCartStore } from "@/lib/store/cart";
+import { useLocationStore } from "@/lib/store/location";
 
 /**
  * Adds the item to cart and jumps straight to /checkout — a shortcut for
@@ -13,9 +14,18 @@ import { useCartStore } from "@/lib/store/cart";
  */
 export default function BuyNowButton({ product, image, className }) {
   const [pending, setPending] = useState(false);
+  const [mounted, setMounted] = useState(false);
   const router = useRouter();
   const addItem = useCartStore((s) => s.addItem);
   const forceAddItem = useCartStore((s) => s.forceAddItem);
+  const storeId = useLocationStore((s) => s.storeId);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  const storeInv = product.storeInventory?.find((i) => i.storeId === storeId);
+  const isOutOfStock = mounted && storeId && (!storeInv || storeInv.stock <= 0);
 
   function handleBuyNow(force = false) {
     const item = {
@@ -51,11 +61,17 @@ export default function BuyNowButton({ product, image, className }) {
       size="lg"
       variant="secondary"
       onClick={() => handleBuyNow()}
-      disabled={pending}
+      disabled={pending || isOutOfStock}
       className={className}
     >
-      {pending ? <Loader2 className="h-5 w-5 animate-spin" /> : <Zap className="h-5 w-5" />}
-      Buy Now
+      {isOutOfStock ? (
+        "Out of Stock"
+      ) : (
+        <>
+          {pending ? <Loader2 className="h-5 w-5 animate-spin" /> : <Zap className="h-5 w-5" />}
+          Buy Now
+        </>
+      )}
     </Button>
   );
 }

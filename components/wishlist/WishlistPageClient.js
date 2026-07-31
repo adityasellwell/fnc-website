@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useRef } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { Heart, Trash2, ShoppingCart } from "lucide-react";
@@ -7,6 +8,8 @@ import Section from "@/components/layout/Section";
 import Button from "@/components/ui/Button";
 import { useWishlistStore } from "@/lib/store/wishlist";
 import { useCartStore } from "@/lib/store/cart";
+import { useAuth } from "@/components/auth/AuthProvider";
+import { getWishlistAction, syncWishlistAction } from "@/app/wishlist/actions";
 
 function WishlistCard({ item }) {
   const remove = useWishlistStore((s) => s.remove);
@@ -49,6 +52,24 @@ function WishlistCard({ item }) {
 
 export default function WishlistPageClient() {
   const items = useWishlistStore((s) => s.items);
+  const hydrate = useWishlistStore((s) => s.hydrate);
+  const { isSignedIn, loading } = useAuth();
+  const synced = useRef(false);
+
+  useEffect(() => {
+    if (loading || !isSignedIn || synced.current) return;
+    synced.current = true;
+    // One-time merge of whatever was saved locally as a guest into the
+    // real account, then load the account's real (possibly multi-device)
+    // wishlist as the source of truth from here on.
+    const localProductIds = useWishlistStore.getState().items.map((i) => i.productId);
+    syncWishlistAction(localProductIds)
+      .then(() => getWishlistAction())
+      .then((dbItems) => {
+        if (dbItems) hydrate(dbItems);
+      })
+      .catch(() => {});
+  }, [isSignedIn, loading, hydrate]);
 
   return (
     <Section background="offwhite" spacing="md">

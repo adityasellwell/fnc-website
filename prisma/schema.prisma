@@ -91,8 +91,7 @@ model Product {
   reviews      Review[]
   orderItems   OrderItem[]
   wishlistedBy Wishlist[]
-  offers       Offer[]     @relation("OfferProducts")
-  coupons      Coupon[]    @relation("CouponProducts")
+  promotions   Promotion[] @relation("PromotionProducts")
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -440,58 +439,51 @@ model OrderStatusHistory {
 // Coupons, offers, banners
 // ---------------------------------------------------------------------
 
-enum CouponType {
-  PERCENT
-  FLAT
+// Coupon and Offer were two separate, overlapping models (a discount code
+// vs. a promotional banner+products bundle) with zero live rows in
+// production — merged into one Promotion model rather than kept as two,
+// since a "campaign" is really the same concept whether or not it has a
+// customer-entered code attached (COUPON) or is just auto-applied via a
+// banner/landing page (OFFER).
+enum PromotionType {
+  COUPON
+  OFFER
 }
 
-enum CouponAppliesTo {
+enum PromotionDiscountType {
+  PERCENT
+  FLAT
+  BOGO
+}
+
+enum PromotionAppliesTo {
   PRODUCT
   CATEGORY
   CART
 }
 
-model Coupon {
-  id              String          @id @default(cuid())
-  code            String          @unique
-  type            CouponType
-  value           Decimal         @db.Decimal(10, 2)
-  minOrderValue   Decimal?        @db.Decimal(10, 2)
-  appliesTo       CouponAppliesTo
-  // Only set when appliesTo is PRODUCT/CATEGORY respectively — not in
-  // §7's shorthand, but "appliesTo: product|category" is meaningless
-  // without knowing *which* product/category it's scoped to.
-  scopeProducts   Product[]       @relation("CouponProducts")
+model Promotion {
+  id           String                @id @default(cuid())
+  type         PromotionType         @default(COUPON)
+  // Required for COUPON (customer types this at checkout), optional for
+  // OFFER (auto-applied via its /promo/[code] landing page or just shown
+  // as a banner) — enforced at the form/action layer, not a DB constraint,
+  // matching how Review's productId/storeId polymorphism is validated.
+  code         String?               @unique
+  title        String
+  description  String?
+  discountType PromotionDiscountType
+  value        Decimal               @db.Decimal(10, 2)
+  minOrderValue Decimal?             @db.Decimal(10, 2)
+  appliesTo    PromotionAppliesTo    @default(CART)
+  scopeProducts   Product[]          @relation("PromotionProducts")
   scopeCategoryId String?
-  expiryDate      DateTime
-  usageLimit      Int?
-  usedCount       Int             @default(0)
-  active          Boolean         @default(true)
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  @@index([active])
-}
-
-enum OfferType {
-  FLASH
-  FESTIVAL
-  COMBO
-  BOGO
-}
-
-model Offer {
-  id          String    @id @default(cuid())
-  type        OfferType
-  title       String
-  discount    String
-  startsAt    DateTime
-  endsAt      DateTime
-  bannerImage String?
-  active      Boolean   @default(true)
-
-  products Product[] @relation("OfferProducts")
+  bannerImage  String?
+  startsAt     DateTime?
+  endsAt       DateTime?
+  usageLimit   Int?
+  usedCount    Int                   @default(0)
+  active       Boolean               @default(true)
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -657,6 +649,17 @@ model Page {
   content   String   @db.Text
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+}
+
+model ContactMessage {
+  id        String   @id @default(cuid())
+  name      String
+  email     String
+  phone     String?
+  message   String   @db.Text
+  createdAt DateTime @default(now())
+
+  @@index([createdAt])
 }
 
 model ProductMedia {

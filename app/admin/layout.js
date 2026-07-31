@@ -9,6 +9,7 @@ const SUPER_ADMIN_NAV = [
   { href: "/admin/customers", label: "Customers", icon: "Users" },
   { href: "/admin/reviews", label: "Reviews", icon: "Star" },
   { href: "/admin/coupons", label: "Coupons", icon: "Ticket" },
+  { href: "/admin/refunds", label: "Refunds", icon: "Undo2" },
   { href: "/admin/banners", label: "Banners", icon: "ImageIcon" },
   { href: "/admin/stores", label: "Stores", icon: "StoreIcon" },
   { href: "/admin/pages", label: "Pages", icon: "FileText" },

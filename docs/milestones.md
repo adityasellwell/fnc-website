@@ -73,3 +73,14 @@ availability), and an Order Operations workspace (status timeline,
 packing notes, rider assignment, print invoice, refund requests). Full
 detail in `docs/changelog.md`, including a list of real bugs found and
 fixed during a full audit pass before this was committed.
+
+---
+
+## 12 — Product Media/Stock Gating, Wishlist Sync, Promotions, Refunds (2026-07-31)
+
+Finished the phases left open at the end of Milestone 11: out-of-stock
+gating on the product page's Add to Cart/Buy Now, a DB-backed wishlist
+for signed-in customers, `Coupon`/`Offer` merged into one `Promotion`
+model (zero live rows in either, confirmed before touching anything) with
+a real checkout promo-code input and a `/promo/[code]` campaign page, and
+a Super-Admin refund approval board. Full detail in `docs/changelog.md`.
