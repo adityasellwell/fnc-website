@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { db } from "@/lib/db";
+import { getSettings } from "@/services/settings";
 
 // GET /api/stores?status=active&page=1&pageSize=100
 //
@@ -41,7 +42,7 @@ export async function GET(request) {
   const where = status ? { status: STATUS_MAP[status] } : {};
 
   try {
-    const [stores, total] = await Promise.all([
+    const [stores, total, settings] = await Promise.all([
       db.store.findMany({
         where,
         orderBy: [{ status: "asc" }, { name: "asc" }],
@@ -49,10 +50,36 @@ export async function GET(request) {
         take: pageSize,
       }),
       db.store.count({ where }),
+      getSettings(),
     ]);
 
+    const mappedStores = stores.map((s) => {
+      let imgs = [];
+      try {
+        imgs = typeof s.images === "string" ? JSON.parse(s.images) : (Array.isArray(s.images) ? s.images : []);
+      } catch (e) {}
+      return {
+        id: s.id,
+        slug: s.slug,
+        name: s.name,
+        status: s.status === "ACTIVE" ? "active" : "coming-soon",
+        address: s.address,
+        city: s.city,
+        state: s.state,
+        geo: { lat: s.latitude, lng: s.longitude },
+        phone: s.phone,
+        whatsapp: s.whatsapp,
+        openingHours: s.openingHours,
+        images: imgs,
+        deliveryAvailable: s.deliveryAvailable,
+        pickupAvailable: s.pickupAvailable,
+        googleMapsLink: s.googleMapsLink,
+      };
+    });
+
     return NextResponse.json({
-      data: stores,
+      data: mappedStores,
+      deliveryRadiusKm: settings.deliveryRadiusKm,
       pagination: {
         page,
         pageSize,

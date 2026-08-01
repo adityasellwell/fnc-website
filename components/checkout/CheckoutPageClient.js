@@ -19,7 +19,7 @@ import Section from "@/components/layout/Section";
 import Button from "@/components/ui/Button";
 import { useCartStore } from "@/lib/store/cart";
 import { useLocationStore } from "@/lib/store/location";
-import { reverseGeocode } from "@/lib/utils/geocode";
+import { reverseGeocode, geocodeAddress } from "@/lib/utils/geocode";
 import { validatePromoCodeAction } from "@/app/checkout/actions";
 
 const initialValues = {
@@ -223,25 +223,22 @@ export default function CheckoutPageClient({ stores = [], settings = {} }) {
     const addressStr = `${addressObj.line1}, ${addressObj.line2 || ""}, ${addressObj.city}, ${addressObj.state} ${addressObj.pincode}`;
 
     try {
-      const res = await fetch(
-        `https://nominatim.openstreetmap.org/search?format=json&limit=1&q=${encodeURIComponent(addressStr)}`,
-        {
-          headers: {
-            Accept: "application/json",
-            "User-Agent": "FncWebsiteDeliveryRadiusEnforcement/1.0",
-          },
-        }
-      );
-      if (!res.ok) throw new Error();
-      const data = await res.json();
-      if (!data || data.length === 0) {
+      const coords = await geocodeAddress(addressStr, {
+        line1: addressObj.line1,
+        line2: addressObj.line2,
+        city: addressObj.city,
+        state: addressObj.state,
+        pincode: addressObj.pincode,
+      });
+
+      if (!coords) {
         setDeliveryError("We couldn't verify this address. Please refine your address or choose Store Pickup.");
         setDeliveryDistance(null);
         setCoords(null);
         return null;
       }
 
-      return applyDistanceCheck(parseFloat(data[0].lat), parseFloat(data[0].lon));
+      return applyDistanceCheck(coords.lat, coords.lng);
     } catch (err) {
       setDeliveryError("Address verification failed. Please check your internet connection, or choose Store Pickup.");
       setDeliveryDistance(null);
@@ -305,6 +302,13 @@ export default function CheckoutPageClient({ stores = [], settings = {} }) {
       { enableHighAccuracy: true, timeout: 8000 }
     );
   }
+
+  useEffect(() => {
+    if (fulfillmentType === "DELIVERY" && typeof window !== "undefined" && navigator.geolocation) {
+      handleUseCurrentLocation();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [fulfillmentType]);
 
   function handleChange(field) {
     return (e) => {
@@ -625,12 +629,40 @@ export default function CheckoutPageClient({ stores = [], settings = {} }) {
                 </p>
               )}
 
-              {store?.name && (
-                <p className="font-body text-xs text-slate flex items-center gap-1.5 -mt-1">
-                  <MapPin className="h-3.5 w-3.5 shrink-0 text-fnc-red" />
-                  Delivering from {store.name}
-                  {store.address ? `, ${store.address}` : ""}
-                </p>
+              {store && (
+                <div className="bg-warmwhite/50 border border-bordergray/60 rounded-2xl p-4 flex flex-col gap-4 font-body text-sm mt-1 shadow-inner w-full">
+                  <div className="flex items-center gap-3">
+                    <div className="h-2 w-2 rounded-full bg-fnc-red animate-pulse shrink-0"></div>
+                    <p className="text-[10px] font-bold text-fnc-red uppercase tracking-wider">Active Route Routing</p>
+                  </div>
+                  
+                  <div className="grid md:grid-cols-2 gap-4 relative">
+                    {/* Left node */}
+                    <div className="flex flex-col gap-1">
+                      <span className="text-[10px] font-bold text-slate uppercase tracking-wider">Ordered From (Store)</span>
+                      <span className="font-display font-bold text-charcoal">{store.name}</span>
+                      <span className="text-xs text-slate truncate">{store.address}</span>
+                    </div>
+
+                    {/* Right node */}
+                    <div className="flex flex-col gap-1">
+                      <span className="text-[10px] font-bold text-slate uppercase tracking-wider">Deliver To (Your Address)</span>
+                      <span className="font-display font-bold text-charcoal">
+                        {values.line1 ? values.line1 : "Detecting Address..."}
+                      </span>
+                      <span className="text-xs text-slate truncate">
+                        {values.city ? `${values.city}, ${values.pincode}` : "Awaiting location verification"}
+                      </span>
+                    </div>
+                  </div>
+
+                  {deliveryDistance !== null && (
+                    <div className="pt-3 border-t border-dashed border-bordergray/80 flex items-center justify-between text-xs">
+                      <span className="text-slate font-medium">Estimated Delivery Distance:</span>
+                      <span className="font-bold text-charcoal">{deliveryDistance.toFixed(1)} km</span>
+                    </div>
+                  )}
+                </div>
               )}
 
               <div className="flex flex-col gap-1.5">

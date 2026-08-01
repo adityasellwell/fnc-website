@@ -8,6 +8,9 @@ import Modal from "./Modal";
 const inputClasses =
   "w-full h-11 px-3.5 rounded-xl border border-bordergray bg-white font-body text-sm text-charcoal placeholder:text-slate focus:border-fnc-red focus:outline-none transition-colors";
 
+const textareaClasses =
+  "w-full px-3.5 py-2.5 rounded-xl border border-bordergray bg-white font-body text-sm text-charcoal placeholder:text-slate focus:border-fnc-red focus:outline-none transition-colors resize-none";
+
 function SubmitButton() {
   const { pending } = useFormStatus();
   return (
@@ -55,7 +58,7 @@ export default function PageFormModal({ trigger, page, action, title, knownSlugs
               defaultValue={page?.content}
               rows={16}
               required
-              className={`${inputClasses} h-auto py-3 font-mono text-xs leading-relaxed resize-y`}
+              className={`${textareaClasses} h-80 py-3 font-mono text-xs leading-relaxed resize-y`}
             />
           </div>
 

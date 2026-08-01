@@ -13,6 +13,7 @@ function parseProductForm(formData) {
     : [];
   const images = [primaryImage, ...additionalImages].filter(Boolean);
   const tags = formData.get("tags")?.toString().trim();
+  const videoUrl = formData.get("videoUrl")?.toString().trim() || null;
 
   return {
     slug: formData.get("slug").toString().trim(),
@@ -26,25 +27,35 @@ function parseProductForm(formData) {
     storageInstructions: formData.get("storageInstructions")?.toString().trim() ?? "",
     tags: tags ? tags.split(",").map((t) => t.trim()).filter(Boolean) : [],
     categoryId: formData.get("categoryId").toString(),
+    videoUrl,
   };
 }
 
 export async function createProductAction(formData) {
-  await requireAdminUser();
+  const admin = await requireAdminUser();
+  if (admin.role.name !== "admin") {
+    throw new Error("Unauthorized: Only super admins can create products");
+  }
   const data = parseProductForm(formData);
   await createProduct({ ...data, nutrition: {} });
   revalidatePath("/admin/products");
 }
 
 export async function updateProductAction(id, formData) {
-  await requireAdminUser();
+  const admin = await requireAdminUser();
+  if (admin.role.name !== "admin") {
+    throw new Error("Unauthorized: Only super admins can edit products");
+  }
   const data = parseProductForm(formData);
   await updateProduct(id, data);
   revalidatePath("/admin/products");
 }
 
 export async function deleteProductAction(id) {
-  await requireAdminUser();
+  const admin = await requireAdminUser();
+  if (admin.role.name !== "admin") {
+    throw new Error("Unauthorized: Only super admins can delete products");
+  }
   await deleteProduct(id);
   revalidatePath("/admin/products");
 }

@@ -21,6 +21,7 @@ import {
   Star,
   FileText,
   Undo2,
+  ShoppingBag,
 } from "lucide-react";
 import SignOutButton from "@/components/auth/SignOutButton";
 import { BRAND } from "@/lib/constants";
@@ -40,6 +41,7 @@ const ICONS = {
   Star,
   FileText,
   Undo2,
+  ShoppingBag,
 };
 
 export default function AdminShell({ user, nav, children }) {
@@ -54,7 +56,7 @@ export default function AdminShell({ user, nav, children }) {
       >
         <div className="h-20 flex items-center justify-between px-4 border-b border-white/10">
           <Link href="/admin" className="flex items-center gap-2.5 min-w-0">
-            <Image src={BRAND.logo} alt={BRAND.name} width={36} height={36} className="h-9 w-9 rounded-full object-contain bg-white shrink-0" />
+            <Image src={BRAND.logo} alt={BRAND.name} width={48} height={48} className="h-10 w-12 rounded-lg object-contain bg-white p-0.5 shrink-0" />
             {!collapsed && <span className="font-display text-base font-bold truncate">F&amp;C Admin</span>}
           </Link>
         </div>
@@ -62,7 +64,7 @@ export default function AdminShell({ user, nav, children }) {
         <nav className="flex-1 flex flex-col gap-1 p-3">
           {nav.map(({ href, label, icon }) => {
             const Icon = ICONS[icon];
-            const active = pathname === href || pathname.startsWith(`${href}/`);
+            const active = href === "/admin" ? pathname === "/admin" : (pathname === href || pathname.startsWith(`${href}/`));
             return (
               <Link
                 key={href}
@@ -101,7 +103,7 @@ export default function AdminShell({ user, nav, children }) {
         {/* Header */}
         <header className="h-20 flex items-center justify-between px-6 sm:px-8 bg-white border-b border-bordergray">
           <div className="md:hidden flex items-center gap-2">
-            <Image src={BRAND.logo} alt={BRAND.name} width={32} height={32} className="h-8 w-8 rounded-full object-contain" />
+            <Image src={BRAND.logo} alt={BRAND.name} width={48} height={48} className="h-10 w-12 rounded-lg object-contain bg-white p-0.5 shrink-0" />
             <span className="font-display text-lg font-bold text-charcoal">F&amp;C Admin</span>
           </div>
           <div className="hidden md:block font-body text-sm text-slate">

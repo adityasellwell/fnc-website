@@ -40,9 +40,9 @@ export default async function Footer() {
               <Image
                 src={BRAND.logo}
                 alt={`${BRAND.fullName} logo`}
-                width={80}
-                height={80}
-                className="h-16 w-16 object-contain"
+                width={120}
+                height={120}
+                className="h-20 w-24 object-contain"
               />
             </Link>
             <p className="font-body text-base text-slate max-w-xs">

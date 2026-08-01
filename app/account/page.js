@@ -4,6 +4,7 @@ import { Heart, Package, MapPin, ChevronRight } from "lucide-react";
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
 import Section from "@/components/layout/Section";
+import ProfileForm from "@/components/account/ProfileForm";
 import Button from "@/components/ui/Button";
 import { getCurrentCustomer } from "@/lib/auth";
 import { db } from "@/lib/db";
@@ -78,7 +79,11 @@ export default async function AccountPage() {
               ) : (
                 <div className="flex flex-col divide-y divide-bordergray">
                   {orders.map((order) => (
-                    <div key={order.id} className="py-5 flex flex-col gap-2">
+                    <Link
+                      key={order.id}
+                      href={`/account/orders/${order.id}`}
+                      className="py-5 flex flex-col gap-2 hover:bg-warmwhite/50 px-3 rounded-2xl -mx-3 transition-colors"
+                    >
                       <div className="flex items-center justify-between gap-3">
                         <p className="font-body text-sm font-semibold text-charcoal">
                           Order #{order.id.slice(-8)}
@@ -101,16 +106,23 @@ export default async function AccountPage() {
                         · {order.items.length} item{order.items.length === 1 ? "" : "s"} ·{" "}
                         {order.fulfillmentType === "DELIVERY" ? "Delivery" : "Pickup"}
                       </p>
-                      <p className="font-display text-sm font-bold text-charcoal">
-                        ₹{Number(order.total).toFixed(0)}
-                      </p>
-                    </div>
+                      <div className="flex items-center justify-between gap-2">
+                        <p className="font-display text-sm font-bold text-charcoal">
+                          ₹{Number(order.total).toFixed(0)}
+                        </p>
+                        <span className="font-body text-xs text-fnc-red font-bold flex items-center gap-0.5">
+                          Track Order <ChevronRight className="h-3.5 w-3.5" />
+                        </span>
+                      </div>
+                    </Link>
                   ))}
                 </div>
               )}
             </div>
 
             <div className="flex flex-col gap-4">
+              <ProfileForm customer={customer} />
+
               <Link
                 href="/wishlist"
                 className="flex items-center gap-4 bg-white border border-bordergray rounded-2xl p-5 hover:border-fnc-red transition-colors"

@@ -3,9 +3,10 @@
 import { useState, useEffect } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, usePathname } from "next/navigation";
 import { useAuth } from "@/components/auth/AuthProvider";
 import { motion, useReducedMotion } from "framer-motion";
+import { cn } from "@/lib/utils";
 import {
   MapPin,
   Search,
@@ -21,8 +22,7 @@ import {
 } from "lucide-react";
 import Container from "./Container";
 import Button from "@/components/ui/Button";
-import { BRAND, NAV_LINKS, CURRENT_LOCATION } from "@/lib/constants";
-import { getStores } from "@/lib/data/stores";
+import { BRAND, NAV_LINKS, CURRENT_LOCATION, CATEGORY_META } from "@/lib/constants";
 import { useCartStore } from "@/lib/store/cart";
 import { useWishlistStore } from "@/lib/store/wishlist";
 import { useLocationStore } from "@/lib/store/location";
@@ -32,6 +32,24 @@ import { haversineDistanceKm } from "@/lib/utils/geo";
 function SearchBar({ className, onSubmitted }) {
   const router = useRouter();
   const [query, setQuery] = useState("");
+  const [isFocused, setIsFocused] = useState(false);
+  const [placeholderIndex, setPlaceholderIndex] = useState(0);
+
+  const placeholders = [
+    "Search for fresh fish...",
+    "Search for juicy chicken...",
+    "Search for organic eggs...",
+    "Search for ocean prawns...",
+    "Search for ready-to-cook marinades...",
+    "Search for mutton & chops...",
+  ];
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setPlaceholderIndex((prev) => (prev + 1) % placeholders.length);
+    }, 3000);
+    return () => clearInterval(timer);
+  }, []);
 
   function handleSubmit(e) {
     e.preventDefault();
@@ -41,34 +59,47 @@ function SearchBar({ className, onSubmitted }) {
     onSubmitted?.();
   }
 
+  const showAnimatedPlaceholder = !query && !isFocused;
+
   return (
     <form
       onSubmit={handleSubmit}
-      className={`flex items-center gap-3 h-11 md:h-12 rounded-full border border-bordergray bg-white/90 backdrop-blur-sm px-5 ${className ?? ""}`}
+      className={`flex items-center gap-3 h-11 md:h-12 rounded-full border border-bordergray bg-white/90 backdrop-blur-sm px-5 relative ${className ?? ""}`}
     >
-      <Search className="h-4 w-4 text-slate shrink-0" />
-      <input
-        type="search"
-        value={query}
-        onChange={(e) => setQuery(e.target.value)}
-        placeholder="Search for fish, chicken, eggs..."
-        className="w-full bg-transparent font-body text-sm text-charcoal placeholder:text-slate focus:outline-none"
-      />
+      <Search className="h-4 w-4 text-fnc-red shrink-0" />
+      <div className="relative w-full h-full flex items-center">
+        {showAnimatedPlaceholder && (
+          <motion.div
+            key={placeholderIndex}
+            initial={{ y: 10, opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            exit={{ y: -10, opacity: 0 }}
+            transition={{ duration: 0.35, ease: "easeInOut" }}
+            className="absolute left-0 text-slate font-body text-sm pointer-events-none select-none"
+          >
+            {placeholders[placeholderIndex]}
+          </motion.div>
+        )}
+        <input
+          type="search"
+          value={query}
+          onFocus={() => setIsFocused(true)}
+          onBlur={() => setIsFocused(false)}
+          onChange={(e) => setQuery(e.target.value)}
+          className="w-full h-full bg-transparent font-body text-sm text-charcoal focus:outline-none z-10"
+        />
+      </div>
     </form>
   );
 }
 
-function CartIcon({ className, scrolled }) {
+function CartIcon({ className }) {
   const count = useCartStore((s) => s.items.reduce((sum, i) => sum + i.qty, 0));
   return (
     <Link
       href="/cart"
       aria-label="Cart"
-      className={`relative h-10 w-10 flex items-center justify-center rounded-full transition-colors ${
-        scrolled
-          ? "text-white hover:bg-white/20"
-          : "text-charcoal hover:bg-warmwhite"
-      } ${className ?? ""}`}
+      className={`relative h-10 w-10 flex items-center justify-center rounded-full transition-colors text-charcoal hover:bg-warmwhite ${className ?? ""}`}
     >
       <ShoppingCart className="h-5 w-5" />
       {count > 0 && (
@@ -100,6 +131,8 @@ function WishlistIcon({ className, textColor, iconHover }) {
 
 export default function Navbar() {
   const { isSignedIn } = useAuth();
+  const pathname = usePathname();
+  const storeId = useLocationStore((s) => s.storeId);
   const [open, setOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
   const [locationLabel, setLocationLabel] = useState(CURRENT_LOCATION.label);
@@ -110,8 +143,9 @@ export default function Navbar() {
   const [pincodeQuery, setPincodeQuery] = useState("");
   const [pincodeError, setPincodeError] = useState("");
   const [storeList, setStoreList] = useState([]);
+  const [deliveryRadius, setDeliveryRadius] = useState(5.0);
 
-  const applyDetectedLocation = (uLat, uLng, geocoded, stores) => {
+  const applyDetectedLocation = (uLat, uLng, geocoded, stores, radius = deliveryRadius) => {
     const activeStores = stores.filter((s) => s.status === "active");
     let nearest = null;
     let minDist = Infinity;
@@ -119,7 +153,7 @@ export default function Navbar() {
       const dist = haversineDistanceKm(uLat, uLng, s.geo.lat, s.geo.lng);
       if (dist < minDist) { minDist = dist; nearest = s; }
     });
-    const isServiceable = nearest !== null && minDist <= 15;
+    const isServiceable = nearest !== null && minDist <= radius;
     const label = geocoded?.short ?? (nearest ? nearest.name.replace("F&C ", "") : "Detected Location");
 
     setLocationLabel(label);
@@ -145,28 +179,31 @@ export default function Navbar() {
     if (saved) setLocationLabel(saved);
     if (savedAddress) setFullAddress(savedAddress);
 
-    getStores().then((stores) => {
-      setStoreList(stores);
+    fetch("/api/stores")
+      .then((res) => res.json())
+      .then((payload) => {
+        const stores = payload.data || [];
+        const radius = payload.deliveryRadiusKm || 5.0;
+        setDeliveryRadius(radius);
+        setStoreList(stores);
 
-      // No saved location yet on this device — silently ask for the
-      // visitor's real position so "Deliver to" reflects them by default,
-      // instead of always showing the store's own city until they open the
-      // picker manually. Fails silently (permission denied/unsupported)
-      // since this runs without the user having asked for it.
-      if (!saved && navigator.geolocation) {
-        navigator.geolocation.getCurrentPosition(
-          async (position) => {
-            const geocoded = await reverseGeocode(
-              position.coords.latitude,
-              position.coords.longitude
-            );
-            applyDetectedLocation(position.coords.latitude, position.coords.longitude, geocoded, stores);
-          },
-          () => {},
-          { timeout: 8000, maximumAge: 300000 }
-        );
-      }
-    });
+        if (!saved && navigator.geolocation) {
+          navigator.geolocation.getCurrentPosition(
+            async (position) => {
+              const geocoded = await reverseGeocode(
+                position.coords.latitude,
+                position.coords.longitude
+              );
+              applyDetectedLocation(position.coords.latitude, position.coords.longitude, geocoded, stores, radius);
+            },
+            () => {},
+            { timeout: 8000, maximumAge: 300000 }
+          );
+        }
+      })
+      .catch((err) => {
+        console.error("Failed to fetch stores in Navbar:", err);
+      });
 
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
@@ -255,7 +292,7 @@ export default function Navbar() {
         className={`sticky top-0 z-50 border-b transition-all duration-300 ${headerBg}`}
       >
         <Container>
-          <div className="flex h-20 md:h-24 items-center gap-4 md:gap-6">
+          <div className="flex h-24 md:h-28 items-center gap-4 md:gap-6">
             {/* Logo */}
             <Link
               href="/"
@@ -265,9 +302,9 @@ export default function Navbar() {
               <Image
                 src={BRAND.logo}
                 alt={`${BRAND.fullName} logo`}
-                width={120}
-                height={120}
-                className="h-16 w-16 md:h-20 md:w-20 object-contain"
+                width={200}
+                height={200}
+                className="h-20 w-24 md:h-24 md:w-32 object-contain"
                 priority
               />
             </Link>
@@ -276,15 +313,24 @@ export default function Navbar() {
             <button
               type="button"
               onClick={() => setIsModalOpen(true)}
-              className="hidden sm:flex items-center gap-1.5 shrink-0 border-l border-bordergray pl-4 h-10 hover:opacity-75 transition-opacity"
+              className="hidden sm:flex items-center gap-2 shrink-0 border-l border-bordergray pl-4 h-12 hover:opacity-75 transition-opacity"
             >
-              <MapPin className="h-4 w-4 text-fnc-red shrink-0" />
-              <span className="flex flex-col items-start leading-tight text-left max-w-40">
-                <span className={`font-body text-[10px] ${subTextColor}`}>Deliver to</span>
-                <span className={`font-body text-sm font-bold ${textColor} flex items-center gap-0.5 truncate`}>
+              <MapPin className="h-4.5 w-4.5 text-fnc-red shrink-0" />
+              <span className="flex flex-col items-start leading-tight text-left max-w-48">
+                <span className={`font-body text-[10px] ${subTextColor} truncate w-full`}>
+                  {storeId && storeList.find((s) => s.id === storeId)
+                    ? `Delivering from ${storeList.find((s) => s.id === storeId).name.replace("F&C ", "")}`
+                    : "Deliver to"}
+                </span>
+                <span className={`font-body text-sm font-bold ${textColor} flex items-center gap-0.5 truncate w-full`}>
                   <span className="truncate">{locationLabel}</span>
                   <ChevronDown className={`h-3 w-3 ${subTextColor} shrink-0`} />
                 </span>
+                {storeId && storeList.find((s) => s.id === storeId) && (
+                  <span className="font-body text-[9px] text-fnc-green font-bold">
+                    Open till 9:00 PM
+                  </span>
+                )}
               </span>
             </button>
 
@@ -293,6 +339,13 @@ export default function Navbar() {
 
             {/* Desktop right actions */}
             <div className="hidden lg:flex items-center gap-1 ml-auto shrink-0">
+              <Link
+                href="/shop"
+                className={`group h-10 flex items-center gap-1.5 px-4 rounded-full font-body text-sm font-semibold transition-colors border border-transparent ${textColor} ${iconHover} relative`}
+              >
+                <span>Shop</span>
+                <span className="absolute bottom-1 left-4 right-4 h-px bg-fnc-red scale-x-0 group-hover:scale-x-100 transition-transform duration-250 origin-left rounded-full" />
+              </Link>
               <Link
                 href="/stores"
                 className={`group h-10 flex items-center gap-1.5 px-4 rounded-full font-body text-sm font-semibold transition-colors border border-transparent ${textColor} ${iconHover} relative`}
@@ -319,7 +372,7 @@ export default function Navbar() {
                 </Link>
               )}
               <WishlistIcon textColor={textColor} iconHover={iconHover} />
-              <CartIcon scrolled={scrolled} />
+              <CartIcon />
             </div>
 
             <Button
@@ -332,7 +385,7 @@ export default function Navbar() {
 
             {/* Mobile right */}
             <div className="flex items-center gap-1 ml-auto lg:hidden">
-              <CartIcon scrolled={scrolled} />
+              <CartIcon />
               <button
                 type="button"
                 className={`h-10 w-10 flex items-center justify-center rounded-full transition-colors ${textColor} ${iconHover}`}
@@ -355,10 +408,22 @@ export default function Navbar() {
               <button
                 type="button"
                 onClick={() => { setOpen(false); setIsModalOpen(true); }}
-                className="flex items-center gap-2 font-body text-base text-charcoal w-fit"
+                className="flex flex-col items-start gap-1 w-full text-left"
               >
-                <MapPin className="h-5 w-5 text-fnc-red" />
-                Deliver to <span className="font-bold">{locationLabel}</span>
+                <div className="flex items-center gap-2 font-body text-base text-charcoal">
+                  <MapPin className="h-5 w-5 text-fnc-red shrink-0" />
+                  <span>Deliver to <span className="font-bold">{locationLabel}</span></span>
+                </div>
+                {storeId && storeList.find((s) => s.id === storeId) && (
+                  <div className="pl-7 flex flex-col items-start gap-0.5">
+                    <p className="font-body text-xs text-slate">
+                      Delivering from <span className="font-semibold text-charcoal">{storeList.find((s) => s.id === storeId).name}</span>
+                    </p>
+                    <p className="font-body text-[10px] text-fnc-green font-bold">
+                      Open till 9:00 PM
+                    </p>
+                  </div>
+                )}
               </button>
 
               <nav className="flex flex-col gap-1">
@@ -397,6 +462,8 @@ export default function Navbar() {
             </Container>
           </div>
         )}
+
+
       </motion.header>
 
       {/* Location Modal */}

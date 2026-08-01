@@ -10,7 +10,6 @@ import {
   Truck,
   Store as StoreIcon,
   Navigation,
-  AlertCircle,
   CheckCircle2,
 } from "lucide-react";
 import Button from "@/components/ui/Button";
@@ -49,10 +48,11 @@ function whatsAppLink(phone, message) {
   return `https://wa.me/${digits}?text=${encodeURIComponent(message)}`;
 }
 
-export default function StoreLocatorInteractive({ store }) {
+export default function StoreLocatorInteractive({ activeStores = [] }) {
+  const [activeStore, setActiveStore] = useState(activeStores[0] || null);
   const [userCoords, setUserCoords] = useState(null);
   const [locationState, setLocationState] = useState("idle"); // idle, prompting, granted, denied, error
-  const [distance, setDistance] = useState(null);
+  const [distances, setDistances] = useState({}); // storeId -> distance
 
   const requestLocation = () => {
     if (typeof window === "undefined" || !navigator.geolocation) {
@@ -68,14 +68,13 @@ export default function StoreLocatorInteractive({ store }) {
         setUserCoords({ lat, lng });
         setLocationState("granted");
 
-        const dist = calculateDistance(lat, lng, store.geo.lat, store.geo.lng);
-        setDistance(dist);
+        const dists = {};
+        activeStores.forEach((s) => {
+          dists[s.id] = calculateDistance(lat, lng, s.geo.lat, s.geo.lng);
+        });
+        setDistances(dists);
       },
       (error) => {
-        // GeolocationPositionError's own properties aren't enumerable, so
-        // logging the raw object prints "{}" — log the actual fields
-        // instead. Denied/unavailable are expected, handled outcomes (see
-        // below), not real errors, so this is a warn, not an error.
         console.warn(`Geolocation unavailable (code ${error.code}): ${error.message}`);
         if (error.code === error.PERMISSION_DENIED) {
           setLocationState("denied");
@@ -83,146 +82,141 @@ export default function StoreLocatorInteractive({ store }) {
           setLocationState("error");
         }
         setUserCoords(null);
-        setDistance(null);
+        setDistances({});
       },
       { enableHighAccuracy: true, timeout: 8000 }
     );
   };
 
-  // Request location automatically on mount
   useEffect(() => {
     requestLocation();
-  }, [store]);
+  }, [activeStores]);
 
-  const directionsUrl = userCoords
-    ? `https://www.google.com/maps/dir/?api=1&origin=${userCoords.lat},${userCoords.lng}&destination=${store.geo.lat},${store.geo.lng}`
-    : store.googleMapsLink;
+  if (!activeStore) return null;
 
   return (
-    <div className="bg-white border border-bordergray rounded-3xl overflow-hidden shadow-sm flex flex-col h-full">
-      {/* Map Header / Container */}
-      <div className="relative z-0 w-full h-[350px] lg:h-[450px] bg-warmwhite border-b border-bordergray">
-        <StoreLocatorMap store={store} userCoords={userCoords} />
-      </div>
+    <div className="grid lg:grid-cols-12 gap-8 items-stretch w-full">
+      {/* Left Column: Store Cards List */}
+      <div className="lg:col-span-5 flex flex-col gap-4">
+        {activeStores.map((s) => {
+          const isActive = s.id === activeStore.id;
+          const distance = distances[s.id];
+          const directionsUrl = userCoords
+            ? `https://www.google.com/maps/dir/?api=1&origin=${userCoords.lat},${userCoords.lng}&destination=${s.geo.lat},${s.geo.lng}`
+            : s.googleMapsLink;
 
-      {/* Store Info & Geolocation Controls */}
-      <div className="p-6 sm:p-8 flex flex-col gap-5 flex-1">
-        {/* Header and Open Status */}
-        <div className="flex items-start justify-between gap-4">
-          <div>
-            <h3 className="font-display text-xl sm:text-2xl font-bold text-charcoal">
-              {store.name}
-            </h3>
-            <p className="font-body text-sm text-slate mt-0.5">
-              F&C Flagship Store
-            </p>
-          </div>
-          <span className="rounded-full bg-fnc-green/10 text-fnc-green font-body text-xs font-semibold px-3 py-1 shrink-0">
-            Open Now
-          </span>
-        </div>
+          return (
+            <div
+              key={s.id}
+              onClick={() => setActiveStore(s)}
+              className={`bg-white border rounded-3xl p-6 transition-all duration-300 cursor-pointer shadow-sm relative overflow-hidden flex flex-col gap-4 ${
+                isActive
+                  ? "border-fnc-red ring-2 ring-fnc-red/20 scale-[1.01]"
+                  : "border-bordergray hover:border-charcoal/40"
+              }`}
+            >
+              {/* Active accent strip */}
+              {isActive && (
+                <div className="absolute left-0 top-0 bottom-0 w-1.5 bg-fnc-red" />
+              )}
 
-        {/* Location / Details list */}
-        <div className="flex flex-col gap-3 font-body text-base text-slate">
-          <p className="flex items-start gap-2.5">
-            <MapPin className="h-5 w-5 text-fnc-red shrink-0 mt-0.5" />
-            <span>
-              {store.address}, {store.city}, {store.state}
-            </span>
-          </p>
-          <p className="flex items-center gap-2.5">
-            <Clock className="h-5 w-5 text-fnc-red shrink-0" />
-            <span>{store.openingHours.mon}</span>
-          </p>
-          <a
-            href={`tel:${store.phone.replace(/\s+/g, "")}`}
-            className="flex items-center gap-2.5 hover:text-fnc-red transition-colors w-fit"
-          >
-            <Phone className="h-5 w-5 text-fnc-red shrink-0" />
-            <span>{store.phone}</span>
-          </a>
-        </div>
-
-        {/* Dynamic Distance and Geolocation Status Banner */}
-        <div className="mt-1">
-          {locationState === "granted" && distance !== null && (
-            <div className="flex items-center gap-2 bg-fnc-green/10 border border-fnc-green/20 text-fnc-green rounded-2xl p-4 font-body text-sm font-medium">
-              <CheckCircle2 className="h-5 w-5 shrink-0" />
-              <span>
-                You are currently{" "}
-                <strong className="font-bold">{distance.toFixed(1)} km</strong>{" "}
-                away from this store.
-              </span>
-            </div>
-          )}
-
-          {locationState === "prompting" && (
-            <div className="flex items-center gap-2 bg-fnc-blue/10 border border-fnc-blue/20 text-fnc-blue rounded-2xl p-4 font-body text-sm font-medium animate-pulse">
-              <span className="h-2 w-2 rounded-full bg-fnc-blue animate-ping shrink-0 mr-1"></span>
-              <span>Requesting location permission...</span>
-            </div>
-          )}
-
-          {(locationState === "denied" || locationState === "error") && (
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-charcoal/5 border border-bordergray text-slate rounded-2xl p-4 font-body text-sm">
-              <div className="flex items-start sm:items-center gap-2.5">
-                <AlertCircle className="h-5 w-5 text-slate shrink-0 mt-0.5 sm:mt-0" />
-                <span>
-                  {locationState === "denied"
-                    ? "Location permission denied. Distance is unavailable."
-                    : "Unable to determine your location."}
+              {/* Title & Status */}
+              <div className="flex items-start justify-between gap-4">
+                <div>
+                  <h3 className="font-display text-lg font-bold text-charcoal">
+                    {s.name}
+                  </h3>
+                  <p className="font-body text-xs text-slate mt-0.5">
+                    F&C Store Location
+                  </p>
+                </div>
+                <span className="rounded-full bg-fnc-green/10 text-fnc-green font-body text-[10px] font-bold uppercase tracking-wider px-2.5 py-1 shrink-0">
+                  Open Now
                 </span>
               </div>
-              <button
-                type="button"
-                onClick={requestLocation}
-                className="text-xs font-semibold text-fnc-red hover:underline text-left shrink-0"
-              >
-                Enable Location
-              </button>
+
+              {/* Location details */}
+              <div className="flex flex-col gap-2.5 font-body text-sm text-slate">
+                <p className="flex items-start gap-2">
+                  <MapPin className="h-4 w-4 text-fnc-red shrink-0 mt-0.5" />
+                  <span>
+                    {s.address}, {s.city}, {s.state}
+                  </span>
+                </p>
+                <p className="flex items-center gap-2">
+                  <Clock className="h-4 w-4 text-fnc-red shrink-0" />
+                  <span>{s.openingHours.mon}</span>
+                </p>
+                <a
+                  href={`tel:${s.phone.replace(/\s+/g, "")}`}
+                  onClick={(e) => e.stopPropagation()}
+                  className="flex items-center gap-2 hover:text-fnc-red transition-colors w-fit"
+                >
+                  <Phone className="h-4 w-4 text-fnc-red shrink-0" />
+                  <span>{s.phone}</span>
+                </a>
+              </div>
+
+              {/* Geolocation status banner inside active card */}
+              {isActive && (
+                <div className="mt-1">
+                  {locationState === "granted" && distance !== undefined && (
+                    <div className="flex items-center gap-2 bg-fnc-green/10 border border-fnc-green/20 text-fnc-green rounded-xl p-3 font-body text-xs font-semibold">
+                      <CheckCircle2 className="h-4 w-4 shrink-0" />
+                      <span>
+                        You are currently{" "}
+                        <strong className="font-bold">{distance.toFixed(1)} km</strong>{" "}
+                        away.
+                      </span>
+                    </div>
+                  )}
+
+                  {locationState === "prompting" && (
+                    <div className="flex items-center gap-2 bg-fnc-blue/10 border border-fnc-blue/20 text-fnc-blue rounded-xl p-3 font-body text-xs font-semibold animate-pulse">
+                      <span className="h-1.5 w-1.5 rounded-full bg-fnc-blue animate-ping shrink-0 mr-0.5"></span>
+                      <span>Detecting location...</span>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* Action Buttons (Only visible on the active/expanded store card!) */}
+              {isActive && (
+                <div className="grid grid-cols-2 gap-3 mt-2 pt-2 border-t border-dashed border-bordergray/60">
+                  <Button
+                    href={whatsAppLink(s.whatsapp, "Hi! I'd like to place an order.")}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    onClick={(e) => e.stopPropagation()}
+                    variant="primary"
+                    size="sm"
+                    className="w-full flex items-center justify-center gap-1.5 text-xs font-bold"
+                  >
+                    <MessageCircle className="h-3.5 w-3.5 shrink-0" />
+                    WhatsApp
+                  </Button>
+                  <Button
+                    href={directionsUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    onClick={(e) => e.stopPropagation()}
+                    variant="outline"
+                    size="sm"
+                    className="w-full flex items-center justify-center gap-1.5 text-xs font-bold"
+                  >
+                    <Navigation className="h-3.5 w-3.5 shrink-0 text-fnc-red" />
+                    Directions
+                  </Button>
+                </div>
+              )}
             </div>
-          )}
-        </div>
+          );
+        })}
+      </div>
 
-        {/* Fulfillment indicators */}
-        <div className="flex flex-wrap gap-2.5 mt-1">
-          {store.deliveryAvailable && (
-            <span className="inline-flex items-center gap-1.5 rounded-full bg-fnc-blue/10 text-fnc-blue font-body text-xs sm:text-sm font-semibold px-3 py-1.5">
-              <Truck className="h-4 w-4" />
-              Delivery Available
-            </span>
-          )}
-          <span className="inline-flex items-center gap-1.5 rounded-full bg-charcoal/5 text-charcoal font-body text-xs sm:text-sm font-semibold px-3 py-1.5">
-            <StoreIcon className="h-4 w-4" />
-            In-Store Pickup
-          </span>
-        </div>
-
-        {/* Action Buttons */}
-        <div className="grid sm:grid-cols-2 gap-3 mt-auto pt-2">
-          <Button
-            href={whatsAppLink(store.whatsapp, "Hi! I'd like to place an order.")}
-            target="_blank"
-            rel="noopener noreferrer"
-            variant="primary"
-            size="md"
-            className="w-full flex items-center justify-center gap-2"
-          >
-            <MessageCircle className="h-4 w-4 shrink-0" />
-            Order on WhatsApp
-          </Button>
-          <Button
-            href={directionsUrl}
-            target="_blank"
-            rel="noopener noreferrer"
-            variant="outline"
-            size="md"
-            className="w-full flex items-center justify-center gap-2"
-          >
-            <Navigation className="h-4 w-4 shrink-0 text-fnc-red" />
-            Get Directions
-          </Button>
-        </div>
+      {/* Right Column: Separate Interactive Map Container */}
+      <div className="lg:col-span-7 bg-white border border-bordergray rounded-3xl overflow-hidden shadow-sm h-[350px] lg:h-auto lg:min-h-[500px]">
+        <StoreLocatorMap store={activeStore} userCoords={userCoords} />
       </div>
     </div>
   );

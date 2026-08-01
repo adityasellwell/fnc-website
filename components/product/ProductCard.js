@@ -7,37 +7,21 @@ import { Star } from "lucide-react";
 import Card from "@/components/ui/Card";
 import PlaceholderMedia from "@/components/ui/PlaceholderMedia";
 import WishlistButton from "@/components/product/WishlistButton";
-import QuickAddToCartButton from "@/components/product/QuickAddToCartButton";
 import { CATEGORY_META, ENFORCE_STOCK_GATING } from "@/lib/constants";
 import { cn } from "@/lib/utils";
 import { useLocationStore } from "@/lib/store/location";
+import { useCartStore } from "@/lib/store/cart";
 
-const toneOverlay = {
-  red: "bg-fnc-red",
-  green: "bg-fnc-green",
-  blue: "bg-fnc-blue",
-  neutral: "bg-charcoal",
-};
-
-/**
- * Shared between both homepage directions via `variant`:
- * "editorial" (Direction A, calm) or "kinetic" (Direction B, bolder).
- *
- * Photo-dominant, food-ecommerce-style card: a large square image carries
- * the appetite appeal, rating sits as a small badge on the photo, and only
- * name/unit/price sit below — no long description, so price stays the
- * most prominent text on the card.
- *
- * Two separate links (image, text block) both point to the PDP rather than
- * one link wrapping everything — that keeps WishlistButton a sibling
- * instead of nested inside an <a>, which HTML/React disallow.
- *
- * Shows the product's category photo as a stand-in until real
- * per-product photography exists (see CATEGORY_META in lib/constants.js).
- */
-export default function ProductCard({ product, variant = "editorial", className }) {
+export default function ProductCard({ product, className }) {
   const storeId = useLocationStore((s) => s.storeId);
   const [mounted, setMounted] = useState(false);
+
+  // Cart operations
+  const addItem = useCartStore((s) => s.addItem);
+  const updateQty = useCartStore((s) => s.updateQty);
+  const cartItems = useCartStore((s) => s.items);
+  const cartItem = cartItems.find((i) => i.productId === product.id);
+  const qty = cartItem?.qty ?? 0;
 
   useEffect(() => {
     setMounted(true);
@@ -45,7 +29,6 @@ export default function ProductCard({ product, variant = "editorial", className 
 
   const categorySlug = product.categoryId.replace(/^cat-/, "");
   const meta = CATEGORY_META[categorySlug] ?? { icon: "Fish", tone: "red" };
-  const isKinetic = variant === "kinetic";
   const href = `/product/${product.slug}`;
 
   // Check store-specific stock
@@ -53,22 +36,81 @@ export default function ProductCard({ product, variant = "editorial", className 
   const isOutOfStock = ENFORCE_STOCK_GATING && mounted && storeId && (!storeInv || storeInv.stock <= 0);
 
   const [imgError, setImgError] = useState(false);
-  // Falls back to the category photo (or the placeholder icon) if the
-  // product's own image URL 404s — real for every pre-existing product
-  // today, since public/images/products/ was never actually populated.
   const primaryImage = imgError ? meta.image : (product.images && product.images[0]) || meta.image;
+
+  function handleAdd(e) {
+    e.preventDefault();
+    e.stopPropagation();
+    const item = {
+      id: product.id,
+      slug: product.slug,
+      name: product.name,
+      unit: product.unit,
+      price: product.price,
+      image: primaryImage,
+      availableAtStores: product.availableAtStores,
+    };
+    const result = addItem(item);
+    if (!result.ok && result.reason === "UNAVAILABLE") {
+      alert("Sorry, this item isn't available at your delivery location.");
+      return;
+    }
+    if (!result.ok && result.reason === "STORE_CONFLICT") {
+      const confirmed = window.confirm(
+        "Your cart has items from a different store. Switching stores will clear your cart. Continue?"
+      );
+      if (confirmed) {
+        useCartStore.getState().clear();
+        addItem(item);
+      }
+    }
+  }
+
+  function handleDecrement(e) {
+    e.preventDefault();
+    e.stopPropagation();
+    updateQty(product.id, qty - 1);
+  }
+
+  function handleIncrement(e) {
+    e.preventDefault();
+    e.stopPropagation();
+    const item = {
+      id: product.id,
+      slug: product.slug,
+      name: product.name,
+      unit: product.unit,
+      price: product.price,
+      image: primaryImage,
+      availableAtStores: product.availableAtStores,
+    };
+    const result = addItem(item);
+    if (!result.ok && result.reason === "UNAVAILABLE") {
+      alert("Sorry, this item isn't available at your delivery location.");
+      return;
+    }
+    if (!result.ok && result.reason === "STORE_CONFLICT") {
+      const confirmed = window.confirm(
+        "Your cart has items from a different store. Switching stores will clear your cart. Continue?"
+      );
+      if (confirmed) {
+        useCartStore.getState().clear();
+        addItem(item);
+      }
+    }
+  }
 
   return (
     <Card
       hoverLift
       className={cn(
-        "group flex flex-col relative",
-        isKinetic && "rounded-3xl border-transparent shadow-sm hover:shadow-xl",
-        isOutOfStock && "opacity-80",
+        "group flex flex-col h-full bg-white border border-bordergray/50 rounded-2xl overflow-hidden shadow-sm hover:shadow-xl transition-all duration-300 relative",
+        isOutOfStock && "opacity-85",
         className
       )}
     >
-      <div className="relative aspect-square w-full overflow-hidden bg-warmwhite">
+      {/* Image Block */}
+      <div className="relative aspect-[4/3] w-full overflow-hidden bg-warmwhite">
         <Link href={href} className="absolute inset-0" aria-label={product.name}>
           {primaryImage ? (
             <Image
@@ -85,29 +127,20 @@ export default function ProductCard({ product, variant = "editorial", className 
               tone={meta.tone}
               label={product.name}
               className="absolute inset-0"
-              iconClassName={isKinetic ? "h-14 w-14" : "h-10 w-10"}
-            />
-          )}
-          {isKinetic && primaryImage && (
-            <div
-              aria-hidden="true"
-              className={cn(
-                "absolute inset-0 mix-blend-multiply opacity-20",
-                toneOverlay[meta.tone]
-              )}
+              iconClassName="h-10 w-10"
             />
           )}
         </Link>
 
         {isOutOfStock && (
           <div className="absolute inset-0 bg-black/40 flex items-center justify-center pointer-events-none z-10">
-            <span className="bg-charcoal text-white font-display text-xs font-bold uppercase tracking-wider px-3 py-1.5 rounded-md shadow-md">
+            <span className="bg-charcoal text-white font-display text-[10px] font-bold uppercase tracking-wider px-2.5 py-1.5 rounded-md shadow-md">
               Out of Stock
             </span>
           </div>
         )}
 
-        <div className="absolute top-3 left-3 flex items-center gap-1 rounded-full bg-white/90 backdrop-blur-sm px-2 py-1 font-body text-xs font-semibold text-charcoal shadow-sm pointer-events-none z-10">
+        <div className="absolute top-2.5 left-2.5 flex items-center gap-1 rounded-full bg-white/90 backdrop-blur-sm px-2 py-0.5 font-body text-[10px] font-bold text-charcoal shadow-sm pointer-events-none z-10">
           <Star className="h-3 w-3 fill-fnc-red text-fnc-red" />
           {product.rating}
         </div>
@@ -115,37 +148,75 @@ export default function ProductCard({ product, variant = "editorial", className 
         <WishlistButton
           product={product}
           image={primaryImage}
-          className="absolute top-3 right-3 z-10"
+          className="absolute top-2.5 right-2.5 z-10"
         />
-
-        {!isOutOfStock && (
-          <QuickAddToCartButton
-            product={product}
-            image={primaryImage}
-            className="absolute bottom-3 right-3 z-10 h-10 w-10 opacity-0 group-hover:opacity-100 focus-visible:opacity-100 transition-opacity"
-          />
-        )}
       </div>
 
-      <Link href={href} className={cn("flex flex-col gap-1 p-4", isKinetic && "p-5")}>
-        <h3
-          className={cn(
-            "font-display font-semibold text-charcoal truncate",
-            isKinetic ? "text-lg" : "text-base"
-          )}
-        >
-          {product.name}
-        </h3>
-        <p className="font-body text-xs text-slate">{product.unit}</p>
-        <p
-          className={cn(
-            "font-display font-bold text-charcoal mt-1",
-            isKinetic ? "text-2xl" : "text-xl"
-          )}
-        >
-          ₹{product.price}
-        </p>
-      </Link>
+      {/* Details Block */}
+      <div className="flex-1 flex flex-col p-3 sm:p-4">
+        <Link href={href} className="flex flex-col gap-0.5">
+          <h3 className="font-display font-bold text-sm sm:text-base text-charcoal line-clamp-1 group-hover:text-fnc-red transition-colors">
+            {product.name}
+          </h3>
+          <p className="font-body text-xs text-slate line-clamp-1 mt-0.5 leading-tight">
+            {product.description || `Freshly cleaned and cut ${product.name.toLowerCase()} premium choice.`}
+          </p>
+        </Link>
+
+        {/* Weight / Pieces Row */}
+        <div className="mt-2 flex items-center justify-between text-[11px] font-body">
+          <span className="bg-fnc-green/5 text-fnc-green border border-fnc-green/15 px-2 py-0.5 rounded font-bold">
+            {product.unit}
+          </span>
+        </div>
+
+        {/* Price & Add to Cart Action Row */}
+        <div className="mt-auto pt-2.5 border-t border-dashed border-bordergray/60 flex items-center justify-between gap-2">
+          <div className="flex flex-col">
+            <span className="font-display font-extrabold text-base sm:text-lg text-fnc-red">
+              ₹{product.price}
+            </span>
+          </div>
+
+          <div className="shrink-0">
+            {isOutOfStock ? (
+              <span className="font-display text-[10px] font-bold uppercase tracking-wider text-slate bg-bordergray px-2.5 py-1.5 rounded-lg">
+                Sold Out
+              </span>
+            ) : qty > 0 ? (
+              <div className="flex items-center bg-fnc-red text-white rounded-lg overflow-hidden h-8 sm:h-9 border border-fnc-red shadow-sm">
+                <button
+                  type="button"
+                  onClick={handleDecrement}
+                  className="px-2.5 h-full hover:bg-black/10 flex items-center justify-center font-bold text-sm"
+                  aria-label="Decrease quantity"
+                >
+                  -
+                </button>
+                <span className="px-1.5 font-display text-xs sm:text-sm font-bold min-w-5 text-center">
+                  {qty}
+                </span>
+                <button
+                  type="button"
+                  onClick={handleIncrement}
+                  className="px-2.5 h-full hover:bg-black/10 flex items-center justify-center font-bold text-sm"
+                  aria-label="Increase quantity"
+                >
+                  +
+                </button>
+              </div>
+            ) : (
+              <button
+                type="button"
+                onClick={handleAdd}
+                className="h-8 sm:h-9 px-4 sm:px-5 font-display text-xs sm:text-sm font-bold text-fnc-red border-2 border-fnc-red hover:bg-fnc-red hover:text-white rounded-lg transition-all duration-200"
+              >
+                ADD
+              </button>
+            )}
+          </div>
+        </div>
+      </div>
     </Card>
   );
 }

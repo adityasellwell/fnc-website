@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import Image from "next/image";
-import { Play, Volume2, VolumeX } from "lucide-react";
+import { Play, Volume2, VolumeX, ChefHat } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 export default function ProductMediaGallery({ media = [], fallbackImage, secondaryFallbackImage, productName }) {
@@ -64,14 +64,21 @@ export default function ProductMediaGallery({ media = [], fallbackImage, seconda
             </button>
           </div>
         ) : (
-          <Image
-            src={activeItem.url}
-            alt={`${productName} - Image ${activeIndex + 1}`}
-            fill
-            sizes="(min-width: 1024px) 45vw, 100vw"
-            className="object-cover transition-all duration-300"
-            priority
-          />
+          <div className="w-full h-full relative">
+            <Image
+              src={activeItem.url}
+              alt={`${productName} - Image ${activeIndex + 1}`}
+              fill
+              sizes="(min-width: 1024px) 45vw, 100vw"
+              className="object-cover transition-all duration-300"
+              priority
+            />
+            {activeItem.title && (
+              <span className="absolute bottom-4 left-4 rounded-full bg-charcoal/80 text-white font-body text-xs font-semibold px-3 py-1.5 backdrop-blur-sm z-10">
+                {activeItem.title}
+              </span>
+            )}
+          </div>
         )}
       </div>
 
@@ -96,13 +103,20 @@ export default function ProductMediaGallery({ media = [], fallbackImage, seconda
                   </div>
                 </div>
               ) : (
-                <Image
-                  src={item.url}
-                  alt={`${productName} thumbnail ${idx + 1}`}
-                  fill
-                  sizes="80px"
-                  className="object-cover"
-                />
+                <div className="w-full h-full relative">
+                  <Image
+                    src={item.url}
+                    alt={`${productName} thumbnail ${idx + 1}`}
+                    fill
+                    sizes="80px"
+                    className="object-cover"
+                  />
+                  {item.title && (
+                    <div className="absolute top-1 right-1 h-5 w-5 rounded-full bg-fnc-red flex items-center justify-center text-white shadow-sm">
+                      <ChefHat className="h-3 w-3" />
+                    </div>
+                  )}
+                </div>
               )}
             </button>
           ))}

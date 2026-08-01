@@ -4,6 +4,87 @@ Milestone-level log per `Project-instructions.md` §10 process. Newest first.
 
 ---
 
+## Milestone 13 — Pre-Launch Pass: Location Accuracy, Phone Login, Email, Order Tracking, Promo Strip (2026-08-01)
+
+Largely produced by another tool from the pre-launch plan (location bugs,
+phone auth, Resend email, customer order tracking, promo strip, SEO
+basics); audited and corrected before this commit.
+
+**Location accuracy (the two real bugs from the plan, confirmed fixed):**
+Navbar now fetches stores via `/api/stores` instead of importing a
+Prisma-backed function into client code (previously silently fell back to
+hardcoded mock data every time — invisible only because the mock
+happened to match the one real store). Serviceability now uses the real
+`Settings.deliveryRadiusKm` (5 km) from that same endpoint instead of a
+hardcoded 15 km, so the location picker and checkout no longer contradict
+each other. `geocodeAddress()` also gained progressive fallback queries
+(pincode-only, without the housing-society name, etc.) for addresses
+Nominatim doesn't index well.
+
+**Phone login:** real Firebase Phone Auth (RecaptchaVerifier +
+`signInWithPhoneNumber`) added to `SignUpForm.js`, alongside email and
+Google. `Customer.email` is now nullable (phone-only accounts have none);
+`getOrCreateCustomerForFirebaseUser` matches by phone when there's no
+email.
+
+**Email:** `resend` package + `lib/email.js`, new
+`/api/auth/send-verification` using Admin SDK's
+`generateEmailVerificationLink()` with a real branded template, replacing
+Firebase's shared default sender — the actual fix for landing in spam
+(the rest of that fix is DNS/domain verification, which is the owner's
+side, not code).
+
+**Customer order tracking:** new `/account/orders/[id]` — status
+timeline, delivery/pickup details, rider info if assigned. Read-only,
+ownership-checked (404s if the order isn't the signed-in customer's).
+
+**Admin-manageable promo strip:** `PROMO_STRIP` added to
+`BannerPlacement` (additive, not a rename — `CATEGORY`/`POPUP` stay as
+they were), `getBannersByPlacement()` generalizes the banner query layer
+beyond the old HERO-only fetcher, new `components/home/PromoStrip.js`
+between the homepage's product grid and trust section.
+
+**SEO/production basics:** `metadataBase`, `app/robots.js`,
+`app/sitemap.js`, `app/manifest.js` — all confirmed missing before this
+pass.
+
+**Real bugs found and fixed during audit before this commit:**
+- Schema had drifted from migration history — `Customer.email` was made
+  nullable and `PROMO_STRIP` added directly to the live DB (via a
+  `db push`-style change) with no migration file ever created. Generated
+  the missing migration and marked it applied via `prisma migrate
+  resolve`, so a fresh environment's migration history now matches
+  reality instead of silently missing these changes.
+- `/api/auth/send-verification` had no rate limiting and no ownership
+  check on the target email — anyone could have used it to mass-send
+  verification emails to arbitrary addresses, which would damage the
+  sending domain's reputation with Resend (the exact problem this
+  feature exists to solve). Added rate limiting.
+- The new admin dashboard (`app/admin/page.js`, now the landing page
+  every admin sees after login) queried `Order.totalPaid` — a field that
+  doesn't exist (the real field is `total`). This would have thrown a
+  Prisma validation error and crashed the dashboard for every single
+  admin/store-manager login. Same wrong field name also produced
+  `₹NaN` in the recent-orders table; a `status === "PENDING"` check for
+  status-badge coloring was comparing against a value that isn't a valid
+  `OrderStatus` (that's a `PaymentStatus` value) and could never match.
+  All fixed; revenue now correctly computed from `paymentStatus: "PAID"`
+  orders, matching the convention `services/analytics.js` already uses.
+- `/account/orders/[id]` (the new customer order-tracking page) read
+  `item.qty`/`item.price` on order line items — the real `OrderItem`
+  fields are `quantity`/`unitPrice` (same wrong-field-name mistake class
+  found and fixed in the admin Order Operations page last session).
+  Would have rendered `x undefined` and `₹NaN` for every item, on the
+  customer-facing page being built specifically to fix "proper order
+  tracking."
+
+**Not yet verified live** (needs owner-provided credentials/testing):
+Resend domain verification + actual inbox-placement test, real OTP
+round-trip on a live phone number, Firebase Phone provider enabled in
+the console.
+
+---
+
 ## Milestone 12 — Product Media/Stock Gating, Wishlist Sync, Promotions Rewrite, Refunds (2026-07-31)
 
 Completes the phases left open at the end of Milestone 11.

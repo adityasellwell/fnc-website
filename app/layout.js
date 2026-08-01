@@ -17,6 +17,7 @@ const inter = Inter({
 });
 
 export const metadata = {
+  metadataBase: new URL(process.env.NEXT_PUBLIC_APP_URL || "https://fncmumbai.com"),
   title: {
     default: "F&C — Fresh Proteins & More",
     template: "%s | F&C — Fresh Proteins & More",

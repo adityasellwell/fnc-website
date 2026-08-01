@@ -11,6 +11,7 @@ import Button from "@/components/ui/Button";
 import Reveal from "@/components/motion/Reveal";
 import { getRecipeBySlug, getRecipes } from "@/lib/data/recipes";
 import { getProducts } from "@/lib/data/products";
+import ProductCard from "@/components/product/ProductCard";
 
 export async function generateMetadata({ params }) {
   const { slug } = await params;
@@ -155,47 +156,14 @@ export default async function RecipeDetailPage({ params }) {
           </Reveal>
 
           {relatedProducts.length > 0 && (
-            <div className="mt-16">
+            <div className="mt-16 max-w-5xl">
               <h2 className="font-display text-xl sm:text-2xl font-bold text-charcoal mb-6">
                 Shop the ingredients
               </h2>
-              <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 sm:gap-5">
                 {relatedProducts.map((product, i) => (
                   <Reveal key={product.id} delay={i * 0.06}>
-                    <Card
-                      as={Link}
-                      href={`/product/${product.slug}`}
-                      hoverLift
-                      className="group flex items-center gap-4 p-4"
-                    >
-                      <div className="relative h-20 w-20 shrink-0 rounded-xl overflow-hidden bg-warmwhite border border-bordergray">
-                        {product.images && product.images[0] ? (
-                          <Image
-                            src={product.images[0]}
-                            alt={product.name}
-                            fill
-                            sizes="80px"
-                            className="object-cover"
-                          />
-                        ) : (
-                          <ShoppingBasket
-                            className="h-8 w-8 text-fnc-red/40 absolute inset-0 m-auto"
-                            strokeWidth={1.25}
-                          />
-                        )}
-                      </div>
-                      <div className="flex flex-col gap-1 min-w-0">
-                        <h3 className="font-display text-base font-semibold text-charcoal truncate">
-                          {product.name}
-                        </h3>
-                        <p className="font-body text-sm text-slate">
-                          {product.unit}
-                        </p>
-                        <p className="font-body text-sm font-bold text-fnc-red">
-                          ₹{product.price}
-                        </p>
-                      </div>
-                    </Card>
+                    <ProductCard product={product} />
                   </Reveal>
                 ))}
               </div>

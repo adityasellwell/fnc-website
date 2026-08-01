@@ -78,6 +78,16 @@ export default async function ProductDetailPage({ params }) {
   // every listing on the site.
   const meta = CATEGORY_META[categorySlug] ?? { icon: "Fish", tone: "red" };
 
+  const recipeMedia = relatedRecipeList
+    .filter((r) => r.image)
+    .map((r) => ({
+      id: `recipe-${r.slug}`,
+      type: "IMAGE",
+      url: r.image,
+      title: `Recipe Idea: ${r.title}`,
+    }));
+  const combinedMedia = [...(product.media || []), ...recipeMedia];
+
   const jsonLdProduct = {
     "@context": "https://schema.org",
     "@type": "Product",
@@ -180,13 +190,12 @@ export default async function ProductDetailPage({ params }) {
 
         {/* Main product detail */}
         <Section background="offwhite" spacing="md">
-          <div className="grid lg:grid-cols-2 gap-8 lg:gap-16 items-start">
+          <div className="grid lg:grid-cols-2 gap-6 lg:gap-10 items-start">
             {/* Image */}
             <Reveal y={16} className="relative w-full">
               <ProductMediaGallery
-                media={product.media}
-                fallbackImage={product.images?.[0]}
-                secondaryFallbackImage={meta.image}
+                media={combinedMedia}
+                fallbackImage={meta.image}
                 productName={product.name}
               />
               {product.tags?.includes("bestseller") && (
@@ -224,7 +233,7 @@ export default async function ProductDetailPage({ params }) {
               </div>
 
               <div className="flex items-baseline gap-2 pb-6 border-b border-bordergray">
-                <span className="font-display text-4xl font-bold text-charcoal">
+                <span className="font-display text-4xl font-extrabold text-fnc-red">
                   ₹{product.price}
                 </span>
                 <span className="font-body text-base text-slate">/ {product.unit}</span>
@@ -250,18 +259,17 @@ export default async function ProductDetailPage({ params }) {
                 <BuyNowButton product={product} image={meta.image} className="w-full sm:w-auto" />
               </div>
 
-              {/* Nutrition */}
               <div className="rounded-2xl border border-bordergray bg-white p-5 sm:p-6">
                 <h2 className="font-display text-base font-bold text-charcoal mb-4">
                   Nutrition Information
                 </h2>
                 <div className="grid grid-cols-4 gap-3 text-center">
                   {nutritionRows.map(([label, value]) => (
-                    <div key={label}>
-                      <p className="font-display text-lg font-bold text-charcoal">
+                    <div key={label} className="bg-fnc-green/[0.03] border border-fnc-green/10 rounded-xl py-3 px-1">
+                      <p className="font-display text-lg font-extrabold text-fnc-green">
                         {value ?? "—"}
                       </p>
-                      <p className="font-body text-[11px] text-slate uppercase tracking-wide mt-1">
+                      <p className="font-body text-[10px] text-slate uppercase tracking-wider font-bold mt-1">
                         {label}
                       </p>
                     </div>
@@ -271,25 +279,25 @@ export default async function ProductDetailPage({ params }) {
 
               {/* Cooking + storage */}
               <div className="grid sm:grid-cols-2 gap-4">
-                <div className="rounded-2xl border border-bordergray bg-white p-5 flex flex-col gap-2">
-                  <div className="flex items-center gap-2">
-                    <Flame className="h-4 w-4 text-fnc-red shrink-0" />
-                    <h3 className="font-display text-sm font-bold text-charcoal">
+                <div className="rounded-2xl border border-fnc-red/20 bg-fnc-red/[0.02] p-5 flex flex-col gap-2">
+                  <div className="flex items-center gap-2 text-fnc-red">
+                    <Flame className="h-4 w-4 shrink-0 fill-fnc-red/10" />
+                    <h3 className="font-display text-sm font-bold">
                       Cooking Instructions
                     </h3>
                   </div>
-                  <p className="font-body text-sm text-slate">
+                  <p className="font-body text-xs sm:text-sm text-slate leading-relaxed">
                     {product.cookingInstructions}
                   </p>
                 </div>
-                <div className="rounded-2xl border border-bordergray bg-white p-5 flex flex-col gap-2">
-                  <div className="flex items-center gap-2">
-                    <Snowflake className="h-4 w-4 text-fnc-blue shrink-0" />
-                    <h3 className="font-display text-sm font-bold text-charcoal">
+                <div className="rounded-2xl border border-fnc-blue/20 bg-fnc-blue/[0.02] p-5 flex flex-col gap-2">
+                  <div className="flex items-center gap-2 text-fnc-blue">
+                    <Snowflake className="h-4 w-4 shrink-0 fill-fnc-blue/10" />
+                    <h3 className="font-display text-sm font-bold">
                       Storage Instructions
                     </h3>
                   </div>
-                  <p className="font-body text-sm text-slate">
+                  <p className="font-body text-xs sm:text-sm text-slate leading-relaxed">
                     {product.storageInstructions}
                   </p>
                 </div>
@@ -306,7 +314,7 @@ export default async function ProductDetailPage({ params }) {
                 You Might Also Like
               </h2>
             </Reveal>
-            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6">
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-5">
               {relatedProductList.map((related, i) => (
                 <Reveal key={related.id} delay={i * 0.05}>
                   <ProductCard product={related} />
@@ -324,7 +332,7 @@ export default async function ProductDetailPage({ params }) {
                 Recipes to Try
               </h2>
             </Reveal>
-            <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-5 sm:gap-6">
+            <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-5 max-w-5xl">
               {relatedRecipeList.map((recipe, i) => (
                 <Reveal key={recipe.id} delay={i * 0.05}>
                   <RecipeCard recipe={recipe} />

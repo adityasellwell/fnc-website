@@ -2,7 +2,8 @@ import { requireAdminUser } from "@/lib/admin-auth";
 import AdminShell from "@/components/admin/AdminShell";
 
 const SUPER_ADMIN_NAV = [
-  { href: "/admin/orders", label: "Orders", icon: "LayoutDashboard" },
+  { href: "/admin", label: "Dashboard", icon: "LayoutDashboard" },
+  { href: "/admin/orders", label: "Orders", icon: "ShoppingBag" },
   { href: "/admin/analytics", label: "Analytics", icon: "BarChart3" },
   { href: "/admin/products", label: "Products", icon: "Package" },
   { href: "/admin/categories", label: "Categories", icon: "Layers" },
@@ -18,7 +19,8 @@ const SUPER_ADMIN_NAV = [
 ];
 
 const STORE_ADMIN_NAV = [
-  { href: "/admin/orders", label: "Orders", icon: "LayoutDashboard" },
+  { href: "/admin", label: "Dashboard", icon: "LayoutDashboard" },
+  { href: "/admin/orders", label: "Orders", icon: "ShoppingBag" },
   { href: "/admin/analytics", label: "Analytics", icon: "BarChart3" },
   { href: "/admin/products", label: "Products", icon: "Package" },
   { href: "/admin/customers", label: "Customers", icon: "Users" },
@@ -27,7 +29,8 @@ const STORE_ADMIN_NAV = [
 ];
 
 const STAFF_NAV = [
-  { href: "/admin/orders", label: "Orders", icon: "LayoutDashboard" },
+  { href: "/admin", label: "Dashboard", icon: "LayoutDashboard" },
+  { href: "/admin/orders", label: "Orders", icon: "ShoppingBag" },
   { href: "/admin/analytics", label: "Analytics", icon: "BarChart3" },
   { href: "/admin/products", label: "Products", icon: "Package" },
   { href: "/admin/customers", label: "Customers", icon: "Users" },

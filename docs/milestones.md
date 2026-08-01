@@ -84,3 +84,18 @@ for signed-in customers, `Coupon`/`Offer` merged into one `Promotion`
 model (zero live rows in either, confirmed before touching anything) with
 a real checkout promo-code input and a `/promo/[code]` campaign page, and
 a Super-Admin refund approval board. Full detail in `docs/changelog.md`.
+
+---
+
+## 13 — Pre-Launch Pass: Location Accuracy, Phone Login, Email, Order Tracking, Promo Strip (2026-08-01)
+
+Fixed two real location bugs (Navbar silently falling back to fake store
+data, and a hardcoded 15km radius contradicting the real 5km delivery
+zone), added Firebase Phone Auth login, real Resend-based verification
+email (replacing Firebase's spam-prone default sender), a customer-facing
+`/account/orders/[id]` tracking page, an admin-manageable homepage promo
+strip, and SEO basics (sitemap/robots/manifest/metadataBase). Largely
+produced by another tool from an agreed pre-launch plan; audited and
+several real bugs fixed before commit — including one that would have
+crashed the admin dashboard on every login. Full detail in
+`docs/changelog.md`.

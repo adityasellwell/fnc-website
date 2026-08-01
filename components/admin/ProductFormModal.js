@@ -9,6 +9,9 @@ import ImageUploadField from "./ImageUploadField";
 const inputClasses =
   "w-full h-11 px-3.5 rounded-xl border border-bordergray bg-white font-body text-sm text-charcoal placeholder:text-slate focus:border-fnc-red focus:outline-none transition-colors";
 
+const textareaClasses =
+  "w-full px-3.5 py-2.5 rounded-xl border border-bordergray bg-white font-body text-sm text-charcoal placeholder:text-slate focus:border-fnc-red focus:outline-none transition-colors resize-none";
+
 function SubmitButton({ label }) {
   const { pending } = useFormStatus();
   return (
@@ -70,19 +73,30 @@ export default function ProductFormModal({ trigger, categories, product, action,
 
           <div className="flex flex-col gap-1.5">
             <label className="font-body text-xs font-semibold text-charcoal">Description</label>
-            <textarea name="description" defaultValue={product?.description} rows={3} required className={`${inputClasses} h-auto py-2.5 resize-none`} />
+            <textarea name="description" defaultValue={product?.description} rows={3} required className={`${textareaClasses} h-24`} />
           </div>
 
           <div className="grid sm:grid-cols-2 gap-4 items-start">
             <ImageUploadField name="image" label="Primary Product Image" defaultValue={product?.images?.[0]} folder="products" />
-            <div className="flex flex-col gap-1.5">
-              <label className="font-body text-xs font-semibold text-charcoal">Additional Gallery Images (comma-separated URLs)</label>
-              <input
-                name="additionalImages"
-                defaultValue={product?.images ? product.images.slice(1).join(", ") : ""}
-                placeholder="https://img1.jpg, https://img2.jpg"
-                className={inputClasses}
-              />
+            <div className="flex flex-col gap-3">
+              <div className="flex flex-col gap-1.5">
+                <label className="font-body text-xs font-semibold text-charcoal">Additional Gallery Images (comma-separated URLs)</label>
+                <input
+                  name="additionalImages"
+                  defaultValue={product?.images ? product.images.slice(1).join(", ") : ""}
+                  placeholder="https://img1.jpg, https://img2.jpg"
+                  className={inputClasses}
+                />
+              </div>
+              <div className="flex flex-col gap-1.5">
+                <label className="font-body text-xs font-semibold text-charcoal">Product Video URL (Optional)</label>
+                <input
+                  name="videoUrl"
+                  defaultValue={product?.media?.find((m) => m.type === "VIDEO")?.url || ""}
+                  placeholder="e.g. https://www.w3schools.com/html/mov_bbb.mp4"
+                  className={inputClasses}
+                />
+              </div>
             </div>
           </div>
 

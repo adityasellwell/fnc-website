@@ -234,7 +234,13 @@ export async function POST(request) {
       }
 
       const addressStr = `${deliveryAddress.line1}, ${deliveryAddress.line2 || ""}, ${deliveryAddress.city}, ${deliveryAddress.state} ${deliveryAddress.pincode}`;
-      const coords = await geocodeAddress(addressStr);
+      const coords = await geocodeAddress(addressStr, {
+        line1: deliveryAddress.line1,
+        line2: deliveryAddress.line2,
+        city: deliveryAddress.city,
+        state: deliveryAddress.state,
+        pincode: deliveryAddress.pincode,
+      });
 
       if (!coords) {
         return NextResponse.json(

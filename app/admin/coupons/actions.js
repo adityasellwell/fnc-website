@@ -12,12 +12,13 @@ function parsePromotionForm(formData) {
   const startsAt = formData.get("startsAt")?.toString().trim();
   const endsAt = formData.get("endsAt")?.toString().trim();
   const bannerImage = formData.get("bannerImage")?.toString().trim();
+  const appliesTo = formData.get("appliesTo").toString();
 
   if (type === "COUPON" && !code) {
     throw new Error("A coupon code is required for type Coupon.");
   }
 
-  return {
+  const base = {
     type,
     code: code || null,
     title: formData.get("title").toString().trim(),
@@ -25,24 +26,62 @@ function parsePromotionForm(formData) {
     discountType: formData.get("discountType").toString(),
     value: Number(formData.get("value")),
     minOrderValue: minOrderValue ? Number(minOrderValue) : null,
-    appliesTo: formData.get("appliesTo").toString(),
+    appliesTo,
     bannerImage: bannerImage || null,
     startsAt: startsAt ? new Date(startsAt) : null,
     endsAt: endsAt ? new Date(endsAt) : null,
     usageLimit: usageLimit ? Number(usageLimit) : null,
-    active: formData.get("active") === "on",
+    active: formData.get("active") === "on" || formData.get("active") === "true",
   };
+
+  return { base, appliesTo };
 }
 
 export async function createPromotionAction(formData) {
   await requireFullAdminUser();
-  await createPromotion(parsePromotionForm(formData));
+  const { base, appliesTo } = parsePromotionForm(formData);
+  
+  let scopeProductsConnect = undefined;
+  let scopeCategoryId = null;
+
+  if (appliesTo === "PRODUCT") {
+    const productIds = formData.getAll("productIds").map((id) => id.toString());
+    if (productIds.length > 0) {
+      scopeProductsConnect = { connect: productIds.map((id) => ({ id })) };
+    }
+  } else if (appliesTo === "CATEGORY") {
+    scopeCategoryId = formData.get("scopeCategoryId")?.toString() || null;
+  }
+
+  await createPromotion({
+    ...base,
+    scopeCategoryId,
+    ...(scopeProductsConnect ? { scopeProducts: scopeProductsConnect } : {}),
+  });
   revalidatePath("/admin/coupons");
 }
 
 export async function updatePromotionAction(id, formData) {
   await requireFullAdminUser();
-  await updatePromotion(id, parsePromotionForm(formData));
+  const { base, appliesTo } = parsePromotionForm(formData);
+  
+  let scopeProductsSet = [];
+  let scopeCategoryId = null;
+
+  if (appliesTo === "PRODUCT") {
+    const productIds = formData.getAll("productIds").map((id) => id.toString());
+    scopeProductsSet = productIds.map((id) => ({ id }));
+  } else if (appliesTo === "CATEGORY") {
+    scopeCategoryId = formData.get("scopeCategoryId")?.toString() || null;
+  }
+
+  await updatePromotion(id, {
+    ...base,
+    scopeCategoryId,
+    scopeProducts: {
+      set: scopeProductsSet,
+    },
+  });
   revalidatePath("/admin/coupons");
 }
 

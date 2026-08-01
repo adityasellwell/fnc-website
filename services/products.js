@@ -1,6 +1,6 @@
 import { db } from "@/lib/db";
 
-const PAGE_SIZE = 20;
+const PAGE_SIZE = 10;
 
 // Falls back to the legacy `images` JSON column when a product has no
 // ProductMedia rows yet — every pre-existing product has zero rows there
@@ -54,7 +54,7 @@ export async function getProductById(id) {
 }
 
 export async function createProduct(data) {
-  const { images, ...rest } = data;
+  const { images, videoUrl, ...rest } = data;
   return db.$transaction(async (tx) => {
     const activeStores = await tx.store.findMany({ where: { status: "ACTIVE" }, select: { id: true } });
 
@@ -87,12 +87,25 @@ export async function createProduct(data) {
         })),
       });
     }
+
+    if (videoUrl) {
+      await tx.productMedia.create({
+        data: {
+          productId: product.id,
+          type: "VIDEO",
+          url: videoUrl,
+          displayOrder: images ? images.length : 1,
+          isPrimary: false,
+        },
+      });
+    }
+
     return product;
   });
 }
 
 export async function updateProduct(id, data) {
-  const { images, ...rest } = data;
+  const { images, videoUrl, ...rest } = data;
   return db.$transaction(async (tx) => {
     const product = await tx.product.update({
       where: { id },
@@ -115,6 +128,19 @@ export async function updateProduct(id, data) {
         })),
       });
     }
+
+    if (videoUrl) {
+      await tx.productMedia.create({
+        data: {
+          productId: id,
+          type: "VIDEO",
+          url: videoUrl,
+          displayOrder: images ? images.length : 1,
+          isPrimary: false,
+        },
+      });
+    }
+
     return product;
   });
 }

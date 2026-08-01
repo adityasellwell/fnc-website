@@ -278,7 +278,7 @@ model Customer {
   authProvider String? // "firebase", "google", etc.
   authUid      String? @unique
   name    String
-  email   String  @unique
+  email   String?  @unique
   phone   String?
 
   // §7's "addresses[]" resolved into a proper relation — checkout needs
@@ -496,6 +496,7 @@ enum BannerPlacement {
   HERO
   CATEGORY
   POPUP
+  PROMO_STRIP
 }
 
 // §7 listed device as 'desktop'|'mobile'; added ALL since most current

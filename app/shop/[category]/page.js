@@ -1,5 +1,7 @@
 import { notFound } from "next/navigation";
 import Link from "next/link";
+import Image from "next/image";
+import { CATEGORY_META } from "@/lib/constants";
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
 import Container from "@/components/layout/Container";
@@ -90,12 +92,24 @@ export default async function ShopCategoryPage({ params, searchParams }) {
           dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLdBreadcrumb) }}
         />
 
-        {/* Hero */}
-        <div className="bg-charcoal text-white py-12 sm:py-16">
-          <Container>
+        {/* Hero Banner with Background Image (Licious style) */}
+        <div className="relative bg-charcoal text-white overflow-hidden py-14 sm:py-20">
+          {/* Background image */}
+          <div className="absolute inset-0 z-0 opacity-70">
+            <Image
+              src={CATEGORY_META[slug]?.image || "/images/categories/fish.jpg"}
+              alt={category.name}
+              fill
+              className="object-cover object-center"
+              priority
+            />
+          </div>
+          <div className="absolute inset-0 bg-gradient-to-r from-black/80 via-black/40 to-transparent z-10" />
+
+          <Container className="relative z-20">
             <nav
               aria-label="Breadcrumb"
-              className="flex items-center gap-2 font-body text-xs text-white/60 mb-4"
+              className="flex items-center gap-2 font-body text-xs text-white/75 mb-4"
             >
               <Link href="/" className="hover:text-white transition-colors">
                 Home
@@ -105,18 +119,24 @@ export default async function ShopCategoryPage({ params, searchParams }) {
                 Shop
               </Link>
               <span aria-hidden="true">/</span>
-              <span className="text-white">{category.name}</span>
+              <span className="text-white font-semibold">{category.name}</span>
             </nav>
-            <h1 className="font-display text-hero sm:text-section-heading-lg font-extrabold tracking-tight max-w-2xl">
-              {category.name}
-            </h1>
-            <p className="font-body text-body text-white/70 mt-3 max-w-xl">
-              {category.description}
-            </p>
+
+            <div className="max-w-xl">
+              <span className="inline-block bg-fnc-red text-white text-[10px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-md mb-4">
+                Fresh Category
+              </span>
+              <h1 className="font-display text-3xl sm:text-4xl md:text-5xl font-extrabold tracking-tight">
+                {category.name}
+              </h1>
+              <p className="font-body text-sm sm:text-base text-white/95 mt-3 leading-relaxed max-w-lg">
+                {category.description || `Hygienically cleaned and freshly cut ${category.name.toLowerCase()} for the perfect culinary experience.`}
+              </p>
+            </div>
           </Container>
         </div>
 
-        <Section background="offwhite" spacing="md">
+        <Section background="offwhite" spacing="sm">
           {/* Category switch row */}
           <div className="flex gap-2 sm:gap-3 mb-8 overflow-x-auto scrollbar-none -mx-5 px-5 sm:mx-0 sm:px-0 sm:flex-wrap">
             <Link href="/shop" className={pillClasses(false)}>
@@ -138,20 +158,18 @@ export default async function ShopCategoryPage({ params, searchParams }) {
           </p>
 
           {paginated.length === 0 ? (
-            <div className="flex flex-col items-center justify-center py-16 text-center border border-dashed border-bordergray rounded-2xl">
-              <p className="font-display text-lg font-bold text-charcoal">
-                No products yet
-              </p>
+            <div className="flex flex-col items-center justify-center py-16 text-center border border-dashed border-bordergray rounded-2xl bg-white/50 w-full">
+              <span className="text-4xl mb-3">🥩</span>
+              <h4 className="font-display text-lg font-bold text-charcoal">Fresh stock arriving soon</h4>
               <p className="font-body text-sm text-slate mt-1 max-w-xs">
-                Check back soon — we&apos;re adding more {category.name.toLowerCase()}{" "}
-                products all the time.
+                We are currently refilling our inventory. In the meantime, feel free to check our other categories above!
               </p>
             </div>
           ) : (
-            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 sm:gap-6">
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 sm:gap-5">
               {paginated.map((product, i) => (
                 <Reveal key={product.id} delay={(i % 4) * 0.05}>
-                  <ProductCard product={product} />
+                  <ProductCard product={product} variant="kinetic" />
                 </Reveal>
               ))}
             </div>

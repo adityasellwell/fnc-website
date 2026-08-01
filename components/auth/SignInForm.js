@@ -1,7 +1,7 @@
 "use client";
 
-import { useState } from "react";
-import { signInWithEmailAndPassword, signInWithPopup, GoogleAuthProvider, sendEmailVerification, signOut } from "firebase/auth";
+import { useState, useEffect } from "react";
+import { signInWithEmailAndPassword, signInWithPopup, GoogleAuthProvider, signOut, RecaptchaVerifier, signInWithPhoneNumber } from "firebase/auth";
 import { auth } from "@/lib/firebase/client";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
@@ -13,11 +13,23 @@ export default function SignInForm() {
   const searchParams = useSearchParams();
   const redirect = searchParams.get("redirect") || "/account";
 
+  const [activeTab, setActiveTab] = useState("email"); // "email" | "phone"
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [phone, setPhone] = useState("");
+  const [otp, setOtp] = useState("");
+  const [otpSent, setOtpSent] = useState(false);
+  const [confirmationResult, setConfirmationResult] = useState(null);
+  const [timer, setTimer] = useState(0);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [verificationSent, setVerificationSent] = useState(false);
+
+  useEffect(() => {
+    if (timer <= 0) return;
+    const id = setInterval(() => setTimer((t) => t - 1), 1000);
+    return () => clearInterval(id);
+  }, [timer]);
 
   const handleEmailSignIn = async (e) => {
     e.preventDefault();
@@ -31,7 +43,11 @@ export default function SignInForm() {
 
       if (!user.emailVerified) {
         // Require email verification
-        await sendEmailVerification(user);
+        await fetch("/api/auth/send-verification", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ email: user.email }),
+        });
         await signOut(auth); // Sign out of client-side firebase session to prevent half-logged in states
         setVerificationSent(true);
         setError("Your email is not verified. We have sent a verification link to your email. Please verify and try again.");
@@ -54,6 +70,71 @@ export default function SignInForm() {
     }
   };
 
+  const setupRecaptcha = () => {
+    if (window.recaptchaVerifier) return;
+    window.recaptchaVerifier = new RecaptchaVerifier(
+      auth,
+      "recaptcha-container",
+      {
+        size: "invisible",
+        callback: () => {},
+        "expired-callback": () => {},
+      }
+    );
+  };
+
+  const handleSendOtp = async (e) => {
+    e.preventDefault();
+    setError("");
+    setLoading(true);
+
+    try {
+      setupRecaptcha();
+      const appVerifier = window.recaptchaVerifier;
+      const cleanPhone = phone.replace(/\D/g, "");
+      if (cleanPhone.length !== 10) {
+        throw new Error("Please enter a valid 10-digit mobile number.");
+      }
+      const formattedPhone = `+91${cleanPhone}`;
+      const confirmation = await signInWithPhoneNumber(auth, formattedPhone, appVerifier);
+      setConfirmationResult(confirmation);
+      setOtpSent(true);
+      setTimer(60);
+    } catch (err) {
+      console.error(err);
+      setError(err.message || "Failed to send OTP. Please check the number and try again.");
+      if (window.recaptchaVerifier) {
+        window.recaptchaVerifier.clear();
+        window.recaptchaVerifier = null;
+      }
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleVerifyOtp = async (e) => {
+    e.preventDefault();
+    setError("");
+    setLoading(true);
+
+    try {
+      const code = otp.replace(/\D/g, "");
+      if (code.length !== 6) {
+        throw new Error("Please enter a valid 6-digit OTP.");
+      }
+      const result = await confirmationResult.confirm(code);
+      const user = result.user;
+
+      const idToken = await user.getIdToken();
+      await syncSession(idToken);
+    } catch (err) {
+      console.error(err);
+      setError("Invalid or expired OTP. Please try again.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const handleGoogleSignIn = async () => {
     setError("");
     setLoading(true);
@@ -63,7 +144,6 @@ export default function SignInForm() {
       const result = await signInWithPopup(auth, provider);
       const user = result.user;
       
-      // Google logins are automatically verified
       const idToken = await user.getIdToken();
       await syncSession(idToken);
     } catch (err) {
@@ -88,7 +168,6 @@ export default function SignInForm() {
         throw new Error("Failed to create server session");
       }
 
-      // Success — redirect user
       router.push(redirect);
       router.refresh();
     } catch (err) {
@@ -106,43 +185,125 @@ export default function SignInForm() {
         Sign in to your F&amp;C account to track orders and save addresses.
       </p>
 
+      {/* Tabs */}
+      <div className="flex border-b border-bordergray mb-6">
+        <button
+          type="button"
+          onClick={() => { setActiveTab("email"); setError(""); }}
+          className={`flex-1 pb-3 font-body text-sm font-semibold text-center border-b-2 transition-colors ${
+            activeTab === "email" ? "border-fnc-red text-fnc-red" : "border-transparent text-slate hover:text-charcoal"
+          }`}
+        >
+          Email &amp; Password
+        </button>
+        <button
+          type="button"
+          onClick={() => { setActiveTab("phone"); setError(""); }}
+          className={`flex-1 pb-3 font-body text-sm font-semibold text-center border-b-2 transition-colors ${
+            activeTab === "phone" ? "border-fnc-red text-fnc-red" : "border-transparent text-slate hover:text-charcoal"
+          }`}
+        >
+          Phone &amp; OTP
+        </button>
+      </div>
+
       {error && (
         <div className={`p-4 rounded-xl mb-4 font-body text-xs font-semibold ${verificationSent ? "bg-fnc-blue/10 text-fnc-blue" : "bg-fnc-red/10 text-fnc-red"}`}>
           {error}
         </div>
       )}
 
-      <form onSubmit={handleEmailSignIn} className="flex flex-col gap-4">
-        <div>
-          <label className="block font-body text-xs font-bold text-charcoal uppercase tracking-wider mb-1">
-            Email Address
-          </label>
-          <input
-            type="email"
-            required
-            placeholder="you@example.com"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            className="w-full h-12 px-4 rounded-xl border border-bordergray font-body text-sm text-charcoal focus:border-fnc-red focus:outline-none transition-colors"
-          />
-        </div>
+      <div id="recaptcha-container"></div>
 
-        <div>
-          <label className="block font-body text-xs font-bold text-charcoal uppercase tracking-wider mb-1">
-            Password
-          </label>
-          <PasswordInput
-            required
-            placeholder="••••••••"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-          />
-        </div>
+      {activeTab === "email" ? (
+        <form onSubmit={handleEmailSignIn} className="flex flex-col gap-4">
+          <div>
+            <label className="block font-body text-xs font-bold text-charcoal uppercase tracking-wider mb-1">
+              Email Address
+            </label>
+            <input
+              type="email"
+              required
+              placeholder="you@example.com"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              className="w-full h-12 px-4 rounded-xl border border-bordergray font-body text-sm text-charcoal focus:border-fnc-red focus:outline-none transition-colors"
+            />
+          </div>
 
-        <Button type="submit" size="lg" className="w-full mt-2" disabled={loading}>
-          {loading ? "Signing In..." : "Sign In"}
-        </Button>
-      </form>
+          <div>
+            <label className="block font-body text-xs font-bold text-charcoal uppercase tracking-wider mb-1">
+              Password
+            </label>
+            <PasswordInput
+              required
+              placeholder="••••••••"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+            />
+          </div>
+
+          <Button type="submit" size="lg" className="w-full mt-2" disabled={loading}>
+            {loading ? "Signing In..." : "Sign In"}
+          </Button>
+        </form>
+      ) : (
+        <form onSubmit={otpSent ? handleVerifyOtp : handleSendOtp} className="flex flex-col gap-4">
+          {!otpSent ? (
+            <div>
+              <label className="block font-body text-xs font-bold text-charcoal uppercase tracking-wider mb-1">
+                Mobile Number
+              </label>
+              <div className="flex gap-2">
+                <span className="flex items-center justify-center h-12 px-3 rounded-xl border border-bordergray bg-warmwhite font-body text-sm font-semibold text-charcoal">
+                  +91
+                </span>
+                <input
+                  type="tel"
+                  required
+                  placeholder="98765 43210"
+                  value={phone}
+                  onChange={(e) => setPhone(e.target.value)}
+                  className="w-full h-12 px-4 rounded-xl border border-bordergray font-body text-sm text-charcoal focus:border-fnc-red focus:outline-none transition-colors"
+                />
+              </div>
+            </div>
+          ) : (
+            <div>
+              <label className="block font-body text-xs font-bold text-charcoal uppercase tracking-wider mb-1">
+                Enter OTP
+              </label>
+              <input
+                type="text"
+                required
+                maxLength={6}
+                placeholder="6-digit code"
+                value={otp}
+                onChange={(e) => setOtp(e.target.value)}
+                className="w-full h-12 px-4 rounded-xl border border-bordergray font-body text-sm text-charcoal text-center tracking-widest focus:border-fnc-red focus:outline-none transition-colors"
+              />
+              <p className="font-body text-xs text-slate mt-2 text-right">
+                {timer > 0 ? (
+                  `Resend in ${timer}s`
+                ) : (
+                  <button
+                    type="button"
+                    onClick={handleSendOtp}
+                    disabled={loading}
+                    className="text-fnc-red font-bold hover:underline"
+                  >
+                    Resend OTP
+                  </button>
+                )}
+              </p>
+            </div>
+          )}
+
+          <Button type="submit" size="lg" className="w-full mt-2" disabled={loading}>
+            {loading ? "Please wait..." : otpSent ? "Verify & Sign In" : "Send OTP Link"}
+          </Button>
+        </form>
+      )}
 
       <div className="relative flex py-4 items-center">
         <div className="grow border-t border-bordergray" />

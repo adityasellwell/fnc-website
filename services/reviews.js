@@ -1,6 +1,6 @@
 import { db } from "@/lib/db";
 
-const PAGE_SIZE = 20;
+const PAGE_SIZE = 10;
 
 export async function listReviewsAdmin({ page = 1, storeId } = {}) {
   const where = storeId

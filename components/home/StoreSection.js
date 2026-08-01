@@ -30,8 +30,8 @@ export default async function StoreSection() {
 
       <div className={comingSoon.length > 0 ? "grid lg:grid-cols-2 gap-8 items-start" : ""}>
         {/* Interactive Map & Store Card */}
-        <Reveal className={comingSoon.length === 0 ? "max-w-xl mx-auto" : ""}>
-          <StoreLocatorInteractive store={store} />
+        <Reveal className={comingSoon.length === 0 ? "max-w-5xl mx-auto w-full" : ""}>
+          <StoreLocatorInteractive activeStores={active} />
         </Reveal>
 
         {/* Coming Soon list — only rendered once there's a second location */}

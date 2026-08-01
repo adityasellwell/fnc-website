@@ -9,8 +9,10 @@ import FranchiseCTA from "@/components/home/FranchiseCTA";
 import Reviews from "@/components/home/Reviews";
 import FinalCTA from "@/components/home/FinalCTA";
 
-import { getHeroBanners } from "@/lib/data/banners";
+import { getHeroBanners, getBannersByPlacement } from "@/lib/data/banners";
 import { getHomepageRecommendations } from "@/lib/data/recommendations";
+import { getCategories } from "@/lib/data/categories";
+import PromoStrip from "@/components/home/PromoStrip";
 
 export const metadata = {
   title: "F&C — Fresh Proteins & More",
@@ -19,8 +21,12 @@ export const metadata = {
 };
 
 export default async function Home() {
-  const banners = await getHeroBanners();
-  const products = await getHomepageRecommendations();
+  const [banners, promoBanners, products, categories] = await Promise.all([
+    getHeroBanners(),
+    getBannersByPlacement("promo_strip"),
+    getHomepageRecommendations(),
+    getCategories(),
+  ]);
 
   return (
     <>
@@ -29,8 +35,11 @@ export default async function Home() {
         {/* 2. Hero Image Slider */}
         <Hero banners={banners} />
 
-        {/* 3, 4, 5. Toggle, Categories, and Recommendations Grid */}
-        <RecommendationsSection products={products} />
+        {/* 3, 4, 5. Categories and Recommendations Grid */}
+        <RecommendationsSection products={products} initialCategories={categories} />
+
+        {/* Promo Strip */}
+        <PromoStrip banners={promoBanners} />
 
         {/* 6. Why Choose F&C */}
         <WhyChooseFC />
