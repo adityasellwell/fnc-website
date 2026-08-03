@@ -20,7 +20,13 @@ export async function POST(request) {
     return NextResponse.json({ success: true, message: "Session created successfully." });
   } catch (error) {
     console.error("POST /api/auth/session failed:", error);
-    return NextResponse.json({ error: "Authentication failed" }, { status: 401 });
+    // Firebase error codes (e.g. "auth/id-token-expired") are not sensitive —
+    // surfacing them lets the client show something actionable instead of a
+    // generic dead-end message.
+    return NextResponse.json(
+      { error: "Authentication failed", code: error?.code || null, detail: error?.message || null },
+      { status: 401 }
+    );
   }
 }
 

@@ -167,13 +167,15 @@ export default function SignInForm() {
       });
 
       if (!res.ok) {
-        throw new Error("Failed to create server session");
+        const json = await res.json().catch(() => ({}));
+        throw new Error(json.detail || json.code || "Failed to create server session");
       }
 
       router.push(redirect);
       router.refresh();
     } catch (err) {
-      setError("Session sync failed. Please try again.");
+      console.error("[syncSession] failed:", err);
+      setError(`Session sync failed: ${err.message || "please try again."}`);
       await signOut(auth);
     }
   };
