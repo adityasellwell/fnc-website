@@ -354,7 +354,7 @@ export async function POST(request) {
           action: "ORDER_CREATED",
           status: "PENDING",
           amount: total,
-          providerOrderId: rzpOrder.id,
+          eventId: rzpOrder.id,
           processingResult: "Razorpay order created and linked to local order successfully.",
         },
       });

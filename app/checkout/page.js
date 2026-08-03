@@ -4,6 +4,7 @@ import Script from "next/script";
 import CheckoutPageClient from "@/components/checkout/CheckoutPageClient";
 import { getActiveStores } from "@/lib/data/stores";
 import { getSettings } from "@/services/settings";
+import { getCurrentCustomer } from "@/lib/auth";
 
 export const metadata = {
   title: "Checkout",
@@ -11,9 +12,10 @@ export const metadata = {
 };
 
 export default async function CheckoutPage() {
-  const [stores, settingsData] = await Promise.all([
+  const [stores, settingsData, customer] = await Promise.all([
     getActiveStores(),
     getSettings(),
+    getCurrentCustomer(),
   ]);
 
   const settings = {
@@ -30,7 +32,11 @@ export default async function CheckoutPage() {
       <Script src="https://checkout.razorpay.com/v1/checkout.js" strategy="lazyOnload" />
       <Navbar />
       <main className="flex-1">
-        <CheckoutPageClient stores={stores} settings={settings} />
+        <CheckoutPageClient
+          stores={stores}
+          settings={settings}
+          savedProfile={customer ? { name: customer.name, phone: customer.phone } : null}
+        />
       </main>
       <Footer />
     </>

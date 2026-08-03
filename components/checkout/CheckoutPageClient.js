@@ -69,7 +69,7 @@ function validate(values, fulfillmentType, settings, subtotal) {
   return errors;
 }
 
-export default function CheckoutPageClient({ stores = [], settings = {} }) {
+export default function CheckoutPageClient({ stores = [], settings = {}, savedProfile = null }) {
   const { user, isSignedIn, loading } = useAuth();
   const isLoaded = !loading;
   const items = useCartStore((s) => s.items);
@@ -162,17 +162,21 @@ export default function CheckoutPageClient({ stores = [], settings = {} }) {
         : settings.deliveryCharge ?? 50
       : 0;
 
-  // Prefill from the signed-in Firebase profile
+  // Prefill from the saved Customer record first (the phone number typed at
+  // signup lives there, not on the Firebase user — Firebase's own
+  // `user.phoneNumber` is only ever set for actual Phone-Auth sign-ins),
+  // falling back to the Firebase profile, then whatever's already typed.
+  // Still fully editable — this only sets the initial value.
   useEffect(() => {
     if (!isSignedIn || !user) return;
     // eslint-disable-next-line react-hooks/set-state-in-effect
     setValues((v) => ({
       ...v,
-      name: user.displayName || v.name,
-      email: user.email || v.email,
-      phone: v.phone || user.phoneNumber || "",
+      name: v.name || savedProfile?.name || user.displayName || "",
+      email: v.email || user.email || "",
+      phone: v.phone || savedProfile?.phone || user.phoneNumber || "",
     }));
-  }, [isSignedIn, user]);
+  }, [isSignedIn, user, savedProfile]);
 
   // Shared by both verification paths: typed-address forward-geocoding and
   // live "Use My Current Location" — either way, once we have coordinates,
