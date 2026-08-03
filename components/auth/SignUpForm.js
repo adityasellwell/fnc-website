@@ -27,6 +27,7 @@ export default function SignUpForm() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState(false);
+  const [emailSendFailed, setEmailSendFailed] = useState(false);
 
   useEffect(() => {
     if (timer <= 0) return;
@@ -64,12 +65,15 @@ export default function SignUpForm() {
         body: JSON.stringify({ idToken, phone: `+91${cleanPhone}`, name }),
       });
 
-      // Send verification email
-      await fetch("/api/auth/send-verification", {
+      // Send verification email — don't assume it worked; the "check your
+      // inbox" screen becomes actively misleading if it silently failed
+      // (e.g. Resend's sandbox sender rejecting an unverified recipient).
+      const verificationRes = await fetch("/api/auth/send-verification", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email: user.email }),
       });
+      setEmailSendFailed(!verificationRes.ok);
 
       // Log out to prevent partial session access until verified
       await signOut(auth);
@@ -188,20 +192,35 @@ export default function SignUpForm() {
   if (success) {
     return (
       <div className="w-full max-w-md bg-white rounded-3xl border border-bordergray shadow-xl p-8 text-center">
-        <div className="h-16 w-16 bg-fnc-green/10 text-fnc-green rounded-full flex items-center justify-center mx-auto mb-4">
-          <svg className="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-            <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-          </svg>
+        <div className={`h-16 w-16 rounded-full flex items-center justify-center mx-auto mb-4 ${emailSendFailed ? "bg-fnc-red/10 text-fnc-red" : "bg-fnc-green/10 text-fnc-green"}`}>
+          {emailSendFailed ? (
+            <svg className="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m9-.75a9 9 0 11-18 0 9 9 0 0118 0zm-9 3.75h.008v.008H12v-.008z" />
+            </svg>
+          ) : (
+            <svg className="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+            </svg>
+          )}
         </div>
         <h2 className="font-display text-2xl font-bold text-charcoal mb-2">
-          Verify Your Email
+          {emailSendFailed ? "Account Created" : "Verify Your Email"}
         </h2>
-        <p className="font-body text-sm text-slate mb-6">
-          We have sent a verification link to <span className="font-semibold text-charcoal">{email}</span>.
-        </p>
-        <p className="font-body text-xs text-slate bg-warmwhite p-4 rounded-xl mb-6">
-          Please check your inbox (and spam folder) and click the link to verify your email. Once verified, you can sign in to complete your profile.
-        </p>
+        {emailSendFailed ? (
+          <p className="font-body text-sm text-slate mb-6">
+            Your account was created, but we couldn&apos;t send a verification email to{" "}
+            <span className="font-semibold text-charcoal">{email}</span> right now. Contact support to get your account verified manually.
+          </p>
+        ) : (
+          <p className="font-body text-sm text-slate mb-6">
+            We have sent a verification link to <span className="font-semibold text-charcoal">{email}</span>.
+          </p>
+        )}
+        {!emailSendFailed && (
+          <p className="font-body text-xs text-slate bg-warmwhite p-4 rounded-xl mb-6">
+            Please check your inbox (and spam folder) and click the link to verify your email. Once verified, you can sign in to complete your profile.
+          </p>
+        )}
         <Link href="/sign-in" className="inline-block w-full">
           <Button size="lg" className="w-full">Go to Sign In</Button>
         </Link>
