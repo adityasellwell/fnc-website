@@ -292,7 +292,7 @@ export default function Navbar() {
         className={`sticky top-0 z-50 border-b transition-all duration-300 ${headerBg}`}
       >
         <Container>
-          <div className="flex h-24 md:h-28 items-center gap-4 md:gap-6">
+          <div className="flex h-28 md:h-32 items-center gap-4 md:gap-6">
             {/* Logo */}
             <Link
               href="/"
@@ -302,9 +302,9 @@ export default function Navbar() {
               <Image
                 src={BRAND.logo}
                 alt={`${BRAND.fullName} logo`}
-                width={200}
-                height={200}
-                className="h-20 w-24 md:h-24 md:w-32 object-contain"
+                width={220}
+                height={220}
+                className="h-24 w-28 md:h-28 md:w-36 object-contain"
                 priority
               />
             </Link>

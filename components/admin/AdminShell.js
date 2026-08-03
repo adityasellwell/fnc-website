@@ -54,9 +54,9 @@ export default function AdminShell({ user, nav, children }) {
       <aside
         className={`hidden md:flex ${collapsed ? "w-20" : "w-64"} shrink-0 flex-col bg-charcoal text-white transition-all duration-200`}
       >
-        <div className="h-20 flex items-center justify-between px-4 border-b border-white/10">
+        <div className="h-24 flex items-center justify-between px-4 border-b border-white/10">
           <Link href="/admin" className="flex items-center gap-2.5 min-w-0">
-            <Image src={BRAND.logo} alt={BRAND.name} width={48} height={48} className="h-10 w-12 rounded-lg object-contain bg-white p-0.5 shrink-0" />
+            <Image src={BRAND.logo} alt={BRAND.name} width={64} height={64} className="h-14 w-14 rounded-lg object-contain bg-white p-1 shrink-0" />
             {!collapsed && <span className="font-display text-base font-bold truncate">F&amp;C Admin</span>}
           </Link>
         </div>
@@ -101,9 +101,9 @@ export default function AdminShell({ user, nav, children }) {
 
       <div className="flex-1 flex flex-col min-w-0">
         {/* Header */}
-        <header className="h-20 flex items-center justify-between px-6 sm:px-8 bg-white border-b border-bordergray">
+        <header className="h-24 flex items-center justify-between px-6 sm:px-8 bg-white border-b border-bordergray">
           <div className="md:hidden flex items-center gap-2">
-            <Image src={BRAND.logo} alt={BRAND.name} width={48} height={48} className="h-10 w-12 rounded-lg object-contain bg-white p-0.5 shrink-0" />
+            <Image src={BRAND.logo} alt={BRAND.name} width={64} height={64} className="h-14 w-14 rounded-lg object-contain bg-white p-1 shrink-0" />
             <span className="font-display text-lg font-bold text-charcoal">F&amp;C Admin</span>
           </div>
           <div className="hidden md:block font-body text-sm text-slate">

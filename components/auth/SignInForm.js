@@ -5,8 +5,10 @@ import { signInWithEmailAndPassword, signInWithPopup, GoogleAuthProvider, signOu
 import { auth } from "@/lib/firebase/client";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
+import Image from "next/image";
 import Button from "@/components/ui/Button";
 import PasswordInput from "@/components/ui/PasswordInput";
+import { BRAND } from "@/lib/constants";
 
 export default function SignInForm() {
   const router = useRouter();
@@ -178,6 +180,16 @@ export default function SignInForm() {
 
   return (
     <div className="w-full max-w-md bg-white rounded-3xl border border-bordergray shadow-xl p-8">
+      <div className="flex justify-center mb-5">
+        <Image
+          src={BRAND.logo}
+          alt={`${BRAND.fullName} logo`}
+          width={200}
+          height={200}
+          className="h-24 w-24 object-contain"
+          priority
+        />
+      </div>
       <h2 className="font-display text-2xl font-bold text-charcoal text-center mb-1">
         Welcome Back
       </h2>
@@ -300,7 +312,7 @@ export default function SignInForm() {
           )}
 
           <Button type="submit" size="lg" className="w-full mt-2" disabled={loading}>
-            {loading ? "Please wait..." : otpSent ? "Verify & Sign In" : "Send OTP Link"}
+            {loading ? "Please wait..." : otpSent ? "Verify & Sign In" : "Send OTP"}
           </Button>
         </form>
       )}
