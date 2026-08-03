@@ -12,25 +12,27 @@ function CartLine({ item }) {
   const removeItem = useCartStore((s) => s.removeItem);
 
   return (
-    <div className="flex items-center gap-4 py-5 border-b border-bordergray last:border-b-0">
-      <div className="relative h-20 w-20 sm:h-24 sm:w-24 shrink-0 rounded-2xl overflow-hidden bg-warmwhite border border-bordergray">
-        {item.image && (
-          <Image src={item.image} alt={item.name} fill sizes="96px" className="object-cover" />
-        )}
+    <div className="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4 py-5 border-b border-bordergray last:border-b-0">
+      <div className="flex items-center gap-3 sm:gap-4 min-w-0">
+        <div className="relative h-16 w-16 sm:h-24 sm:w-24 shrink-0 rounded-2xl overflow-hidden bg-warmwhite border border-bordergray">
+          {item.image && (
+            <Image src={item.image} alt={item.name} fill sizes="96px" className="object-cover" />
+          )}
+        </div>
+
+        <div className="min-w-0 flex-1">
+          <Link
+            href={`/product/${item.slug}`}
+            className="font-display font-semibold text-charcoal hover:text-fnc-red transition-colors truncate block"
+          >
+            {item.name}
+          </Link>
+          <p className="font-body text-xs text-slate mt-0.5">{item.unit}</p>
+          <p className="font-display font-bold text-charcoal mt-1">₹{item.price}</p>
+        </div>
       </div>
 
-      <div className="min-w-0 flex-1">
-        <Link
-          href={`/product/${item.slug}`}
-          className="font-display font-semibold text-charcoal hover:text-fnc-red transition-colors truncate block"
-        >
-          {item.name}
-        </Link>
-        <p className="font-body text-xs text-slate mt-0.5">{item.unit}</p>
-        <p className="font-display font-bold text-charcoal mt-1">₹{item.price}</p>
-      </div>
-
-      <div className="flex items-center gap-3 shrink-0">
+      <div className="flex items-center justify-between sm:justify-end gap-3 sm:shrink-0">
         <div className="flex items-center gap-1 rounded-full border border-bordergray">
           <button
             type="button"
