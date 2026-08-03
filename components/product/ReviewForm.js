@@ -7,7 +7,7 @@ import { useAuth } from "@/components/auth/AuthProvider";
 import Button from "@/components/ui/Button";
 import { cn } from "@/lib/utils";
 
-export default function ReviewForm({ productId }) {
+export default function ReviewForm({ productId, orderId, onSubmitted }) {
   const { isSignedIn, loading: authLoading } = useAuth();
   const router = useRouter();
 
@@ -35,7 +35,7 @@ export default function ReviewForm({ productId }) {
       const res = await fetch("/api/reviews", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ productId, rating, comment: comment.trim() }),
+        body: JSON.stringify({ productId, orderId, rating, comment: comment.trim() }),
       });
       const json = await res.json();
 
@@ -44,6 +44,7 @@ export default function ReviewForm({ productId }) {
       setStatus("success");
       setComment("");
       setRating(0);
+      onSubmitted?.();
       router.refresh();
     } catch (err) {
       setStatus("error");

@@ -10,6 +10,7 @@ import { getCurrentCustomer } from "@/lib/auth";
 import { getOrderById } from "@/services/orders";
 import { cn } from "@/lib/utils";
 import OrderActions from "./OrderActions";
+import ReviewPrompt from "./ReviewPrompt";
 
 export const metadata = {
   title: "Track Order — F&C",
@@ -304,6 +305,9 @@ export default async function TrackOrderPage({ params }) {
 
                 {/* Order Actions — Cancel / Request Refund / Refund Status */}
                 <OrderActions order={order} />
+
+                {/* Review Prompt — shown once order is DELIVERED/COLLECTED */}
+                <ReviewPrompt order={order} />
 
                 {/* Help Card */}
                 <Card className="p-6 flex items-start gap-4 bg-fnc-green/5 border border-fnc-green/10">

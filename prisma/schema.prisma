@@ -257,11 +257,17 @@ model Review {
   customer   Customer? @relation(fields: [customerId], references: [id])
   customerId String?
 
+  // Ties a review to the specific delivered order that made it eligible —
+  // powers "verified purchase" and gates one review per order per product.
+  order   Order?  @relation(fields: [orderId], references: [id])
+  orderId String?
+
   createdAt DateTime @default(now())
 
   @@index([productId])
   @@index([storeId])
   @@index([customerId])
+  @@index([orderId])
 }
 
 // ---------------------------------------------------------------------
@@ -397,6 +403,7 @@ model Order {
 
   paymentAuditLogs PaymentAuditLog[]
   refundRequest    RefundRequest?
+  reviews          Review[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt

@@ -13,6 +13,7 @@ const createReviewSchema = z
   .object({
     productId: z.string().min(1).optional(),
     storeId: z.string().min(1).optional(),
+    orderId: z.string().min(1).optional(),
     rating: z.coerce.number().int().min(1, "rating must be between 1 and 5").max(5, "rating must be between 1 and 5"),
     comment: z.string().min(1, "comment is required").max(5000),
   })
@@ -20,6 +21,11 @@ const createReviewSchema = z
     message: "Exactly one of productId or storeId must be provided",
     path: ["productId"],
   });
+
+// An order is only "reviewable" once it has actually reached the
+// customer — matches the terminal statuses used for the refund window
+// elsewhere (see canRequestRefund in OrderActions.js).
+const REVIEWABLE_ORDER_STATUSES = ["DELIVERED", "COLLECTED"];
 
 const listReviewsQuerySchema = z
   .object({
@@ -109,11 +115,38 @@ export async function POST(request) {
     );
   }
 
-  const { productId, storeId, rating, comment } = parsed.data;
+  const { productId, storeId, orderId, rating, comment } = parsed.data;
 
   try {
+    // A product review tied to an order must be a real, delivered
+    // purchase belonging to this customer — otherwise anyone signed in
+    // could review any product with no purchase at all.
+    if (orderId) {
+      const order = await db.order.findUnique({
+        where: { id: orderId },
+        select: { customerId: true, status: true, items: { select: { productId: true } } },
+      });
+      if (!order || order.customerId !== customer.id) {
+        return NextResponse.json({ error: "Order not found" }, { status: 404 });
+      }
+      if (!REVIEWABLE_ORDER_STATUSES.includes(order.status)) {
+        return NextResponse.json(
+          { error: "You can review this order's items once it's delivered." },
+          { status: 403 }
+        );
+      }
+      if (productId && !order.items.some((item) => item.productId === productId)) {
+        return NextResponse.json(
+          { error: "This product wasn't part of that order." },
+          { status: 400 }
+        );
+      }
+    }
+
     const existing = await db.review.findFirst({
-      where: { customerId: customer.id, productId: productId ?? null, storeId: storeId ?? null },
+      where: orderId
+        ? { customerId: customer.id, productId: productId ?? null, storeId: storeId ?? null, orderId }
+        : { customerId: customer.id, productId: productId ?? null, storeId: storeId ?? null },
     });
     if (existing) {
       return NextResponse.json(
@@ -131,6 +164,7 @@ export async function POST(request) {
           customerId: customer.id,
           productId: productId ?? null,
           storeId: storeId ?? null,
+          orderId: orderId ?? null,
         },
       });
 

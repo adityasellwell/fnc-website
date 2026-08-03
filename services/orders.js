@@ -1,5 +1,6 @@
 import { db } from "@/lib/db";
 import { initiateRazorpayRefund } from "@/services/payment";
+import { sendReviewRequestEmail } from "@/lib/email";
 
 const PAGE_SIZE = 10;
 
@@ -38,6 +39,7 @@ export async function getOrderById(id) {
       items: { include: { product: true } },
       statusHistory: { orderBy: { timestamp: "asc" }, include: { changedBy: true } },
       refundRequest: true,
+      reviews: { select: { productId: true } },
     },
   });
 }
@@ -47,9 +49,12 @@ export async function getOrderById(id) {
  * when in the same transaction.
  */
 export async function updateOrderStatus(orderId, status, changedById) {
-  const order = await db.order.findUnique({ where: { id: orderId } });
+  const order = await db.order.findUnique({
+    where: { id: orderId },
+    include: { customer: true },
+  });
 
-  return db.$transaction(async (tx) => {
+  const result = await db.$transaction(async (tx) => {
     const updated = await tx.order.update({ where: { id: orderId }, data: { status } });
     await tx.orderStatusHistory.create({ data: { orderId, status, changedById } });
     await tx.auditLog.create({
@@ -64,6 +69,16 @@ export async function updateOrderStatus(orderId, status, changedById) {
     });
     return [updated];
   });
+
+  // Only nudge on the transition INTO a completed status, never re-fire
+  // if an admin re-saves the same status or corrects it later.
+  const isNewlyCompleted =
+    ["DELIVERED", "COLLECTED"].includes(status) && order?.status !== status;
+  if (isNewlyCompleted && order?.customer?.email) {
+    sendReviewRequestEmail(order.customer, { ...order, status });
+  }
+
+  return result;
 }
 
 export async function updateOrderPackingNotes(orderId, notes, userId) {
