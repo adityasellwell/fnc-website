@@ -267,8 +267,8 @@ export default function OrderDetailClient({ order, currentUser }) {
             </div>
           )}
 
-          {/* Refund Actions (if Cancelled/Returned) */}
-          {(order.status === "CANCELLED" || order.status === "RETURNED" || order.status === "REFUNDED") && (
+          {/* Refund Operations — visible on any PAID order */}
+          {order.paymentStatus === "PAID" && (
             <div className="bg-white border border-bordergray rounded-3xl p-6">
               <h2 className="font-display text-base font-bold text-charcoal mb-4 flex items-center gap-2">
                 <Undo className="h-5 w-5 text-fnc-red" />
@@ -277,15 +277,29 @@ export default function OrderDetailClient({ order, currentUser }) {
               {order.refundRequest ? (
                 <div className="bg-warmwhite p-4 rounded-2xl flex flex-col gap-2">
                   <p className="font-body text-sm text-charcoal">
-                    <span className="font-semibold">Refund Status:</span>{" "}
+                    <span className="font-semibold">Status:</span>{" "}
                     <span className="font-bold text-fnc-red">{order.refundRequest.status}</span>
                   </p>
                   <p className="font-body text-sm text-charcoal">
-                    <span className="font-semibold">Refund Amount:</span> ₹{Number(order.refundRequest.amount).toFixed(2)}
+                    <span className="font-semibold">Category:</span>{" "}
+                    {order.refundRequest.category?.replace(/_/g, " ")}
+                  </p>
+                  <p className="font-body text-sm text-charcoal">
+                    <span className="font-semibold">Amount:</span> ₹{Number(order.refundRequest.amount).toFixed(2)}
                   </p>
                   <p className="font-body text-sm text-charcoal">
                     <span className="font-semibold">Reason:</span> {order.refundRequest.reason}
                   </p>
+                  {order.refundRequest.razorpayRefundId && (
+                    <p className="font-body text-xs text-slate">
+                      Razorpay Refund ID: {order.refundRequest.razorpayRefundId}
+                    </p>
+                  )}
+                  {order.refundRequest.adminNotes && (
+                    <p className="font-body text-sm text-charcoal">
+                      <span className="font-semibold">Admin Notes:</span> {order.refundRequest.adminNotes}
+                    </p>
+                  )}
                   {order.refundRequest.processedAt && (
                     <p className="font-body text-xs text-slate">
                       Processed at: {formatDate(order.refundRequest.processedAt)}

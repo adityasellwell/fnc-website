@@ -1,4 +1,4 @@
-import Table from "@/components/admin/Table";
+import ServerTable from "@/components/admin/ServerTable";
 import Pagination from "@/components/admin/Pagination";
 import Filters from "@/components/admin/Filters";
 import OrderRowActions from "@/components/admin/OrderRowActions";
@@ -42,7 +42,7 @@ export default async function AdminOrdersPage({ searchParams }) {
         ]}
       />
 
-      <Table
+      <ServerTable
         emptyMessage="No orders match these filters."
         columns={[
           {

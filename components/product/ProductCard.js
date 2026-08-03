@@ -3,7 +3,8 @@
 import Link from "next/link";
 import Image from "next/image";
 import { useState, useEffect } from "react";
-import { Star } from "lucide-react";
+import { Star, ChevronLeft, ChevronRight, Play, Volume2, VolumeX } from "lucide-react";
+import { AnimatePresence, motion } from "framer-motion";
 import Card from "@/components/ui/Card";
 import PlaceholderMedia from "@/components/ui/PlaceholderMedia";
 import WishlistButton from "@/components/product/WishlistButton";
@@ -37,6 +38,35 @@ export default function ProductCard({ product, className }) {
 
   const [imgError, setImgError] = useState(false);
   const primaryImage = imgError ? meta.image : (product.images && product.images[0]) || meta.image;
+
+  // Real media (images + video) uploaded for this product, falling back to
+  // the single legacy image/category-photo chain when none exists yet.
+  const mediaItems =
+    product.media && product.media.length > 0
+      ? product.media
+      : primaryImage
+      ? [{ id: "fallback", type: "IMAGE", url: primaryImage }]
+      : [];
+
+  const [activeIndex, setActiveIndex] = useState(0);
+  const [isMuted, setIsMuted] = useState(true);
+  const activeItem = mediaItems[activeIndex];
+
+  function goTo(e, idx) {
+    e.preventDefault();
+    e.stopPropagation();
+    setActiveIndex(idx);
+  }
+  function goPrev(e) {
+    e.preventDefault();
+    e.stopPropagation();
+    setActiveIndex((i) => (i - 1 + mediaItems.length) % mediaItems.length);
+  }
+  function goNext(e) {
+    e.preventDefault();
+    e.stopPropagation();
+    setActiveIndex((i) => (i + 1) % mediaItems.length);
+  }
 
   function handleAdd(e) {
     e.preventDefault();
@@ -109,18 +139,51 @@ export default function ProductCard({ product, className }) {
         className
       )}
     >
-      {/* Image Block */}
+      {/* Media Block */}
       <div className="relative aspect-[4/3] w-full overflow-hidden bg-warmwhite">
         <Link href={href} className="absolute inset-0" aria-label={product.name}>
-          {primaryImage ? (
-            <Image
-              src={primaryImage}
-              alt={product.name}
-              fill
-              sizes="(min-width: 1024px) 22vw, 45vw"
-              className="object-cover transition-transform duration-500 group-hover:scale-105"
-              onError={() => setImgError(true)}
-            />
+          {activeItem ? (
+            <AnimatePresence initial={false} mode="wait">
+              {activeItem.type === "VIDEO" ? (
+                <motion.div
+                  key={activeItem.id ?? activeIndex}
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                  transition={{ duration: 0.25 }}
+                  className="absolute inset-0"
+                >
+                  <video
+                    src={activeItem.url}
+                    className="w-full h-full object-cover"
+                    autoPlay
+                    loop
+                    muted={isMuted}
+                    playsInline
+                  />
+                </motion.div>
+              ) : (
+                <motion.div
+                  key={activeItem.id ?? activeIndex}
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                  transition={{ duration: 0.25 }}
+                  className="absolute inset-0"
+                >
+                  <Image
+                    src={activeItem.url}
+                    alt={product.name}
+                    fill
+                    sizes="(min-width: 1024px) 22vw, 45vw"
+                    className="object-cover transition-transform duration-500 group-hover:scale-105"
+                    onError={() => {
+                      if (activeIndex === 0) setImgError(true);
+                    }}
+                  />
+                </motion.div>
+              )}
+            </AnimatePresence>
           ) : (
             <PlaceholderMedia
               icon={meta.icon}
@@ -150,6 +213,64 @@ export default function ProductCard({ product, className }) {
           image={primaryImage}
           className="absolute top-2.5 right-2.5 z-10"
         />
+
+        {/* Video mute toggle */}
+        {activeItem?.type === "VIDEO" && (
+          <button
+            type="button"
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              setIsMuted((m) => !m);
+            }}
+            aria-label={isMuted ? "Unmute video" : "Mute video"}
+            className="absolute bottom-2.5 right-2.5 z-10 h-7 w-7 flex items-center justify-center rounded-full bg-black/60 text-white backdrop-blur-sm hover:bg-black/80 transition-colors"
+          >
+            {isMuted ? <VolumeX className="h-3.5 w-3.5" /> : <Volume2 className="h-3.5 w-3.5" />}
+          </button>
+        )}
+
+        {/* Prev/next arrows — desktop hover only, hidden with a single item */}
+        {mediaItems.length > 1 && (
+          <>
+            <button
+              type="button"
+              onClick={goPrev}
+              aria-label="Previous media"
+              className="hidden sm:flex absolute left-2 top-1/2 -translate-y-1/2 z-10 h-7 w-7 items-center justify-center rounded-full bg-white/90 text-charcoal shadow-sm opacity-0 group-hover:opacity-100 transition-opacity hover:bg-white"
+            >
+              <ChevronLeft className="h-4 w-4" />
+            </button>
+            <button
+              type="button"
+              onClick={goNext}
+              aria-label="Next media"
+              className="hidden sm:flex absolute right-2 top-1/2 -translate-y-1/2 z-10 h-7 w-7 items-center justify-center rounded-full bg-white/90 text-charcoal shadow-sm opacity-0 group-hover:opacity-100 transition-opacity hover:bg-white"
+            >
+              <ChevronRight className="h-4 w-4" />
+            </button>
+
+            {/* Dot indicators */}
+            <div className="absolute bottom-2.5 left-1/2 -translate-x-1/2 z-10 flex items-center gap-1">
+              {mediaItems.map((item, idx) => (
+                <button
+                  key={item.id ?? idx}
+                  type="button"
+                  onClick={(e) => goTo(e, idx)}
+                  aria-label={`Show media ${idx + 1}`}
+                  className={cn(
+                    "h-1.5 rounded-full transition-all duration-200 shadow-sm",
+                    idx === activeIndex ? "w-4 bg-white" : "w-1.5 bg-white/60"
+                  )}
+                >
+                  {item.type === "VIDEO" && idx !== activeIndex && (
+                    <Play className="h-1.5 w-1.5 text-charcoal" />
+                  )}
+                </button>
+              ))}
+            </div>
+          </>
+        )}
       </div>
 
       {/* Details Block */}

@@ -1,4 +1,4 @@
-import Table from "@/components/admin/Table";
+import ServerTable from "@/components/admin/ServerTable";
 import InviteTeamMemberModal from "@/components/admin/InviteTeamMemberModal";
 import TeamRoleSelect from "@/components/admin/TeamRoleSelect";
 import ConfirmDialog from "@/components/admin/ConfirmDialog";
@@ -36,7 +36,7 @@ export default async function AdminTeamPage() {
         <InviteTeamMemberModal roles={roles} currentUser={serializedAdmin} stores={serializedStores} />
       </div>
 
-      <Table
+      <ServerTable
         emptyMessage="No team members yet."
         columns={[
           { header: "Name", accessor: (m) => m.name },

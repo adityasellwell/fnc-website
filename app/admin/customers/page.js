@@ -1,5 +1,5 @@
 import Link from "next/link";
-import Table from "@/components/admin/Table";
+import ServerTable from "@/components/admin/ServerTable";
 import Pagination from "@/components/admin/Pagination";
 import Filters from "@/components/admin/Filters";
 import { listCustomers } from "@/services/customers";
@@ -24,7 +24,7 @@ export default async function AdminCustomersPage({ searchParams }) {
 
       <Filters fields={[{ key: "search", label: "Search name, email or phone", type: "search" }]} />
 
-      <Table
+      <ServerTable
         emptyMessage="No customers match this search."
         columns={[
           { header: "Name", accessor: (c) => c.name },

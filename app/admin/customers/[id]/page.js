@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ArrowLeft } from "lucide-react";
-import Table from "@/components/admin/Table";
+import ServerTable from "@/components/admin/ServerTable";
 import { getCustomerWithOrders } from "@/services/customers";
 import { requireAdminUser, getScopedStoreId } from "@/lib/admin-auth";
 
@@ -61,7 +61,7 @@ export default async function AdminCustomerDetailPage({ params }) {
       )}
 
       <h2 className="font-display text-lg font-bold text-charcoal mb-3">Order History</h2>
-      <Table
+      <ServerTable
         emptyMessage="No orders yet."
         columns={[
           { header: "Order", accessor: (o) => `#${o.id.slice(-8)}` },

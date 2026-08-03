@@ -1,5 +1,5 @@
 import { TrendingUp, ShoppingBag, Receipt, Users } from "lucide-react";
-import Table from "@/components/admin/Table";
+import ServerTable from "@/components/admin/ServerTable";
 import {
   getRevenueStats,
   getTopProducts,
@@ -64,7 +64,7 @@ export default async function AdminAnalyticsPage() {
       <div className="grid lg:grid-cols-2 gap-6">
         <div>
           <h2 className="font-display text-lg font-bold text-charcoal mb-3">Top Products</h2>
-          <Table
+          <ServerTable
             emptyMessage="No sales yet."
             columns={[
               { header: "Product", accessor: (p) => p.name },
@@ -77,7 +77,7 @@ export default async function AdminAnalyticsPage() {
 
         <div>
           <h2 className="font-display text-lg font-bold text-charcoal mb-3">Popular Searches</h2>
-          <Table
+          <ServerTable
             emptyMessage="No searches logged yet."
             columns={[
               { header: "Query", accessor: (s) => s.query },
@@ -92,7 +92,7 @@ export default async function AdminAnalyticsPage() {
       {storeBreakdown && (
         <div className="mt-8 bg-white border border-bordergray rounded-2xl p-6">
           <h2 className="font-display text-lg font-bold text-charcoal mb-4">Per-Store Sales Breakdown</h2>
-          <Table
+          <ServerTable
             emptyMessage="No store data available."
             columns={[
               { header: "Store", accessor: (s) => s.storeName },
@@ -110,7 +110,7 @@ export default async function AdminAnalyticsPage() {
       {lowStock && lowStock.length > 0 && (
         <div className="mt-8 bg-white border border-bordergray rounded-2xl p-6">
           <h2 className="font-display text-lg font-bold text-fnc-red mb-3">Low Stock Warnings ({lowStock.length})</h2>
-          <Table
+          <ServerTable
             emptyMessage="All items are well stocked!"
             columns={[
               { header: "Product", accessor: (i) => i.product.name },

@@ -677,16 +677,46 @@ model ProductMedia {
   @@index([displayOrder])
 }
 
+enum RefundStatus {
+  REQUESTED
+  UNDER_REVIEW
+  APPROVED
+  PROCESSING
+  REFUNDED
+  REJECTED
+  CANCELLED
+}
+
+enum RefundCategory {
+  ITEM_NOT_RECEIVED
+  ITEM_DAMAGED
+  WRONG_ITEM
+  QUALITY_ISSUE
+  DELIVERY_CANCELLED
+  DUPLICATE_ORDER
+  OTHER
+}
+
 model RefundRequest {
-  id          String        @id @default(cuid())
-  order       Order         @relation(fields: [orderId], references: [id], onDelete: Cascade)
-  orderId     String        @unique
-  reason      String        @db.Text
-  status      String        // "PENDING" | "APPROVED" | "REJECTED" | "COMPLETED"
-  amount      Decimal       @db.Decimal(10, 2)
-  processedAt DateTime?
-  notes       String?       @db.Text
-  createdAt   DateTime      @default(now())
-  updatedAt   DateTime      @updatedAt
+  id                String         @id @default(cuid())
+  order             Order          @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  orderId           String         @unique
+  // reason is the customer's free-text notes; category is the structured type
+  category          RefundCategory @default(OTHER)
+  reason            String         @db.Text
+  photoUrl          String?        // optional evidence photo (Firebase Storage URL)
+  status            RefundStatus   @default(REQUESTED)
+  amount            Decimal        @db.Decimal(10, 2)
+  // Razorpay refund confirmation — set once API call succeeds
+  razorpayRefundId  String?
+  // Who initiated: "CUSTOMER" or "ADMIN"
+  initiatedBy       String         @default("CUSTOMER")
+  // Admin's internal notes (shown to customer on rejection)
+  adminNotes        String?        @db.Text
+  processedAt       DateTime?
+  createdAt         DateTime       @default(now())
+  updatedAt         DateTime       @updatedAt
+
+  @@index([status])
 }
 
