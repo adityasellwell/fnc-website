@@ -5,6 +5,7 @@ import Container from "./Container";
 import SocialIcon from "@/components/ui/SocialIcon";
 import { BRAND, FOOTER_LINKS } from "@/lib/constants";
 import { getActiveStores } from "@/lib/data/stores";
+import { getSettings } from "@/services/settings";
 
 function FooterColumn({ title, links }) {
   return (
@@ -29,7 +30,12 @@ function FooterColumn({ title, links }) {
 }
 
 export default async function Footer() {
-  const [store] = await getActiveStores();
+  const [store, settings] = await Promise.all([
+    getActiveStores().then((stores) => stores[0]),
+    getSettings(),
+  ]);
+  const contactPhone = settings?.businessInfo?.phone || BRAND.phone;
+  const contactEmail = settings?.businessInfo?.email || BRAND.email;
 
   return (
     <footer className="bg-warmwhite border-t border-bordergray">
@@ -94,18 +100,18 @@ export default async function Footer() {
           </p>
           <div className="flex items-center gap-5">
             <a
-              href={`tel:${BRAND.phone}`}
+              href={`tel:${contactPhone}`}
               className="flex items-center gap-1.5 font-body text-xs text-slate hover:text-fnc-red transition-colors"
             >
               <Phone className="h-3.5 w-3.5" />
-              {BRAND.phone}
+              {contactPhone}
             </a>
             <a
-              href={`mailto:${BRAND.email}`}
+              href={`mailto:${contactEmail}`}
               className="flex items-center gap-1.5 font-body text-xs text-slate hover:text-fnc-red transition-colors"
             >
               <Mail className="h-3.5 w-3.5" />
-              {BRAND.email}
+              {contactEmail}
             </a>
           </div>
         </div>

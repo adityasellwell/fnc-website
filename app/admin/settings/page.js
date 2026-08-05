@@ -68,6 +68,24 @@ export default async function AdminSettingsPage() {
           </div>
         </div>
 
+        <h2 className="font-display text-lg font-bold text-charcoal border-b border-bordergray pb-3 mt-4">Business Contact Details</h2>
+        <p className="font-body text-xs text-slate -mt-4">Shown site-wide in the footer and on the Contact page. Leave blank to keep the current default.</p>
+
+        <div className="grid sm:grid-cols-2 gap-5">
+          <div className="flex flex-col gap-1.5">
+            <label className="font-body text-xs font-semibold text-charcoal">Phone</label>
+            <input name="businessPhone" defaultValue={settings.businessInfo?.phone || ""} placeholder="+91 98765 43210" className={inputClasses} />
+          </div>
+          <div className="flex flex-col gap-1.5">
+            <label className="font-body text-xs font-semibold text-charcoal">WhatsApp</label>
+            <input name="businessWhatsapp" defaultValue={settings.businessInfo?.whatsapp || ""} placeholder="+91 98765 43210" className={inputClasses} />
+          </div>
+        </div>
+        <div className="flex flex-col gap-1.5">
+          <label className="font-body text-xs font-semibold text-charcoal">Email</label>
+          <input name="businessEmail" type="email" defaultValue={settings.businessInfo?.email || ""} placeholder="hello@fncmumbai.com" className={inputClasses} />
+        </div>
+
         <h2 className="font-display text-lg font-bold text-charcoal border-b border-bordergray pb-3 mt-4">Platform Listing Integrations</h2>
 
         <div className="flex flex-col gap-1.5">

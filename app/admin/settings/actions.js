@@ -14,10 +14,17 @@ export async function updateSettingsAction(formData) {
     freeDeliveryThreshold: parseFloat(formData.get("freeDeliveryThreshold")),
     zomatoUrl: formData.get("zomatoUrl")?.toString().trim() || null,
     swiggyUrl: formData.get("swiggyUrl")?.toString().trim() || null,
+    businessInfo: {
+      phone: formData.get("businessPhone")?.toString().trim() || "",
+      whatsapp: formData.get("businessWhatsapp")?.toString().trim() || "",
+      email: formData.get("businessEmail")?.toString().trim() || "",
+    },
   };
 
   await updateSettings(data);
 
   revalidatePath("/admin/settings");
   revalidatePath("/checkout");
+  revalidatePath("/contact");
+  revalidatePath("/", "layout");
 }

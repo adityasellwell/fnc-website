@@ -6,6 +6,7 @@ import Container from "@/components/layout/Container";
 import Reveal from "@/components/motion/Reveal";
 import ContactForm from "@/components/contact/ContactForm";
 import { BRAND, CURRENT_LOCATION } from "@/lib/constants";
+import { getSettings } from "@/services/settings";
 
 export const metadata = {
   title: "Contact Us — F&C Fresh Proteins & More",
@@ -18,34 +19,39 @@ function whatsAppLink(phone, message) {
   return `https://wa.me/${digits}?text=${encodeURIComponent(message)}`;
 }
 
-const contactMethods = [
-  {
-    icon: Phone,
-    label: "Call us",
-    value: BRAND.phone,
-    href: `tel:${BRAND.phone.replace(/\s+/g, "")}`,
-  },
-  {
-    icon: MessageCircle,
-    label: "WhatsApp",
-    value: BRAND.whatsapp,
-    href: whatsAppLink(BRAND.whatsapp, "Hi! I have a question about F&C."),
-  },
-  {
-    icon: Mail,
-    label: "Email us",
-    value: BRAND.email,
-    href: `mailto:${BRAND.email}`,
-  },
-  {
-    icon: MapPin,
-    label: "Visit us",
-    value: CURRENT_LOCATION.fullLabel,
-    href: "/stores",
-  },
-];
+export default async function ContactPage() {
+  const settings = await getSettings();
+  const phone = settings?.businessInfo?.phone || BRAND.phone;
+  const whatsapp = settings?.businessInfo?.whatsapp || BRAND.whatsapp;
+  const email = settings?.businessInfo?.email || BRAND.email;
 
-export default function ContactPage() {
+  const contactMethods = [
+    {
+      icon: Phone,
+      label: "Call us",
+      value: phone,
+      href: `tel:${phone.replace(/\s+/g, "")}`,
+    },
+    {
+      icon: MessageCircle,
+      label: "WhatsApp",
+      value: whatsapp,
+      href: whatsAppLink(whatsapp, "Hi! I have a question about F&C."),
+    },
+    {
+      icon: Mail,
+      label: "Email us",
+      value: email,
+      href: `mailto:${email}`,
+    },
+    {
+      icon: MapPin,
+      label: "Visit us",
+      value: CURRENT_LOCATION.fullLabel,
+      href: "/stores",
+    },
+  ];
+
   return (
     <>
       <Navbar />

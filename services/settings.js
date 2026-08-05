@@ -11,8 +11,9 @@ const DEFAULT_SETTINGS = {
   socialLinks: { facebook: "", instagram: "", whatsapp: "" },
   businessInfo: {
     name: "F&C — Fresh Proteins & More",
-    email: "contact@fncproteins.com",
+    email: "hello@fncfresh.in",
     phone: "+91 98765 43210",
+    whatsapp: "+91 98765 43210",
     address: "Shop No 11, next to Eden Super Mart, Crown Apartment, Hiranandani Estate, Thane West",
   },
   seoTitle: "F&C — Fresh Proteins & More",
