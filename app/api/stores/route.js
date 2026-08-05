@@ -74,6 +74,8 @@ export async function GET(request) {
         deliveryAvailable: s.deliveryAvailable,
         pickupAvailable: s.pickupAvailable,
         googleMapsLink: s.googleMapsLink,
+        swiggyUrl: s.swiggyUrl,
+        zomatoUrl: s.zomatoUrl,
       };
     });
 

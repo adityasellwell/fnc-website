@@ -5,6 +5,7 @@ import Image from "next/image";
 import { Minus, Plus, Trash2, ShoppingBag, ArrowRight } from "lucide-react";
 import Section from "@/components/layout/Section";
 import Button from "@/components/ui/Button";
+import DeliveryPartnerSelect from "./DeliveryPartnerSelect";
 import { useCartStore } from "@/lib/store/cart";
 
 function CartLine({ item }) {
@@ -99,7 +100,9 @@ export default function CartPageClient() {
             ))}
           </div>
 
-          <div className="bg-white border border-bordergray rounded-3xl p-6 flex flex-col gap-4 lg:sticky lg:top-28">
+          <div className="flex flex-col gap-4 lg:sticky lg:top-28">
+          <DeliveryPartnerSelect />
+          <div className="bg-white border border-bordergray rounded-3xl p-6 flex flex-col gap-4">
             <h2 className="font-display text-lg font-bold text-charcoal">Order Summary</h2>
             <div className="flex items-center justify-between font-body text-sm text-slate">
               <span>Subtotal ({items.reduce((s, i) => s + i.qty, 0)} items)</span>
@@ -119,6 +122,7 @@ export default function CartPageClient() {
             >
               Clear cart
             </button>
+          </div>
           </div>
         </div>
       )}

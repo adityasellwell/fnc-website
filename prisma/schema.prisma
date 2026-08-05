@@ -131,6 +131,12 @@ model Store {
   pickupAvailable   Boolean  @default(true)
   googleMapsLink    String
 
+  // Optional third-party ordering links for this store (Swiggy/Zomato
+  // listing pages). Nullable — a store not yet onboarded to a platform
+  // simply omits that option from the cart's delivery-partner selector.
+  swiggyUrl String?
+  zomatoUrl String?
+
   // Not in §7's shorthand, but load-bearing today: the homepage Store
   // Locator section and /stores page already distinguish the one live
   // store from announced-but-not-open locations ("Coming Soon" badge).

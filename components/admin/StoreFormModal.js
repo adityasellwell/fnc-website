@@ -96,6 +96,17 @@ export default function StoreFormModal({ trigger, store, action, title }) {
             <input name="googleMapsLink" defaultValue={store?.googleMapsLink} className={inputClasses} />
           </div>
 
+          <div className="grid sm:grid-cols-2 gap-4">
+            <div className="flex flex-col gap-1.5">
+              <label className="font-body text-xs font-semibold text-charcoal">Swiggy URL (optional)</label>
+              <input name="swiggyUrl" type="url" defaultValue={store?.swiggyUrl ?? ""} placeholder="https://www.swiggy.com/restaurants/..." className={inputClasses} />
+            </div>
+            <div className="flex flex-col gap-1.5">
+              <label className="font-body text-xs font-semibold text-charcoal">Zomato URL (optional)</label>
+              <input name="zomatoUrl" type="url" defaultValue={store?.zomatoUrl ?? ""} placeholder="https://www.zomato.com/..." className={inputClasses} />
+            </div>
+          </div>
+
           <ImageUploadField name="image" label="Store Image" defaultValue={store?.images?.[0]} folder="stores" />
 
           <div className="grid sm:grid-cols-3 gap-4 items-end">

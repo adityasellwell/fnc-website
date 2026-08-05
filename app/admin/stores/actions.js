@@ -24,6 +24,8 @@ function parseStoreForm(formData) {
     phone: formData.get("phone").toString().trim(),
     whatsapp: formData.get("whatsapp").toString().trim(),
     googleMapsLink: formData.get("googleMapsLink")?.toString().trim() || "",
+    swiggyUrl: formData.get("swiggyUrl")?.toString().trim() || null,
+    zomatoUrl: formData.get("zomatoUrl")?.toString().trim() || null,
     status: formData.get("status").toString(),
     deliveryAvailable: formData.get("deliveryAvailable") === "on",
     pickupAvailable: formData.get("pickupAvailable") === "on",
