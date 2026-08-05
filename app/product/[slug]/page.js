@@ -14,6 +14,7 @@ import AddToCartButton from "@/components/product/AddToCartButton";
 import BuyNowButton from "@/components/product/BuyNowButton";
 import ReviewForm from "@/components/product/ReviewForm";
 import ProductMediaGallery from "@/components/product/ProductMediaGallery";
+import StoreAvailabilityBadge from "@/components/product/StoreAvailabilityBadge";
 import { getProductBySlug, getProducts } from "@/lib/data/products";
 import { getCategoryBySlug } from "@/lib/data/categories";
 import { getRecipeBySlug } from "@/lib/data/recipes";
@@ -253,6 +254,8 @@ export default async function ProductDetailPage({ params }) {
                   ))}
                 </div>
               )}
+
+              <StoreAvailabilityBadge storeInventory={product.storeInventory} />
 
               <div className="flex flex-col sm:flex-row gap-3">
                 <AddToCartButton product={product} image={meta.image} className="w-full sm:w-auto" />

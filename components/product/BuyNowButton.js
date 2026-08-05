@@ -22,6 +22,7 @@ export default function BuyNowButton({ product, image, className }) {
   const storeId = useLocationStore((s) => s.storeId);
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- standard hydration guard for a persisted (localStorage) client store
     setMounted(true);
   }, []);
 
@@ -70,7 +71,7 @@ export default function BuyNowButton({ product, image, className }) {
       ) : (
         <>
           {pending ? <Loader2 className="h-5 w-5 animate-spin" /> : <Zap className="h-5 w-5" />}
-          Buy Now
+          Order Now
         </>
       )}
     </Button>
