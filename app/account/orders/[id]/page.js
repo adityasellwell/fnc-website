@@ -287,7 +287,7 @@ export default async function TrackOrderPage({ params }) {
                   <Card className="p-6 bg-warmwhite/30 border-2 border-fnc-red/10">
                     <h2 className="font-display text-base font-bold text-charcoal mb-3 flex items-center gap-2">
                       <User className="h-4.5 w-4.5 text-fnc-red" />
-                      Rider Information
+                      Delivery Partner
                     </h2>
                     <div className="font-body text-sm text-charcoal">
                       <p className="font-semibold">{order.riderName || "Delivery Partner Assigned"}</p>
@@ -298,6 +298,12 @@ export default async function TrackOrderPage({ params }) {
                             {order.riderPhone}
                           </a>
                         </p>
+                      )}
+                      {order.deliveryOtp && order.status === "OUT_FOR_DELIVERY" && (
+                        <div className="mt-3 pt-3 border-t border-fnc-red/10">
+                          <p className="text-xs text-slate">Share this code with your delivery partner to confirm handoff:</p>
+                          <p className="font-display text-2xl font-bold text-fnc-red tracking-widest mt-1">{order.deliveryOtp}</p>
+                        </div>
                       )}
                     </div>
                   </Card>
