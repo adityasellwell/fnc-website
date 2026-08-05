@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { verifyWebhookSignature, createPaymentAuditLog } from "@/services/payment";
+import { sendOrderConfirmedEmail } from "@/lib/email";
 
 export async function POST(request) {
   const rawBody = await request.text();
@@ -34,6 +35,7 @@ export async function POST(request) {
   try {
     const order = await db.order.findUnique({
       where: { razorpayOrderId },
+      include: { customer: true },
     });
 
     if (!order) {
@@ -106,6 +108,9 @@ export async function POST(request) {
       });
 
       console.log(`[Razorpay Webhook] Order ${order.id} marked as PAID & CONFIRMED`);
+      if (order.customer?.email) {
+        sendOrderConfirmedEmail(order.customer, order);
+      }
       return NextResponse.json({ message: "Payment processed successfully" }, { status: 200 });
     }
 

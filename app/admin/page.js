@@ -1,19 +1,42 @@
 import { requireAdminUser, getScopedStoreId } from "@/lib/admin-auth";
 import { db } from "@/lib/db";
 import Link from "next/link";
-import { ShoppingBag, DollarSign, AlertTriangle, Store, ArrowRight } from "lucide-react";
+import { ShoppingBag, DollarSign, AlertTriangle, Store, ArrowRight, Clock3, Package, CheckCircle2, Truck, Ban, RotateCcw, Bike } from "lucide-react";
 import AdminProfileClient from "./AdminProfileClient";
 
 export const metadata = { title: "Dashboard — Admin" };
 
+const PIPELINE_STEPS = [
+  { statuses: ["PLACED", "CONFIRMED"], label: "Pending", icon: Clock3 },
+  { statuses: ["PREPARING"], label: "Preparing", icon: Package },
+  { statuses: ["READY_FOR_PICKUP"], label: "Ready", icon: CheckCircle2 },
+  { statuses: ["OUT_FOR_DELIVERY"], label: "Out for Delivery", icon: Truck },
+  { statuses: ["DELIVERED", "COLLECTED"], label: "Delivered", icon: CheckCircle2 },
+];
+
 export default async function AdminDashboardPage() {
   const admin = await requireAdminUser();
   const storeId = getScopedStoreId(admin);
-  
+
   const where = storeId ? { storeId } : {};
 
+  const startOfToday = new Date();
+  startOfToday.setHours(0, 0, 0, 0);
+  const todayWhere = { ...where, createdAt: { gte: startOfToday } };
+
   // Query counts and stats
-  const [totalOrders, completedOrders, lowStockProducts, recentOrders, scopedStore] = await Promise.all([
+  const [
+    totalOrders,
+    completedOrders,
+    lowStockProducts,
+    recentOrders,
+    scopedStore,
+    todayStatusCounts,
+    todayPaidOrders,
+    todayCancelledCount,
+    pendingRefundsCount,
+    availablePartnersCount,
+  ] = await Promise.all([
     db.order.count({ where }),
     db.order.findMany({
       where: { ...where, paymentStatus: "PAID" },
@@ -36,23 +59,78 @@ export default async function AdminDashboardPage() {
       take: 5,
       include: { store: { select: { name: true } } }
     }),
-    storeId ? db.store.findUnique({ where: { id: storeId } }) : null
+    storeId ? db.store.findUnique({ where: { id: storeId } }) : null,
+    db.order.groupBy({ by: ["status"], where: todayWhere, _count: true }),
+    db.order.findMany({ where: { ...todayWhere, paymentStatus: "PAID" }, select: { total: true } }),
+    db.order.count({ where: { ...todayWhere, status: "CANCELLED" } }),
+    db.refundRequest.count({
+      where: {
+        status: { in: ["REQUESTED", "UNDER_REVIEW"] },
+        ...(storeId ? { order: { storeId } } : {}),
+      },
+    }),
+    db.deliveryPartner.count({ where: { ...(storeId ? { storeId } : {}), isActive: true, status: "AVAILABLE" } }),
   ]);
 
   const totalRevenue = completedOrders.reduce((sum, o) => sum + Number(o.total), 0);
   const lowStockCount = lowStockProducts.length;
+  const todayRevenue = todayPaidOrders.reduce((sum, o) => sum + Number(o.total), 0);
+  const countsByStatus = Object.fromEntries(todayStatusCounts.map((s) => [s.status, s._count]));
+  const todayOrdersCount = todayStatusCounts.reduce((sum, s) => sum + s._count, 0);
 
   return (
     <div className="flex flex-col gap-6">
       {/* Header */}
       <div>
-        <h1 className="font-display text-2xl font-bold text-charcoal">Admin Dashboard</h1>
+        <h1 className="font-display text-2xl font-bold text-charcoal">Today&apos;s Operations</h1>
         <p className="font-body text-xs text-slate mt-1">
-          Welcome back, <span className="font-semibold text-charcoal">{admin.name}</span>. Here is a summary of activities.
+          Welcome back, <span className="font-semibold text-charcoal">{admin.name}</span>. Here&apos;s what needs attention right now.
         </p>
       </div>
 
-      {/* KPI Cards */}
+      {/* Order pipeline — today */}
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
+        {PIPELINE_STEPS.map((step) => {
+          const count = step.statuses.reduce((sum, s) => sum + (countsByStatus[s] || 0), 0);
+          const Icon = step.icon;
+          return (
+            <div key={step.label} className="bg-white border border-bordergray rounded-2xl p-4 flex flex-col gap-1">
+              <div className="flex items-center gap-2 text-slate">
+                <Icon className="h-4 w-4" />
+                <span className="text-[10px] font-bold uppercase tracking-wider">{step.label}</span>
+              </div>
+              <span className="font-display text-2xl font-black text-charcoal">{count}</span>
+            </div>
+          );
+        })}
+      </div>
+
+      {/* Today's stats */}
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
+        <div className="bg-white border border-bordergray rounded-2xl p-4">
+          <span className="text-[10px] font-bold text-slate uppercase tracking-wider block">Today&apos;s Revenue</span>
+          <span className="font-display text-lg font-black text-charcoal block mt-0.5">₹{todayRevenue.toLocaleString("en-IN", { maximumFractionDigits: 0 })}</span>
+        </div>
+        <div className="bg-white border border-bordergray rounded-2xl p-4">
+          <span className="text-[10px] font-bold text-slate uppercase tracking-wider block">Today&apos;s Orders</span>
+          <span className="font-display text-lg font-black text-charcoal block mt-0.5">{todayOrdersCount}</span>
+        </div>
+        <div className="bg-white border border-bordergray rounded-2xl p-4">
+          <div className="flex items-center gap-1.5 text-slate"><Ban className="h-3.5 w-3.5" /><span className="text-[10px] font-bold uppercase tracking-wider">Cancelled</span></div>
+          <span className="font-display text-lg font-black text-charcoal block mt-0.5">{todayCancelledCount}</span>
+        </div>
+        <Link href="/admin/refunds" className="bg-white border border-bordergray rounded-2xl p-4 hover:border-fnc-red/30 transition-colors">
+          <div className="flex items-center gap-1.5 text-slate"><RotateCcw className="h-3.5 w-3.5" /><span className="text-[10px] font-bold uppercase tracking-wider">Refunds Pending</span></div>
+          <span className="font-display text-lg font-black text-charcoal block mt-0.5">{pendingRefundsCount}</span>
+        </Link>
+        <Link href="/admin/delivery-partners" className="bg-white border border-bordergray rounded-2xl p-4 hover:border-fnc-red/30 transition-colors">
+          <div className="flex items-center gap-1.5 text-slate"><Bike className="h-3.5 w-3.5" /><span className="text-[10px] font-bold uppercase tracking-wider">Available Partners</span></div>
+          <span className="font-display text-lg font-black text-charcoal block mt-0.5">{availablePartnersCount}</span>
+        </Link>
+      </div>
+
+      {/* All-time KPI Cards */}
+      <h2 className="font-display text-sm font-bold text-slate uppercase tracking-wider -mb-2">All-Time Summary</h2>
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         {/* Revenue */}
         <div className="bg-white border border-bordergray rounded-3xl p-5 shadow-sm flex items-center gap-4">

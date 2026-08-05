@@ -1,6 +1,6 @@
 import { db } from "@/lib/db";
 import { initiateRazorpayRefund } from "@/services/payment";
-import { sendReviewRequestEmail } from "@/lib/email";
+import { sendReviewRequestEmail, sendOrderStatusUpdateEmail } from "@/lib/email";
 
 const PAGE_SIZE = 10;
 
@@ -70,12 +70,15 @@ export async function updateOrderStatus(orderId, status, changedById) {
     return [updated];
   });
 
-  // Only nudge on the transition INTO a completed status, never re-fire
-  // if an admin re-saves the same status or corrects it later.
-  const isNewlyCompleted =
-    ["DELIVERED", "COLLECTED"].includes(status) && order?.status !== status;
-  if (isNewlyCompleted && order?.customer?.email) {
-    sendReviewRequestEmail(order.customer, { ...order, status });
+  // Only nudge on the actual transition into a status, never re-fire if
+  // an admin re-saves the same status or corrects it later.
+  const isNewStatus = order?.status !== status;
+  if (isNewStatus && order?.customer?.email) {
+    if (["DELIVERED", "COLLECTED"].includes(status)) {
+      sendReviewRequestEmail(order.customer, { ...order, status });
+    } else if (["PREPARING", "OUT_FOR_DELIVERY", "READY_FOR_PICKUP"].includes(status)) {
+      sendOrderStatusUpdateEmail(order.customer, { ...order, status }, status);
+    }
   }
 
   return result;
@@ -99,19 +102,36 @@ export async function updateOrderPackingNotes(orderId, notes, userId) {
   return order;
 }
 
-export async function assignOrderRider(orderId, name, phone, userId) {
+/**
+ * Assigns a real DeliveryPartner to an order — replaces the old free-text
+ * rider fields with a real linked record, still snapshotting name/phone
+ * onto riderName/riderPhone so existing displays (customer tracking page)
+ * keep working unchanged. Generates the OTP the partner will need to
+ * confirm handoff with the customer.
+ */
+export async function assignDeliveryPartner(orderId, partnerId, userId) {
+  const partner = await db.deliveryPartner.findUnique({ where: { id: partnerId } });
+  if (!partner) throw new Error("Delivery partner not found");
+
+  const deliveryOtp = String(Math.floor(1000 + Math.random() * 9000));
+
   const order = await db.order.update({
     where: { id: orderId },
-    data: { riderName: name, riderPhone: phone },
+    data: {
+      deliveryPartnerId: partnerId,
+      riderName: partner.name,
+      riderPhone: partner.phone,
+      deliveryOtp,
+    },
   });
   await db.auditLog.create({
     data: {
       userId,
-      action: "ASSIGN_RIDER",
+      action: "ASSIGN_DELIVERY_PARTNER",
       entityType: "Order",
       entityId: orderId,
       storeId: order.storeId,
-      details: { riderName: name, riderPhone: phone },
+      details: { partnerId, partnerName: partner.name },
     },
   });
   return order;
@@ -236,4 +256,50 @@ export async function createOrderRefund(orderId, amount, reason, userId) {
     });
     return request;
   });
+}
+
+/**
+ * Orders currently assigned to a delivery partner and still in-flight —
+ * powers the partner's own dashboard, scoped strictly to their id.
+ */
+export async function listOrdersForDeliveryPartner(partnerId) {
+  return db.order.findMany({
+    where: {
+      deliveryPartnerId: partnerId,
+      status: { in: ["PREPARING", "OUT_FOR_DELIVERY"] },
+    },
+    include: { items: { include: { product: true } }, customer: true },
+    orderBy: { createdAt: "asc" },
+  });
+}
+
+async function assertOrderBelongsToPartner(orderId, partnerId) {
+  const order = await db.order.findUnique({ where: { id: orderId } });
+  if (!order || order.deliveryPartnerId !== partnerId) {
+    throw new Error("Order not found or not assigned to you");
+  }
+  return order;
+}
+
+/** Partner marks an order picked up from the store — PREPARING -> OUT_FOR_DELIVERY. */
+export async function markOrderPickedUp(orderId, partnerId) {
+  const order = await assertOrderBelongsToPartner(orderId, partnerId);
+  if (order.status !== "PREPARING") throw new Error("Order isn't ready to be picked up");
+  return updateOrderStatus(orderId, "OUT_FOR_DELIVERY", null);
+}
+
+/**
+ * Partner confirms handoff with the customer's OTP — OUT_FOR_DELIVERY -> DELIVERED.
+ * The OTP check is the only thing standing between "I dropped it off" and
+ * an actual confirmed delivery, so it's verified server-side here, not
+ * trusted from the client.
+ */
+export async function markOrderDelivered(orderId, partnerId, otp) {
+  const order = await assertOrderBelongsToPartner(orderId, partnerId);
+  if (order.status !== "OUT_FOR_DELIVERY") throw new Error("Order isn't out for delivery");
+  if (!order.deliveryOtp || order.deliveryOtp !== otp?.toString().trim()) {
+    throw new Error("Incorrect OTP");
+  }
+  await db.order.update({ where: { id: orderId }, data: { deliveryOtp: null } });
+  return updateOrderStatus(orderId, "DELIVERED", null);
 }
