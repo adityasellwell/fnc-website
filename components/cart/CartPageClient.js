@@ -5,7 +5,7 @@ import Image from "next/image";
 import { Minus, Plus, Trash2, ShoppingBag, ArrowRight } from "lucide-react";
 import Section from "@/components/layout/Section";
 import Button from "@/components/ui/Button";
-import DeliveryPartnerSelect from "./DeliveryPartnerSelect";
+import DeliveryPartnerSelect from "@/components/store/DeliveryPartnerSelect";
 import { useCartStore } from "@/lib/store/cart";
 
 function CartLine({ item }) {

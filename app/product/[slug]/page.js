@@ -15,6 +15,7 @@ import BuyNowButton from "@/components/product/BuyNowButton";
 import ReviewForm from "@/components/product/ReviewForm";
 import ProductMediaGallery from "@/components/product/ProductMediaGallery";
 import StoreAvailabilityBadge from "@/components/product/StoreAvailabilityBadge";
+import DeliveryPartnerSelect from "@/components/store/DeliveryPartnerSelect";
 import { getProductBySlug, getProducts } from "@/lib/data/products";
 import { getCategoryBySlug } from "@/lib/data/categories";
 import { getRecipeBySlug } from "@/lib/data/recipes";
@@ -261,6 +262,8 @@ export default async function ProductDetailPage({ params }) {
                 <AddToCartButton product={product} image={meta.image} className="w-full sm:w-auto" />
                 <BuyNowButton product={product} image={meta.image} className="w-full sm:w-auto" />
               </div>
+
+              <DeliveryPartnerSelect />
 
               <div className="rounded-2xl border border-bordergray bg-white p-5 sm:p-6">
                 <h2 className="font-display text-base font-bold text-charcoal mb-4">

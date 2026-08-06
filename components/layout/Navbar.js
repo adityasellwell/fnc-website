@@ -163,6 +163,7 @@ export default function Navbar() {
     localStorage.setItem("fnc_delivery_address", geocoded?.full ?? label);
     useLocationStore.getState().setLocation({
       storeId: isServiceable ? nearest.id : null,
+      nearestStoreId: nearest?.id ?? null,
       label,
       isServiceable,
     });
@@ -255,6 +256,7 @@ export default function Navbar() {
       const activeStore = storeList.find((s) => s.status === "active");
       useLocationStore.getState().setLocation({
         storeId: isServiceable ? (activeStore?.id ?? null) : null,
+        nearestStoreId: activeStore?.id ?? null,
         label,
         isServiceable,
       });
@@ -275,6 +277,7 @@ export default function Navbar() {
     const activeStore = storeList.find((s) => s.status === "active");
     useLocationStore.getState().setLocation({
       storeId: isServiceable ? (activeStore?.id ?? null) : null,
+      nearestStoreId: activeStore?.id ?? null,
       label,
       isServiceable,
     });
