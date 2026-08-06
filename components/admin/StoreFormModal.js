@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useFormStatus } from "react-dom";
-import { Loader2 } from "lucide-react";
+import { Loader2, Plus, Trash2 } from "lucide-react";
 import Modal from "./Modal";
 import ImageUploadField from "./ImageUploadField";
 
@@ -29,8 +29,30 @@ function SubmitButton({ label }) {
   );
 }
 
+/** Seeds the editable link list from deliveryPartnerLinks, falling back to the legacy fixed Swiggy/Zomato fields for stores that only have those set. */
+function initialLinks(store) {
+  if (Array.isArray(store?.deliveryPartnerLinks) && store.deliveryPartnerLinks.length > 0) {
+    return store.deliveryPartnerLinks;
+  }
+  const legacy = [];
+  if (store?.swiggyUrl) legacy.push({ label: "Swiggy", url: store.swiggyUrl });
+  if (store?.zomatoUrl) legacy.push({ label: "Zomato", url: store.zomatoUrl });
+  return legacy;
+}
+
 export default function StoreFormModal({ trigger, store, action, title }) {
   const [open, setOpen] = useState(false);
+  const [links, setLinks] = useState(() => initialLinks(store));
+
+  function addLink() {
+    setLinks((cur) => [...cur, { label: "", url: "" }]);
+  }
+  function removeLink(idx) {
+    setLinks((cur) => cur.filter((_, i) => i !== idx));
+  }
+  function updateLink(idx, field, value) {
+    setLinks((cur) => cur.map((l, i) => (i === idx ? { ...l, [field]: value } : l)));
+  }
 
   async function handleSubmit(formData) {
     await action(formData);
@@ -96,15 +118,54 @@ export default function StoreFormModal({ trigger, store, action, title }) {
             <input name="googleMapsLink" defaultValue={store?.googleMapsLink} className={inputClasses} />
           </div>
 
-          <div className="grid sm:grid-cols-2 gap-4">
-            <div className="flex flex-col gap-1.5">
-              <label className="font-body text-xs font-semibold text-charcoal">Swiggy URL (optional)</label>
-              <input name="swiggyUrl" type="url" defaultValue={store?.swiggyUrl ?? ""} placeholder="https://www.swiggy.com/restaurants/..." className={inputClasses} />
+          <div className="flex flex-col gap-2">
+            <div className="flex items-center justify-between">
+              <label className="font-body text-xs font-semibold text-charcoal">Delivery Partner Links (optional)</label>
+              <button
+                type="button"
+                onClick={addLink}
+                className="h-8 px-3 rounded-full border border-bordergray font-body text-xs font-semibold text-charcoal hover:border-fnc-red hover:text-fnc-red transition-colors flex items-center gap-1"
+              >
+                <Plus className="h-3.5 w-3.5" />
+                Add Link
+              </button>
             </div>
-            <div className="flex flex-col gap-1.5">
-              <label className="font-body text-xs font-semibold text-charcoal">Zomato URL (optional)</label>
-              <input name="zomatoUrl" type="url" defaultValue={store?.zomatoUrl ?? ""} placeholder="https://www.zomato.com/..." className={inputClasses} />
-            </div>
+            <p className="font-body text-xs text-slate -mt-1">
+              Add as many ordering platforms as you want — Swiggy, Zomato, Dunzo, ONDC, anything with a store listing URL. These show up as options in the site&apos;s delivery-partner selector.
+            </p>
+            {links.length === 0 ? (
+              <p className="font-body text-xs text-slate italic">No platform links added — customers will only see F&C&apos;s own delivery/pickup.</p>
+            ) : (
+              <div className="flex flex-col gap-2.5">
+                {links.map((link, idx) => (
+                  <div key={idx} className="flex gap-2 items-center">
+                    <input
+                      name="link_label"
+                      value={link.label}
+                      onChange={(e) => updateLink(idx, "label", e.target.value)}
+                      placeholder="Platform name (e.g. Swiggy)"
+                      className={`${inputClasses} w-40 shrink-0`}
+                    />
+                    <input
+                      name="link_url"
+                      type="url"
+                      value={link.url}
+                      onChange={(e) => updateLink(idx, "url", e.target.value)}
+                      placeholder="https://..."
+                      className={inputClasses}
+                    />
+                    <button
+                      type="button"
+                      onClick={() => removeLink(idx)}
+                      aria-label="Remove link"
+                      className="h-9 w-9 shrink-0 flex items-center justify-center rounded-full text-slate hover:text-fnc-red hover:bg-warmwhite transition-colors"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
 
           <ImageUploadField name="image" label="Store Image" defaultValue={store?.images?.[0]} folder="stores" />

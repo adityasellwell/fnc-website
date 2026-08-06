@@ -4,15 +4,29 @@ import { useEffect, useState } from "react";
 import { ExternalLink, AlertTriangle } from "lucide-react";
 import { useLocationStore } from "@/lib/store/location";
 
-const THIRD_PARTY = [
-  { key: "swiggy", label: "Swiggy", urlField: "swiggyUrl" },
-  { key: "zomato", label: "Zomato", urlField: "zomatoUrl" },
-];
+/**
+ * Builds the third-party option list from the store's open-ended
+ * deliveryPartnerLinks (admin can add as many platforms as they want),
+ * falling back to the legacy fixed swiggyUrl/zomatoUrl fields for stores
+ * that only have those set.
+ */
+function thirdPartyOptionsFor(store) {
+  if (Array.isArray(store?.deliveryPartnerLinks) && store.deliveryPartnerLinks.length > 0) {
+    return store.deliveryPartnerLinks
+      .filter((l) => l.label && l.url)
+      .map((l) => ({ key: l.label, label: l.label, url: l.url }));
+  }
+  const legacy = [];
+  if (store?.swiggyUrl) legacy.push({ key: "Swiggy", label: "Swiggy", url: store.swiggyUrl });
+  if (store?.zomatoUrl) legacy.push({ key: "Zomato", label: "Zomato", url: store.zomatoUrl });
+  return legacy;
+}
 
 /**
  * Lets a customer route their order to F&C's own checkout (default,
- * unchanged flow) or open a store's Swiggy/Zomato listing in a new tab
- * instead — same pattern as nbcindia.in's delivery-partner dropdowns.
+ * unchanged flow) or open one of the store's admin-configured platform
+ * listings in a new tab instead — same pattern as nbcindia.in's
+ * delivery-partner dropdowns.
  *
  * When the customer is OUTSIDE the delivery radius (storeId is null but
  * a nearest store still exists), F&C Delivery is not offered — instead
@@ -40,7 +54,7 @@ export default function DeliveryPartnerSelect() {
   if (!store) return null;
 
   const outOfRadius = !storeId && !!nearestStoreId;
-  const thirdPartyOptions = THIRD_PARTY.filter((p) => store[p.urlField]);
+  const thirdPartyOptions = thirdPartyOptionsFor(store);
 
   const options = outOfRadius
     ? thirdPartyOptions
@@ -53,9 +67,9 @@ export default function DeliveryPartnerSelect() {
 
   function handleChange(e) {
     const key = e.target.value;
-    const partner = THIRD_PARTY.find((p) => p.key === key);
-    if (partner && store[partner.urlField]) {
-      window.open(store[partner.urlField], "_blank");
+    const partner = thirdPartyOptions.find((p) => p.key === key);
+    if (partner) {
+      window.open(partner.url, "_blank");
     }
     e.target.value = options[0].key;
   }

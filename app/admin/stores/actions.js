@@ -13,6 +13,12 @@ function parseStoreForm(formData) {
   }
   const image = formData.get("image")?.toString().trim();
 
+  const linkLabels = formData.getAll("link_label").map((v) => v.toString().trim());
+  const linkUrls = formData.getAll("link_url").map((v) => v.toString().trim());
+  const deliveryPartnerLinks = linkLabels
+    .map((label, i) => ({ label, url: linkUrls[i] || "" }))
+    .filter((l) => l.label && l.url);
+
   return {
     slug: formData.get("slug").toString().trim(),
     name: formData.get("name").toString().trim(),
@@ -24,8 +30,7 @@ function parseStoreForm(formData) {
     phone: formData.get("phone").toString().trim(),
     whatsapp: formData.get("whatsapp").toString().trim(),
     googleMapsLink: formData.get("googleMapsLink")?.toString().trim() || "",
-    swiggyUrl: formData.get("swiggyUrl")?.toString().trim() || null,
-    zomatoUrl: formData.get("zomatoUrl")?.toString().trim() || null,
+    deliveryPartnerLinks: deliveryPartnerLinks.length > 0 ? deliveryPartnerLinks : null,
     status: formData.get("status").toString(),
     deliveryAvailable: formData.get("deliveryAvailable") === "on",
     pickupAvailable: formData.get("pickupAvailable") === "on",

@@ -131,11 +131,17 @@ model Store {
   pickupAvailable   Boolean  @default(true)
   googleMapsLink    String
 
-  // Optional third-party ordering links for this store (Swiggy/Zomato
-  // listing pages). Nullable — a store not yet onboarded to a platform
-  // simply omits that option from the cart's delivery-partner selector.
+  // Legacy fixed Swiggy/Zomato fields — superseded by deliveryPartnerLinks
+  // below (an open-ended list), kept only so any already-set values still
+  // display until re-entered through the new admin UI.
   swiggyUrl String?
   zomatoUrl String?
+
+  // Open-ended list of third-party ordering links for this store, e.g.
+  // [{ "label": "Swiggy", "url": "https://..." }, { "label": "Dunzo", "url": "..." }]
+  // Admin can add/remove as many as they want — not limited to a fixed
+  // set of platforms. Nullable/empty means only F&C's own checkout shows.
+  deliveryPartnerLinks Json?
 
   // Not in §7's shorthand, but load-bearing today: the homepage Store
   // Locator section and /stores page already distinguish the one live

@@ -76,6 +76,7 @@ export async function GET(request) {
         googleMapsLink: s.googleMapsLink,
         swiggyUrl: s.swiggyUrl,
         zomatoUrl: s.zomatoUrl,
+        deliveryPartnerLinks: s.deliveryPartnerLinks || [],
       };
     });
 
