@@ -12,8 +12,6 @@ export async function updateSettingsAction(formData) {
     deliveryCharge: parseFloat(formData.get("deliveryCharge")),
     minOrderValue: parseFloat(formData.get("minOrderValue")),
     freeDeliveryThreshold: parseFloat(formData.get("freeDeliveryThreshold")),
-    zomatoUrl: formData.get("zomatoUrl")?.toString().trim() || null,
-    swiggyUrl: formData.get("swiggyUrl")?.toString().trim() || null,
     businessInfo: {
       phone: formData.get("businessPhone")?.toString().trim() || "",
       whatsapp: formData.get("businessWhatsapp")?.toString().trim() || "",

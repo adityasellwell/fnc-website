@@ -86,30 +86,6 @@ export default async function AdminSettingsPage() {
           <input name="businessEmail" type="email" defaultValue={settings.businessInfo?.email || ""} placeholder="hello@fncmumbai.com" className={inputClasses} />
         </div>
 
-        <h2 className="font-display text-lg font-bold text-charcoal border-b border-bordergray pb-3 mt-4">Platform Listing Integrations</h2>
-
-        <div className="flex flex-col gap-1.5">
-          <label className="font-body text-xs font-semibold text-charcoal">Zomato Listing URL (optional)</label>
-          <input
-            name="zomatoUrl"
-            type="url"
-            placeholder="https://www.zomato.com/..."
-            defaultValue={settings.zomatoUrl || ""}
-            className={inputClasses}
-          />
-        </div>
-
-        <div className="flex flex-col gap-1.5">
-          <label className="font-body text-xs font-semibold text-charcoal">Swiggy Listing URL (optional)</label>
-          <input
-            name="swiggyUrl"
-            type="url"
-            placeholder="https://www.swiggy.com/..."
-            defaultValue={settings.swiggyUrl || ""}
-            className={inputClasses}
-          />
-        </div>
-
         <div className="flex justify-end pt-3 border-t border-bordergray">
           <button
             type="submit"

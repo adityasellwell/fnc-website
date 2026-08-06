@@ -10,13 +10,13 @@ import {
   Truck,
   Store as StoreIcon,
   UserCircle2,
-  ExternalLink,
   Navigation,
   MapPin,
   Tag,
 } from "lucide-react";
 import Section from "@/components/layout/Section";
 import Button from "@/components/ui/Button";
+import DeliveryPartnerSelect from "@/components/store/DeliveryPartnerSelect";
 import { useCartStore } from "@/lib/store/cart";
 import { useLocationStore } from "@/lib/store/location";
 import { reverseGeocode, geocodeAddress } from "@/lib/utils/geocode";
@@ -851,35 +851,9 @@ export default function CheckoutPageClient({ stores = [], settings = {}, savedPr
             Edit cart
           </Link>
 
-          {(settings.zomatoUrl || settings.swiggyUrl) && (
-            <div className="pt-4 border-t border-bordergray flex flex-col gap-2">
-              <p className="font-body text-xs text-slate text-center">Prefer ordering elsewhere?</p>
-              <div className="flex flex-col sm:flex-row gap-2">
-                {settings.zomatoUrl && (
-                  <a
-                    href={settings.zomatoUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="flex-1 flex items-center justify-center gap-1.5 h-10 rounded-xl border border-bordergray font-body text-xs font-semibold text-charcoal hover:border-charcoal transition-colors"
-                  >
-                    Order on Zomato
-                    <ExternalLink className="h-3.5 w-3.5" />
-                  </a>
-                )}
-                {settings.swiggyUrl && (
-                  <a
-                    href={settings.swiggyUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="flex-1 flex items-center justify-center gap-1.5 h-10 rounded-xl border border-bordergray font-body text-xs font-semibold text-charcoal hover:border-charcoal transition-colors"
-                  >
-                    Order on Swiggy
-                    <ExternalLink className="h-3.5 w-3.5" />
-                  </a>
-                )}
-              </div>
-            </div>
-          )}
+          <div className="pt-4 border-t border-bordergray">
+            <DeliveryPartnerSelect />
+          </div>
         </div>
       </div>
     </Section>
