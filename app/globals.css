@@ -457,3 +457,14 @@ body {
 .hover\:bg-fnc-green\/5:hover {
   background-color: rgba(45, 122, 31, 0.05) !important;
 }
+/* Hidden scrollbar for modal bodies and other tight scroll containers —
+   content still scrolls via wheel/trackpad/touch, the default browser
+   scrollbar track just doesn't render (it read as a hard rectangle cut
+   into a rounded corner). */
+.thin-scrollbar {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+.thin-scrollbar::-webkit-scrollbar {
+  display: none;
+}

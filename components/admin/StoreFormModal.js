@@ -136,32 +136,37 @@ export default function StoreFormModal({ trigger, store, action, title }) {
             {links.length === 0 ? (
               <p className="font-body text-xs text-slate italic">No platform links added — customers will only see F&C&apos;s own delivery/pickup.</p>
             ) : (
-              <div className="flex flex-col gap-2.5">
+              <div className="flex flex-col gap-3">
                 {links.map((link, idx) => (
-                  <div key={idx} className="flex gap-2 items-center">
-                    <input
-                      name="link_label"
-                      value={link.label}
-                      onChange={(e) => updateLink(idx, "label", e.target.value)}
-                      placeholder="Platform name (e.g. Swiggy)"
-                      className={`${inputClasses} w-40 shrink-0`}
-                    />
-                    <input
-                      name="link_url"
-                      type="url"
-                      value={link.url}
-                      onChange={(e) => updateLink(idx, "url", e.target.value)}
-                      placeholder="https://..."
-                      className={inputClasses}
-                    />
-                    <button
-                      type="button"
-                      onClick={() => removeLink(idx)}
-                      aria-label="Remove link"
-                      className="h-9 w-9 shrink-0 flex items-center justify-center rounded-full text-slate hover:text-fnc-red hover:bg-warmwhite transition-colors"
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </button>
+                  <div key={idx} className="rounded-xl border border-bordergray p-3 flex flex-col gap-2.5">
+                    <div className="flex items-center gap-2">
+                      <input
+                        name="link_label"
+                        value={link.label}
+                        onChange={(e) => updateLink(idx, "label", e.target.value)}
+                        placeholder="Platform name (e.g. Swiggy)"
+                        className={`${inputClasses} min-w-0 flex-1`}
+                      />
+                      <button
+                        type="button"
+                        onClick={() => removeLink(idx)}
+                        aria-label="Remove link"
+                        className="h-9 w-9 shrink-0 flex items-center justify-center rounded-full text-slate hover:text-fnc-red hover:bg-warmwhite transition-colors"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </button>
+                    </div>
+                    <div className="flex flex-col gap-1">
+                      <label className="font-body text-[11px] font-semibold text-slate uppercase tracking-wide">Listing URL</label>
+                      <input
+                        name="link_url"
+                        type="url"
+                        value={link.url}
+                        onChange={(e) => updateLink(idx, "url", e.target.value)}
+                        placeholder="https://www.swiggy.com/restaurants/..."
+                        className={`${inputClasses} min-w-0`}
+                      />
+                    </div>
                   </div>
                 ))}
               </div>

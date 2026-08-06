@@ -36,19 +36,27 @@ export default function Modal({ open, onClose, title, children, maxWidth = "max-
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={shouldReduceMotion ? { opacity: 0 } : { opacity: 0, y: 24, scale: 0.98 }}
             transition={{ duration: shouldReduceMotion ? 0 : 0.22, ease: [0.16, 1, 0.3, 1] }}
-            className={`bg-white w-full ${maxWidth} rounded-t-3xl sm:rounded-3xl border border-bordergray shadow-2xl p-5 sm:p-6 relative max-h-[92vh] overflow-y-auto`}
+            className={`bg-white w-full ${maxWidth} rounded-t-2xl sm:rounded-2xl border border-bordergray shadow-2xl relative max-h-[88vh] flex flex-col overflow-hidden`}
             onClick={(e) => e.stopPropagation()}
           >
-            <button
-              type="button"
-              onClick={onClose}
-              aria-label="Close"
-              className="absolute top-4 right-4 h-9 w-9 flex items-center justify-center rounded-full text-slate hover:bg-warmwhite transition-colors shrink-0"
-            >
-              <X className="h-5 w-5" />
-            </button>
-            {title && <h3 className="font-display text-lg sm:text-xl font-bold text-charcoal mb-5 pr-10">{title}</h3>}
-            {children}
+            <div className="flex items-center justify-between gap-4 px-4 sm:px-6 py-4 sm:py-5 border-b border-bordergray shrink-0">
+              {title ? (
+                <h3 className="font-display text-lg sm:text-xl font-bold text-charcoal">{title}</h3>
+              ) : (
+                <span />
+              )}
+              <button
+                type="button"
+                onClick={onClose}
+                aria-label="Close"
+                className="h-9 w-9 flex items-center justify-center rounded-full text-slate hover:bg-warmwhite transition-colors shrink-0"
+              >
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+            <div className="thin-scrollbar px-4 sm:px-6 py-5 sm:py-6 overflow-y-auto overflow-x-hidden">
+              {children}
+            </div>
           </motion.div>
         </motion.div>
       )}
