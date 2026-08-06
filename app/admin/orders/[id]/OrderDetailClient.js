@@ -19,7 +19,7 @@ import {
   advanceOrderStatusAction,
   cancelOrderAction,
   updatePackingNotesAction,
-  assignRiderAction,
+  assignDeliveryPartnerAction,
   createRefundAction,
 } from "../actions";
 import { getNextStatus, getStatusLabel } from "@/lib/orderStatus";
@@ -27,11 +27,10 @@ import { getNextStatus, getStatusLabel } from "@/lib/orderStatus";
 const inputClasses =
   "w-full h-11 px-3.5 rounded-xl border border-bordergray bg-white font-body text-sm text-charcoal focus:border-fnc-red focus:outline-none transition-colors disabled:opacity-60";
 
-export default function OrderDetailClient({ order, currentUser }) {
+export default function OrderDetailClient({ order, currentUser, availablePartners = [] }) {
   const [pending, startTransition] = useTransition();
   const [packingNotes, setPackingNotes] = useState(order.packingNotes || "");
-  const [riderName, setRiderName] = useState(order.riderName || "");
-  const [riderPhone, setRiderPhone] = useState(order.riderPhone || "");
+  const [selectedPartnerId, setSelectedPartnerId] = useState(order.deliveryPartnerId || "");
   const [refundAmount, setRefundAmount] = useState(order.total || "");
   const [refundReason, setRefundReason] = useState("");
   const [showRefundForm, setShowRefundForm] = useState(false);
@@ -64,11 +63,12 @@ export default function OrderDetailClient({ order, currentUser }) {
     });
   };
 
-  const handleSaveRider = (e) => {
+  const handleAssignPartner = (e) => {
     e.preventDefault();
+    if (!selectedPartnerId) return;
     startTransition(async () => {
-      await assignRiderAction(order.id, riderName, riderPhone);
-      alert("Rider assigned successfully!");
+      await assignDeliveryPartnerAction(order.id, selectedPartnerId);
+      alert("Delivery partner assigned — a handoff OTP has been generated for the customer.");
     });
   };
 
@@ -230,40 +230,48 @@ export default function OrderDetailClient({ order, currentUser }) {
             <div className="bg-white border border-bordergray rounded-3xl p-6">
               <h2 className="font-display text-base font-bold text-charcoal mb-4 flex items-center gap-2">
                 <Truck className="h-5 w-5 text-fnc-red" />
-                Delivery Rider Assignment
+                Delivery Partner Assignment
               </h2>
-              <form onSubmit={handleSaveRider} className="grid sm:grid-cols-2 gap-4">
-                <div className="flex flex-col gap-1.5">
-                  <label className="font-body text-xs font-semibold text-charcoal">Rider Name</label>
-                  <input
-                    value={riderName}
-                    onChange={(e) => setRiderName(e.target.value)}
-                    placeholder="e.g. Rahul Kumar"
-                    disabled={pending}
-                    className={inputClasses}
-                  />
-                </div>
-                <div className="flex flex-col gap-1.5">
-                  <label className="font-body text-xs font-semibold text-charcoal">Rider Phone</label>
-                  <input
-                    value={riderPhone}
-                    onChange={(e) => setRiderPhone(e.target.value)}
-                    placeholder="e.g. +91 98765 43210"
-                    disabled={pending}
-                    className={inputClasses}
-                  />
-                </div>
-                <div className="sm:col-span-2 flex justify-end">
+              {order.riderName && (
+                <p className="font-body text-sm text-charcoal mb-3">
+                  Currently assigned: <span className="font-bold">{order.riderName}</span> ({order.riderPhone})
+                  {order.deliveryOtp && (
+                    <span className="block text-xs text-slate mt-1">Handoff OTP: <span className="font-bold text-fnc-red">{order.deliveryOtp}</span></span>
+                  )}
+                </p>
+              )}
+              {availablePartners.length === 0 ? (
+                <p className="font-body text-sm text-slate">
+                  No active delivery partners for this store yet. Add one under Admin → Delivery Partners.
+                </p>
+              ) : (
+                <form onSubmit={handleAssignPartner} className="flex flex-col sm:flex-row gap-3 sm:items-end">
+                  <div className="flex flex-col gap-1.5 flex-1">
+                    <label className="font-body text-xs font-semibold text-charcoal">Delivery Partner</label>
+                    <select
+                      value={selectedPartnerId}
+                      onChange={(e) => setSelectedPartnerId(e.target.value)}
+                      disabled={pending}
+                      className={inputClasses}
+                    >
+                      <option value="">Select a partner...</option>
+                      {availablePartners.map((p) => (
+                        <option key={p.id} value={p.id}>
+                          {p.name} — {p.phone} ({p.status})
+                        </option>
+                      ))}
+                    </select>
+                  </div>
                   <button
                     type="submit"
-                    disabled={pending}
-                    className="h-10 px-4 rounded-xl bg-charcoal text-white font-body text-sm font-semibold hover:bg-charcoal/90 transition-colors flex items-center gap-2 cursor-pointer disabled:opacity-60"
+                    disabled={pending || !selectedPartnerId}
+                    className="h-11 px-4 rounded-xl bg-charcoal text-white font-body text-sm font-semibold hover:bg-charcoal/90 transition-colors flex items-center gap-2 cursor-pointer disabled:opacity-60"
                   >
                     <Save className="h-4 w-4" />
-                    Assign Rider
+                    Assign
                   </button>
-                </div>
-              </form>
+                </form>
+              )}
             </div>
           )}
 

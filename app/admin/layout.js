@@ -11,6 +11,7 @@ const SUPER_ADMIN_NAV = [
   { href: "/admin/reviews", label: "Reviews", icon: "Star" },
   { href: "/admin/coupons", label: "Coupons", icon: "Ticket" },
   { href: "/admin/refunds", label: "Refunds", icon: "Undo2" },
+  { href: "/admin/delivery-partners", label: "Delivery Partners", icon: "Bike" },
   { href: "/admin/banners", label: "Banners", icon: "ImageIcon" },
   { href: "/admin/stores", label: "Stores", icon: "StoreIcon" },
   { href: "/admin/pages", label: "Pages", icon: "FileText" },
@@ -25,6 +26,7 @@ const STORE_ADMIN_NAV = [
   { href: "/admin/products", label: "Products", icon: "Package" },
   { href: "/admin/customers", label: "Customers", icon: "Users" },
   { href: "/admin/reviews", label: "Reviews", icon: "Star" },
+  { href: "/admin/delivery-partners", label: "Delivery Partners", icon: "Bike" },
   { href: "/admin/team", label: "Team", icon: "UserCog" },
 ];
 
@@ -35,6 +37,7 @@ const STAFF_NAV = [
   { href: "/admin/products", label: "Products", icon: "Package" },
   { href: "/admin/customers", label: "Customers", icon: "Users" },
   { href: "/admin/reviews", label: "Reviews", icon: "Star" },
+  { href: "/admin/delivery-partners", label: "Delivery Partners", icon: "Bike" },
 ];
 
 export default async function AdminLayout({ children }) {

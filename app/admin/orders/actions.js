@@ -6,7 +6,7 @@ import { requireAdminUser, getScopedStoreId } from "@/lib/admin-auth";
 import {
   updateOrderStatus,
   updateOrderPackingNotes,
-  assignOrderRider,
+  assignDeliveryPartner,
   createOrderRefund,
   getOrderStoreId,
 } from "@/services/orders";
@@ -49,15 +49,10 @@ export async function updatePackingNotesAction(orderId, notes) {
   revalidatePath(`/admin/orders/${orderId}`);
 }
 
-export async function assignRiderAction(orderId, name, phone) {
+export async function assignDeliveryPartnerAction(orderId, partnerId) {
   const admin = await requireAdminUser();
   await assertOrderAccess(admin, orderId);
-  await assignOrderRider(
-    orderId,
-    name?.toString().trim() || "",
-    phone?.toString().trim() || "",
-    admin.id
-  );
+  await assignDeliveryPartner(orderId, partnerId, admin.id);
   revalidatePath("/admin/orders");
   revalidatePath(`/admin/orders/${orderId}`);
 }

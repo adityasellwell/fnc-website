@@ -150,6 +150,7 @@ model Store {
   orders            Order[]
   auditLogs         AuditLog[]
   users             User[]
+  deliveryPartners  DeliveryPartner[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -386,13 +387,19 @@ model Order {
 
   couponCode String?
 
-  // Order Operations page fields — kept as plain text on the order itself
-  // rather than a separate Rider/DeliveryPartner model, since there's no
-  // rider account/app at this stage, just a name and phone number staff
-  // jot down when handing an order off.
   packingNotes String? @db.Text
+  // Legacy free-text snapshot — kept for old orders and as a display
+  // fallback, now auto-filled from deliveryPartner on assignment rather
+  // than hand-typed by staff.
   riderName    String?
   riderPhone   String?
+
+  deliveryPartner   DeliveryPartner? @relation(fields: [deliveryPartnerId], references: [id])
+  deliveryPartnerId String?
+  // Shown to the customer on their tracking page, entered by the partner
+  // in their portal to confirm handoff — generated once a partner is
+  // assigned, cleared once delivered.
+  deliveryOtp       String?
 
   statusHistory OrderStatusHistory[]
 
@@ -417,6 +424,39 @@ model Order {
   @@index([customerId])
   @@index([status])
   @@index([createdAt])
+  @@index([storeId])
+  @@index([deliveryPartnerId])
+}
+
+enum DeliveryPartnerStatus {
+  AVAILABLE
+  BUSY
+  OFFLINE
+}
+
+// A store's in-house (or later, freelance) delivery staff. Login is
+// phone + PIN rather than Firebase phone-SMS auth — this is an internal
+// staff tool, not a customer-facing signup flow, and doesn't depend on
+// SMS billing being enabled.
+model DeliveryPartner {
+  id            String                @id @default(cuid())
+  name          String
+  phone         String                @unique
+  pinHash       String
+  pinSalt       String
+  vehicleType   String?
+  vehicleNumber String?
+  status        DeliveryPartnerStatus @default(OFFLINE)
+  isActive      Boolean               @default(true)
+
+  store   Store  @relation(fields: [storeId], references: [id])
+  storeId String
+
+  orders Order[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
   @@index([storeId])
 }
 

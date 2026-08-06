@@ -22,6 +22,7 @@ import {
   FileText,
   Undo2,
   ShoppingBag,
+  Bike,
 } from "lucide-react";
 import SignOutButton from "@/components/auth/SignOutButton";
 import { BRAND } from "@/lib/constants";
@@ -42,6 +43,7 @@ const ICONS = {
   FileText,
   Undo2,
   ShoppingBag,
+  Bike,
 };
 
 export default function AdminShell({ user, nav, children }) {
