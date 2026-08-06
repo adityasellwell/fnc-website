@@ -43,7 +43,7 @@ export default function DeliveryPartnerFormModal({ trigger, partner, action, tit
         {issuedPin ? (
           <div className="flex flex-col gap-4 items-center text-center py-4">
             <p className="font-body text-sm text-charcoal">
-              Delivery partner saved. Share this PIN with them — it won&apos;t be shown again.
+              Delivery rider saved. Share this PIN with them — it won&apos;t be shown again.
             </p>
             <p className="font-display text-4xl font-bold tracking-widest text-fnc-red">{issuedPin}</p>
             <p className="font-body text-xs text-slate">
@@ -109,7 +109,7 @@ export default function DeliveryPartnerFormModal({ trigger, partner, action, tit
               <button type="button" onClick={handleClose} className="h-11 px-4 font-body text-sm font-semibold text-charcoal hover:bg-warmwhite rounded-xl transition-colors">
                 Cancel
               </button>
-              <SubmitButton label={partner ? "Save Changes" : "Add Partner"} />
+              <SubmitButton label={partner ? "Save Changes" : "Add Delivery Rider"} />
             </div>
           </form>
         )}

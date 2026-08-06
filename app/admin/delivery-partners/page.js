@@ -3,7 +3,7 @@ import { listDeliveryPartners } from "@/services/delivery-partners";
 import { listStoresAdmin } from "@/services/stores";
 import DeliveryPartnersClientPage from "./DeliveryPartnersClientPage";
 
-export const metadata = { title: "Delivery Partners — Admin" };
+export const metadata = { title: "Delivery — Admin" };
 
 export default async function AdminDeliveryPartnersPage() {
   const admin = await requireAdminUser();

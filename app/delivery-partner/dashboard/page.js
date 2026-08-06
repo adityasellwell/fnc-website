@@ -3,7 +3,7 @@ import { getCurrentPartner } from "@/lib/delivery-partner-auth";
 import { listOrdersForDeliveryPartner } from "@/services/orders";
 import PartnerDashboardClient from "@/components/delivery-partner/PartnerDashboardClient";
 
-export const metadata = { title: "Today's Deliveries — Delivery Partner" };
+export const metadata = { title: "Today's Deliveries — Delivery Rider" };
 
 export default async function PartnerDashboardPage() {
   const partner = await getCurrentPartner();

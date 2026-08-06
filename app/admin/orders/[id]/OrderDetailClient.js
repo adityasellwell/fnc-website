@@ -230,7 +230,7 @@ export default function OrderDetailClient({ order, currentUser, availablePartner
             <div className="bg-white border border-bordergray rounded-3xl p-6">
               <h2 className="font-display text-base font-bold text-charcoal mb-4 flex items-center gap-2">
                 <Truck className="h-5 w-5 text-fnc-red" />
-                Delivery Partner Assignment
+                Delivery Rider Assignment
               </h2>
               {order.riderName && (
                 <p className="font-body text-sm text-charcoal mb-3">
@@ -242,19 +242,19 @@ export default function OrderDetailClient({ order, currentUser, availablePartner
               )}
               {availablePartners.length === 0 ? (
                 <p className="font-body text-sm text-slate">
-                  No active delivery partners for this store yet. Add one under Admin → Delivery Partners.
+                  No active delivery riders for this store yet. Add one under Admin → Delivery.
                 </p>
               ) : (
                 <form onSubmit={handleAssignPartner} className="flex flex-col sm:flex-row gap-3 sm:items-end">
                   <div className="flex flex-col gap-1.5 flex-1">
-                    <label className="font-body text-xs font-semibold text-charcoal">Delivery Partner</label>
+                    <label className="font-body text-xs font-semibold text-charcoal">Delivery Rider</label>
                     <select
                       value={selectedPartnerId}
                       onChange={(e) => setSelectedPartnerId(e.target.value)}
                       disabled={pending}
                       className={inputClasses}
                     >
-                      <option value="">Select a partner...</option>
+                      <option value="">Select a rider...</option>
                       {availablePartners.map((p) => (
                         <option key={p.id} value={p.id}>
                           {p.name} — {p.phone} ({p.status})

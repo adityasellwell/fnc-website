@@ -34,7 +34,7 @@ export default function PartnerSignInForm() {
 
   return (
     <div className="w-full max-w-sm bg-white rounded-3xl border border-bordergray shadow-xl p-8">
-      <h1 className="font-display text-2xl font-bold text-charcoal text-center mb-1">Delivery Partner</h1>
+      <h1 className="font-display text-2xl font-bold text-charcoal text-center mb-1">Delivery Rider Sign In</h1>
       <p className="font-body text-sm text-slate text-center mb-6">Sign in with the phone number and PIN your store manager gave you.</p>
 
       <form onSubmit={handleSubmit} className="flex flex-col gap-4">

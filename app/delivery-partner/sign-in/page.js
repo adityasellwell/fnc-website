@@ -2,7 +2,7 @@ import { redirect } from "next/navigation";
 import { getCurrentPartner } from "@/lib/delivery-partner-auth";
 import PartnerSignInForm from "@/components/delivery-partner/PartnerSignInForm";
 
-export const metadata = { title: "Delivery Partner Sign In" };
+export const metadata = { title: "Delivery Rider Sign In" };
 
 export default async function PartnerSignInPage() {
   const partner = await getCurrentPartner();

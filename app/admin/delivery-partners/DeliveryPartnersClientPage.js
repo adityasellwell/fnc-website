@@ -22,27 +22,27 @@ export default function DeliveryPartnersClientPage({ partners, stores, scopedSto
     <div>
       <div className="flex items-center justify-between gap-4 mb-6">
         <div>
-          <h1 className="font-display text-2xl font-bold text-charcoal">Delivery Partners</h1>
+          <h1 className="font-display text-2xl font-bold text-charcoal">Delivery</h1>
           <p className="font-body text-sm text-slate mt-1">
-            Add and manage delivery staff. They sign in separately at /delivery-partner/sign-in with their phone and PIN.
+            Add and manage delivery riders. They sign in separately at /delivery-partner/sign-in with their phone and PIN.
           </p>
         </div>
         <DeliveryPartnerFormModal
-          title="Add Delivery Partner"
+          title="Add Delivery Rider"
           action={createDeliveryPartnerAction}
           stores={stores}
           scopedStoreId={scopedStoreId}
           trigger={({ onClick }) => (
             <button type="button" onClick={onClick} className="h-10 px-4 rounded-full bg-fnc-red text-white font-body text-sm font-semibold hover:bg-fnc-red/90 transition-colors flex items-center gap-1.5 shrink-0">
               <Plus className="h-4 w-4" />
-              Add Partner
+              Add Delivery Rider
             </button>
           )}
         />
       </div>
 
       <Table
-        emptyMessage="No delivery partners yet."
+        emptyMessage="No delivery riders yet."
         columns={[
           { header: "Name", accessor: (p) => p.name },
           { header: "Phone", accessor: (p) => p.phone },
@@ -62,7 +62,7 @@ export default function DeliveryPartnersClientPage({ partners, stores, scopedSto
             accessor: (p) => (
               <div className="flex items-center gap-2 justify-end">
                 <DeliveryPartnerFormModal
-                  title="Edit Delivery Partner"
+                  title="Edit Delivery Rider"
                   partner={p}
                   action={updateDeliveryPartnerAction.bind(null, p.id)}
                   stores={stores}
@@ -74,7 +74,7 @@ export default function DeliveryPartnersClientPage({ partners, stores, scopedSto
                   )}
                 />
                 <ConfirmDialog
-                  title="Reset this partner's PIN?"
+                  title="Reset this rider's PIN?"
                   description={`A new PIN will be generated for ${p.name}. Their old PIN stops working immediately.`}
                   confirmLabel="Reset PIN"
                   onConfirm={async () => {
@@ -89,7 +89,7 @@ export default function DeliveryPartnersClientPage({ partners, stores, scopedSto
                 />
                 {p.isActive && (
                   <ConfirmDialog
-                    title="Deactivate this partner?"
+                    title="Deactivate this rider?"
                     description={`${p.name} will no longer be able to sign in or be assigned new orders.`}
                     confirmLabel="Deactivate"
                     onConfirm={() => deactivatePartnerAction(p.id)}
