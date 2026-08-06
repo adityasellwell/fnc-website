@@ -176,6 +176,7 @@ export default function Navbar() {
 
     const saved = localStorage.getItem("fnc_delivery_location");
     const savedAddress = localStorage.getItem("fnc_delivery_address");
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- reading a browser-only API (localStorage) on mount, not a plain derived-state setState
     if (saved) setLocationLabel(saved);
     if (savedAddress) setFullAddress(savedAddress);
 
@@ -208,6 +209,11 @@ export default function Navbar() {
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
 
+  // The store actually serving the customer's resolved location — looked
+  // up from the already-fetched store list, so it stays accurate across
+  // modal open/close instead of only flashing right after detection.
+  const resolvedStore = storeList.find((s) => s.id === storeId) || null;
+
   const handleDetectLocation = () => {
     if (!navigator.geolocation) { setLocState("error"); return; }
     setLocState("detecting");
@@ -222,7 +228,7 @@ export default function Navbar() {
         applyDetectedLocation(uLat, uLng, geocoded, storeList);
 
         setLocState("success");
-        setTimeout(() => { setIsModalOpen(false); setLocState("idle"); }, 1200);
+        setTimeout(() => setIsModalOpen(false), 1200);
       },
       () => { setLocState("error"); },
       { timeout: 8000 }
@@ -490,17 +496,24 @@ export default function Navbar() {
                 <><Loader2 className="h-5 w-5 animate-spin" /> Detecting location...</>
               ) : locState === "success" ? (
                 <><Navigation className="h-5 w-5" /> Location Detected!</>
+              ) : fullAddress ? (
+                <><Navigation className="h-5 w-5" /> Update My Location</>
               ) : (
                 <><Navigation className="h-5 w-5" /> Use Current Location</>
               )}
             </button>
 
-            {locState === "success" && fullAddress && (
+            {/* Persists across modal reopens — driven by fullAddress state,
+                not the transient locState, so it stays visible instead of
+                only flashing right after granting permission once. */}
+            {fullAddress && locState !== "detecting" && (
               <div className="mt-3 rounded-xl border border-bordergray bg-warmwhite px-4 py-3">
-                <p className="font-body text-xs font-semibold text-slate uppercase mb-1">Detected Address</p>
+                <p className="font-body text-xs font-semibold text-slate uppercase mb-1">Your Location</p>
                 <p className="font-body text-sm text-charcoal">{fullAddress}</p>
                 <p className={`font-body text-xs font-semibold mt-1.5 ${serviceable ? "text-fnc-green" : "text-fnc-blue"}`}>
-                  {serviceable ? "✓ We deliver here" : "Delivery is coming soon to your area — orders can still be placed via WhatsApp"}
+                  {serviceable
+                    ? `✓ Ordering from ${resolvedStore?.name || "your nearest F&C store"}`
+                    : "Delivery is coming soon to your area — orders can still be placed via WhatsApp"}
                 </p>
               </div>
             )}

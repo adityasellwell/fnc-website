@@ -89,7 +89,9 @@ export default function StoreLocatorInteractive({ activeStores = [] }) {
   };
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- kicks off geolocation on mount/store-list change, not a plain setState
     requestLocation();
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- requestLocation is stable for this component's lifetime, re-including it would just re-trigger geolocation prompts unnecessarily
   }, [activeStores]);
 
   if (!activeStore) return null;
@@ -110,6 +112,8 @@ export default function StoreLocatorInteractive({ activeStores = [] }) {
               key={s.id}
               onClick={() => setActiveStore(s)}
               className={`bg-white border rounded-3xl p-6 transition-all duration-300 cursor-pointer shadow-sm relative overflow-hidden flex flex-col gap-4 ${
+                activeStores.length === 1 ? "h-full" : ""
+              } ${
                 isActive
                   ? "border-fnc-red ring-2 ring-fnc-red/20 scale-[1.01]"
                   : "border-bordergray hover:border-charcoal/40"
@@ -180,9 +184,9 @@ export default function StoreLocatorInteractive({ activeStores = [] }) {
                 </div>
               )}
 
-              {/* Action Buttons (Only visible on the active/expanded store card!) */}
+              {/* Action Buttons (Only visible on the active/expanded store card!) — pinned to the bottom so the card always fills the height matched to the map */}
               {isActive && (
-                <div className="grid grid-cols-2 gap-3 mt-2 pt-2 border-t border-dashed border-bordergray/60">
+                <div className="grid grid-cols-2 gap-3 mt-auto pt-2 border-t border-dashed border-bordergray/60">
                   <Button
                     href={whatsAppLink(s.whatsapp, "Hi! I'd like to place an order.")}
                     target="_blank"
