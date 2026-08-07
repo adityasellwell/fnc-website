@@ -769,7 +769,7 @@ export default function CheckoutPageClient({ stores = [], settings = {}, savedPr
         {/* Order summary */}
         <div className="bg-white border border-bordergray rounded-3xl p-6 flex flex-col gap-4 lg:sticky lg:top-28">
           <h2 className="font-display text-lg font-bold text-charcoal">Order Summary</h2>
-          <div className="flex flex-col gap-3 max-h-80 overflow-y-auto">
+          <div className="flex flex-col gap-3 max-h-80 overflow-y-auto" data-lenis-prevent>
             {items.map((item) => (
               <div key={item.productId} className="flex items-center justify-between gap-3 font-body text-sm">
                 <span className="text-charcoal truncate">

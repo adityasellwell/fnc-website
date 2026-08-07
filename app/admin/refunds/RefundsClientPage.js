@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useState, useEffect, useTransition } from "react";
 import Link from "next/link";
 import {
   Check,
@@ -48,6 +48,19 @@ export default function RefundsClientPage({ refunds }) {
     setToast({ message, type });
     setTimeout(() => setToast(null), 4000);
   };
+
+  // Same fix as the admin Modal component: Lenis (global smooth-scroll)
+  // hijacks wheel events for the whole page independent of CSS, so it has
+  // to be explicitly paused while this custom review modal is open.
+  useEffect(() => {
+    if (!selected) return;
+    document.body.style.overflow = "hidden";
+    window.__lenis?.stop();
+    return () => {
+      document.body.style.overflow = "";
+      window.__lenis?.start();
+    };
+  }, [selected]);
 
   const openModal = (refund) => {
     setSelected(refund);
@@ -156,7 +169,7 @@ export default function RefundsClientPage({ refunds }) {
       {/* Review Modal */}
       {selected && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
-          <div className="bg-white rounded-3xl shadow-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto">
+          <div className="thin-scrollbar bg-white rounded-3xl shadow-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto" data-lenis-prevent>
             <div className="flex items-center justify-between p-6 border-b border-bordergray">
               <h2 className="font-display text-lg font-bold text-charcoal">Review Refund Request</h2>
               <button onClick={closeModal} className="h-8 w-8 flex items-center justify-center rounded-xl hover:bg-warmwhite text-slate">

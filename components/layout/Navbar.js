@@ -145,6 +145,20 @@ export default function Navbar() {
   const [storeList, setStoreList] = useState([]);
   const [deliveryRadius, setDeliveryRadius] = useState(5.0);
 
+  // Same fix as the admin Modal component: Lenis (global smooth-scroll)
+  // hijacks wheel events for the whole page independent of CSS, so it has
+  // to be explicitly paused while this overlay is open or scrolling over
+  // it just smooth-scrolls the page behind instead of the modal itself.
+  useEffect(() => {
+    if (!isModalOpen) return;
+    document.body.style.overflow = "hidden";
+    window.__lenis?.stop();
+    return () => {
+      document.body.style.overflow = "";
+      window.__lenis?.start();
+    };
+  }, [isModalOpen]);
+
   const applyDetectedLocation = (uLat, uLng, geocoded, stores, radius = deliveryRadius) => {
     const activeStores = stores.filter((s) => s.status === "active");
     let nearest = null;
@@ -478,7 +492,11 @@ export default function Navbar() {
       {/* Location Modal */}
       {isModalOpen && (
         <div className="fixed inset-0 z-60 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
-          <div className="bg-white w-full max-w-md rounded-3xl border border-bordergray shadow-2xl p-6 relative">
+          <div
+            className="thin-scrollbar bg-white w-full max-w-md rounded-3xl border border-bordergray shadow-2xl p-6 relative"
+            style={{ maxHeight: "88vh", overflowY: "auto", overflowX: "hidden" }}
+            data-lenis-prevent
+          >
             <button
               onClick={() => { setIsModalOpen(false); setPincodeError(""); }}
               className="absolute top-4 right-4 h-9 w-9 flex items-center justify-center rounded-full text-slate hover:bg-warmwhite transition-colors"
