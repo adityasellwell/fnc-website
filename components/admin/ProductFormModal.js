@@ -37,22 +37,22 @@ export default function ProductFormModal({ trigger, categories, product, action,
   return (
     <>
       {trigger({ onClick: () => setOpen(true) })}
-      <Modal open={open} onClose={() => setOpen(false)} title={title} maxWidth="max-w-2xl">
+      <Modal open={open} onClose={() => setOpen(false)} title={title} size="xl" description="Manage product details, pricing, and media.">
         <form action={handleSubmit} className="flex flex-col gap-4">
           <div className="grid sm:grid-cols-2 gap-4">
             <div className="flex flex-col gap-1.5">
-              <label className="font-body text-xs font-semibold text-charcoal">Name</label>
+              <label className="font-body text-xs font-semibold text-charcoal">Name <span className="text-fnc-red">*</span></label>
               <input name="name" defaultValue={product?.name} required className={inputClasses} />
             </div>
             <div className="flex flex-col gap-1.5">
-              <label className="font-body text-xs font-semibold text-charcoal">Slug</label>
+              <label className="font-body text-xs font-semibold text-charcoal">Slug <span className="text-fnc-red">*</span></label>
               <input name="slug" defaultValue={product?.slug} required className={inputClasses} />
             </div>
           </div>
 
           <div className="grid sm:grid-cols-3 gap-4">
             <div className="flex flex-col gap-1.5">
-              <label className="font-body text-xs font-semibold text-charcoal">Category</label>
+              <label className="font-body text-xs font-semibold text-charcoal">Category <span className="text-fnc-red">*</span></label>
               <select name="categoryId" defaultValue={product?.categoryId} required className={inputClasses}>
                 {categories.map((c) => (
                   <option key={c.id} value={c.id}>
@@ -62,17 +62,17 @@ export default function ProductFormModal({ trigger, categories, product, action,
               </select>
             </div>
             <div className="flex flex-col gap-1.5">
-              <label className="font-body text-xs font-semibold text-charcoal">Price (₹)</label>
+              <label className="font-body text-xs font-semibold text-charcoal">Price (₹) <span className="text-fnc-red">*</span></label>
               <input name="price" type="number" step="0.01" defaultValue={product ? Number(product.price) : ""} required className={inputClasses} />
             </div>
             <div className="flex flex-col gap-1.5">
-              <label className="font-body text-xs font-semibold text-charcoal">Unit</label>
+              <label className="font-body text-xs font-semibold text-charcoal">Unit <span className="text-fnc-red">*</span></label>
               <input name="unit" defaultValue={product?.unit} placeholder="500 g" required className={inputClasses} />
             </div>
           </div>
 
           <div className="flex flex-col gap-1.5">
-            <label className="font-body text-xs font-semibold text-charcoal">Description</label>
+            <label className="font-body text-xs font-semibold text-charcoal">Description <span className="text-fnc-red">*</span></label>
             <textarea name="description" defaultValue={product?.description} rows={3} required className={`${textareaClasses} h-24`} />
           </div>
 
@@ -126,7 +126,7 @@ export default function ProductFormModal({ trigger, categories, product, action,
             />
           </div>
 
-          <div className="flex justify-end gap-3 pt-2">
+          <div className="sticky bottom-0 -mx-4 sm:-mx-6 -mb-5 sm:-mb-6 mt-2 bg-white border-t border-bordergray px-4 sm:px-6 py-4 flex justify-end gap-3">
             <button type="button" onClick={() => setOpen(false)} className="h-11 px-4 font-body text-sm font-semibold text-charcoal hover:bg-warmwhite rounded-xl transition-colors">
               Cancel
             </button>

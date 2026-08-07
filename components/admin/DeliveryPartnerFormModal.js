@@ -39,7 +39,7 @@ export default function DeliveryPartnerFormModal({ trigger, partner, action, tit
   return (
     <>
       {trigger({ onClick: () => setOpen(true) })}
-      <Modal open={open} onClose={handleClose} title={title} maxWidth="max-w-lg">
+      <Modal open={open} onClose={handleClose} title={title} size="md" description="Manage rider details and status.">
         {issuedPin ? (
           <div className="flex flex-col gap-4 items-center text-center py-4">
             <p className="font-body text-sm text-charcoal">
@@ -56,18 +56,18 @@ export default function DeliveryPartnerFormModal({ trigger, partner, action, tit
         ) : (
           <form action={handleSubmit} className="flex flex-col gap-4">
             <div className="flex flex-col gap-1.5">
-              <label className="font-body text-xs font-semibold text-charcoal">Name</label>
+              <label className="font-body text-xs font-semibold text-charcoal">Name <span className="text-fnc-red">*</span></label>
               <input name="name" defaultValue={partner?.name} required className={inputClasses} />
             </div>
             <div className="flex flex-col gap-1.5">
-              <label className="font-body text-xs font-semibold text-charcoal">Phone</label>
+              <label className="font-body text-xs font-semibold text-charcoal">Phone <span className="text-fnc-red">*</span></label>
               <input name="phone" defaultValue={partner?.phone} required disabled={!!partner} className={inputClasses} />
               {partner && <p className="font-body text-xs text-slate">Phone can&apos;t be changed after creation.</p>}
             </div>
 
             {!scopedStoreId && (
               <div className="flex flex-col gap-1.5">
-                <label className="font-body text-xs font-semibold text-charcoal">Store</label>
+                <label className="font-body text-xs font-semibold text-charcoal">Store <span className="text-fnc-red">*</span></label>
                 <select name="storeId" defaultValue={partner?.storeId} required={!partner} disabled={!!partner} className={inputClasses}>
                   <option value="">Select a store...</option>
                   {stores.map((s) => (
@@ -98,14 +98,14 @@ export default function DeliveryPartnerFormModal({ trigger, partner, action, tit
                     <option value="OFFLINE">Offline</option>
                   </select>
                 </div>
-                <label className="flex items-center justify-between gap-2.5 font-body text-sm text-charcoal h-11 px-3.5 rounded-xl border border-bordergray">
-                  Active
+                <label className="flex items-center gap-2.5 font-body text-sm text-charcoal h-11">
                   <input type="checkbox" name="isActive" defaultChecked={partner?.isActive ?? true} className="h-4 w-4 rounded accent-fnc-red shrink-0" />
+                  Active
                 </label>
               </div>
             )}
 
-            <div className="flex justify-end gap-3 pt-2">
+            <div className="sticky bottom-0 -mx-4 sm:-mx-6 -mb-5 sm:-mb-6 mt-2 bg-white border-t border-bordergray px-4 sm:px-6 py-4 flex justify-end gap-3">
               <button type="button" onClick={handleClose} className="h-11 px-4 font-body text-sm font-semibold text-charcoal hover:bg-warmwhite rounded-xl transition-colors">
                 Cancel
               </button>

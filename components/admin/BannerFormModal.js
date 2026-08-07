@@ -35,7 +35,7 @@ export default function BannerFormModal({ trigger, banner, action, title }) {
   return (
     <>
       {trigger({ onClick: () => setOpen(true) })}
-      <Modal open={open} onClose={() => setOpen(false)} title={title} maxWidth="max-w-xl">
+      <Modal open={open} onClose={() => setOpen(false)} title={title} size="lg" description="Configure banner placement and content.">
         <form action={handleSubmit} className="flex flex-col gap-4">
           <div className="grid sm:grid-cols-2 gap-4">
             <div className="flex flex-col gap-1.5">
@@ -59,7 +59,7 @@ export default function BannerFormModal({ trigger, banner, action, title }) {
           <ImageUploadField name="image" label="Banner Image" defaultValue={banner?.image} folder="banners" />
 
           <div className="flex flex-col gap-1.5">
-            <label className="font-body text-xs font-semibold text-charcoal">Link (where it goes on click)</label>
+            <label className="font-body text-xs font-semibold text-charcoal">Link (where it goes on click) <span className="text-fnc-red">*</span></label>
             <input name="link" defaultValue={banner?.link} placeholder="/shop/fish" required className={inputClasses} />
           </div>
 
@@ -91,7 +91,7 @@ export default function BannerFormModal({ trigger, banner, action, title }) {
             </div>
           </div>
 
-          <div className="flex justify-end gap-3 pt-2">
+          <div className="sticky bottom-0 -mx-4 sm:-mx-6 -mb-5 sm:-mb-6 mt-2 bg-white border-t border-bordergray px-4 sm:px-6 py-4 flex justify-end gap-3">
             <button type="button" onClick={() => setOpen(false)} className="h-11 px-4 font-body text-sm font-semibold text-charcoal hover:bg-warmwhite rounded-xl transition-colors">
               Cancel
             </button>

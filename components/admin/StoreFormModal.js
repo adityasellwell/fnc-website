@@ -62,53 +62,53 @@ export default function StoreFormModal({ trigger, store, action, title }) {
   return (
     <>
       {trigger({ onClick: () => setOpen(true) })}
-      <Modal open={open} onClose={() => setOpen(false)} title={title} maxWidth="max-w-2xl">
+      <Modal open={open} onClose={() => setOpen(false)} title={title} size="xl" description="Manage store details, hours, and delivery options.">
         <form action={handleSubmit} className="flex flex-col gap-4">
           <div className="grid sm:grid-cols-2 gap-4">
             <div className="flex flex-col gap-1.5">
-              <label className="font-body text-xs font-semibold text-charcoal">Name</label>
+              <label className="font-body text-xs font-semibold text-charcoal">Name <span className="text-fnc-red">*</span></label>
               <input name="name" defaultValue={store?.name} required className={inputClasses} />
             </div>
             <div className="flex flex-col gap-1.5">
-              <label className="font-body text-xs font-semibold text-charcoal">Slug</label>
+              <label className="font-body text-xs font-semibold text-charcoal">Slug <span className="text-fnc-red">*</span></label>
               <input name="slug" defaultValue={store?.slug} required className={inputClasses} />
             </div>
           </div>
 
           <div className="flex flex-col gap-1.5">
-            <label className="font-body text-xs font-semibold text-charcoal">Address</label>
+            <label className="font-body text-xs font-semibold text-charcoal">Address <span className="text-fnc-red">*</span></label>
             <input name="address" defaultValue={store?.address} required className={inputClasses} />
           </div>
 
           <div className="grid sm:grid-cols-2 gap-4">
             <div className="flex flex-col gap-1.5">
-              <label className="font-body text-xs font-semibold text-charcoal">City</label>
+              <label className="font-body text-xs font-semibold text-charcoal">City <span className="text-fnc-red">*</span></label>
               <input name="city" defaultValue={store?.city} required className={inputClasses} />
             </div>
             <div className="flex flex-col gap-1.5">
-              <label className="font-body text-xs font-semibold text-charcoal">State</label>
+              <label className="font-body text-xs font-semibold text-charcoal">State <span className="text-fnc-red">*</span></label>
               <input name="state" defaultValue={store?.state} required className={inputClasses} />
             </div>
           </div>
 
           <div className="grid sm:grid-cols-2 gap-4">
             <div className="flex flex-col gap-1.5">
-              <label className="font-body text-xs font-semibold text-charcoal">Latitude</label>
+              <label className="font-body text-xs font-semibold text-charcoal">Latitude <span className="text-fnc-red">*</span></label>
               <input name="latitude" type="number" step="any" defaultValue={store?.latitude} required className={inputClasses} />
             </div>
             <div className="flex flex-col gap-1.5">
-              <label className="font-body text-xs font-semibold text-charcoal">Longitude</label>
+              <label className="font-body text-xs font-semibold text-charcoal">Longitude <span className="text-fnc-red">*</span></label>
               <input name="longitude" type="number" step="any" defaultValue={store?.longitude} required className={inputClasses} />
             </div>
           </div>
 
           <div className="grid sm:grid-cols-2 gap-4">
             <div className="flex flex-col gap-1.5">
-              <label className="font-body text-xs font-semibold text-charcoal">Phone</label>
+              <label className="font-body text-xs font-semibold text-charcoal">Phone <span className="text-fnc-red">*</span></label>
               <input name="phone" defaultValue={store?.phone} required className={inputClasses} />
             </div>
             <div className="flex flex-col gap-1.5">
-              <label className="font-body text-xs font-semibold text-charcoal">WhatsApp</label>
+              <label className="font-body text-xs font-semibold text-charcoal">WhatsApp <span className="text-fnc-red">*</span></label>
               <input name="whatsapp" defaultValue={store?.whatsapp} required className={inputClasses} />
             </div>
           </div>
@@ -183,13 +183,13 @@ export default function StoreFormModal({ trigger, store, action, title }) {
                 <option value="COMING_SOON">Coming Soon</option>
               </select>
             </div>
-            <label className="flex items-center justify-between gap-2.5 font-body text-sm text-charcoal h-11 px-3.5 rounded-xl border border-bordergray">
-              Delivery available
+            <label className="flex items-center gap-2.5 font-body text-sm text-charcoal h-11">
               <input type="checkbox" name="deliveryAvailable" defaultChecked={store?.deliveryAvailable ?? false} className="h-4 w-4 rounded accent-fnc-red shrink-0" />
+              Delivery available
             </label>
-            <label className="flex items-center justify-between gap-2.5 font-body text-sm text-charcoal h-11 px-3.5 rounded-xl border border-bordergray">
-              Pickup available
+            <label className="flex items-center gap-2.5 font-body text-sm text-charcoal h-11">
               <input type="checkbox" name="pickupAvailable" defaultChecked={store?.pickupAvailable ?? true} className="h-4 w-4 rounded accent-fnc-red shrink-0" />
+              Pickup available
             </label>
           </div>
 
@@ -210,7 +210,7 @@ export default function StoreFormModal({ trigger, store, action, title }) {
             </div>
           </div>
 
-          <div className="flex justify-end gap-3 pt-2">
+          <div className="sticky bottom-0 -mx-4 sm:-mx-6 -mb-5 sm:-mb-6 mt-2 bg-white border-t border-bordergray px-4 sm:px-6 py-4 flex justify-end gap-3">
             <button type="button" onClick={() => setOpen(false)} className="h-11 px-4 font-body text-sm font-semibold text-charcoal hover:bg-warmwhite rounded-xl transition-colors">
               Cancel
             </button>

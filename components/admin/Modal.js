@@ -4,7 +4,16 @@ import { useEffect } from "react";
 import { X } from "lucide-react";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 
-export default function Modal({ open, onClose, title, children, maxWidth = "max-w-lg" }) {
+// Four standard sizes — every modal picks one of these rather than an
+// ad-hoc width, so the admin panel's modals read as one system.
+const SIZES = {
+  sm: "max-w-[480px]",
+  md: "max-w-[640px]",
+  lg: "max-w-[900px]",
+  xl: "max-w-[1200px]",
+};
+
+export default function Modal({ open, onClose, title, description, children, size = "md" }) {
   const shouldReduceMotion = useReducedMotion();
 
   useEffect(() => {
@@ -36,15 +45,14 @@ export default function Modal({ open, onClose, title, children, maxWidth = "max-
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={shouldReduceMotion ? { opacity: 0 } : { opacity: 0, y: 24, scale: 0.98 }}
             transition={{ duration: shouldReduceMotion ? 0 : 0.22, ease: [0.16, 1, 0.3, 1] }}
-            className={`bg-white w-full ${maxWidth} rounded-t-2xl sm:rounded-2xl border border-bordergray shadow-2xl relative max-h-[88vh] flex flex-col overflow-hidden`}
+            className={`bg-white w-full ${SIZES[size] || SIZES.md} rounded-t-2xl sm:rounded-2xl border border-bordergray shadow-2xl relative max-h-[88vh] flex flex-col overflow-hidden`}
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="flex items-center justify-between gap-4 px-4 sm:px-6 py-4 sm:py-5 border-b border-bordergray shrink-0">
-              {title ? (
-                <h3 className="font-display text-lg sm:text-xl font-bold text-charcoal">{title}</h3>
-              ) : (
-                <span />
-              )}
+            <div className="flex items-start justify-between gap-4 px-4 sm:px-6 py-4 sm:py-5 border-b border-bordergray shrink-0">
+              <div className="min-w-0">
+                {title && <h3 className="font-display text-lg sm:text-xl font-bold text-charcoal">{title}</h3>}
+                {description && <p className="font-body text-xs sm:text-sm text-slate mt-0.5">{description}</p>}
+              </div>
               <button
                 type="button"
                 onClick={onClose}

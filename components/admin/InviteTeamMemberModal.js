@@ -44,11 +44,11 @@ export default function InviteTeamMemberModal({ roles, currentUser, stores = [] 
             email — they will automatically get this role the moment they sign in.
           </p>
           <div className="flex flex-col gap-1.5">
-            <label className="font-body text-xs font-semibold text-charcoal">Name</label>
+            <label className="font-body text-xs font-semibold text-charcoal">Name <span className="text-fnc-red">*</span></label>
             <input name="name" required className={inputClasses} placeholder="Their full name" />
           </div>
           <div className="flex flex-col gap-1.5">
-            <label className="font-body text-xs font-semibold text-charcoal">Email</label>
+            <label className="font-body text-xs font-semibold text-charcoal">Email <span className="text-fnc-red">*</span></label>
             <input name="email" type="email" required className={inputClasses} placeholder="them@example.com" />
           </div>
           {currentUser?.role?.name === "admin" && (
@@ -65,7 +65,7 @@ export default function InviteTeamMemberModal({ roles, currentUser, stores = [] 
             </div>
           )}
           <div className="flex flex-col gap-1.5">
-            <label className="font-body text-xs font-semibold text-charcoal">Role</label>
+            <label className="font-body text-xs font-semibold text-charcoal">Role <span className="text-fnc-red">*</span></label>
             <select name="roleId" required className={inputClasses}>
               {roles.map((r) => (
                 <option key={r.id} value={r.id}>
@@ -74,7 +74,7 @@ export default function InviteTeamMemberModal({ roles, currentUser, stores = [] 
               ))}
             </select>
           </div>
-          <div className="flex justify-end gap-3 pt-2">
+          <div className="sticky bottom-0 -mx-4 sm:-mx-6 -mb-5 sm:-mb-6 mt-2 bg-white border-t border-bordergray px-4 sm:px-6 py-4 flex justify-end gap-3">
             <button type="button" onClick={() => setOpen(false)} className="h-11 px-4 font-body text-sm font-semibold text-charcoal hover:bg-warmwhite rounded-xl transition-colors">
               Cancel
             </button>

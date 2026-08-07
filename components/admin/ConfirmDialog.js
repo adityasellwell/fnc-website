@@ -33,7 +33,7 @@ export default function ConfirmDialog({
   return (
     <>
       {trigger({ onClick: () => setOpen(true) })}
-      <Modal open={open} onClose={() => !pending && setOpen(false)} title={title} maxWidth="max-w-sm">
+      <Modal open={open} onClose={() => !pending && setOpen(false)} title={title} size="sm">
         <div className="flex flex-col gap-4">
           {description && (
             <p className="font-body text-sm text-slate flex items-start gap-2">

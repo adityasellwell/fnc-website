@@ -35,7 +35,7 @@ export default function CouponFormModal({ trigger, coupon, action, title }) {
   return (
     <>
       {trigger({ onClick: () => setOpen(true) })}
-      <Modal open={open} onClose={() => setOpen(false)} title={title} maxWidth="max-w-xl">
+      <Modal open={open} onClose={() => setOpen(false)} title={title} size="md" description="Configure discount rules and validity.">
         <form action={handleSubmit} className="flex flex-col gap-4">
           <div className="grid sm:grid-cols-2 gap-4">
             <div className="flex flex-col gap-1.5">
@@ -54,7 +54,7 @@ export default function CouponFormModal({ trigger, coupon, action, title }) {
           </div>
 
           <div className="flex flex-col gap-1.5">
-            <label className="font-body text-xs font-semibold text-charcoal">Title</label>
+            <label className="font-body text-xs font-semibold text-charcoal">Title <span className="text-fnc-red">*</span></label>
             <input name="title" defaultValue={coupon?.title} placeholder="Welcome offer" required className={inputClasses} />
           </div>
 
@@ -73,7 +73,7 @@ export default function CouponFormModal({ trigger, coupon, action, title }) {
               </select>
             </div>
             <div className="flex flex-col gap-1.5">
-              <label className="font-body text-xs font-semibold text-charcoal">Value</label>
+              <label className="font-body text-xs font-semibold text-charcoal">Value <span className="text-fnc-red">*</span></label>
               <input name="value" type="number" step="0.01" defaultValue={coupon ? Number(coupon.value) : ""} required className={inputClasses} />
             </div>
           </div>
@@ -118,12 +118,12 @@ export default function CouponFormModal({ trigger, coupon, action, title }) {
             </div>
           </div>
 
-          <label className="flex items-center justify-between gap-2.5 font-body text-sm text-charcoal h-11 px-3.5 rounded-xl border border-bordergray">
-            Active
+          <label className="flex items-center gap-2.5 font-body text-sm text-charcoal h-11">
             <input type="checkbox" name="active" defaultChecked={coupon?.active ?? true} className="h-4 w-4 rounded accent-fnc-red shrink-0" />
+            Active
           </label>
 
-          <div className="flex justify-end gap-3 pt-2">
+          <div className="sticky bottom-0 -mx-4 sm:-mx-6 -mb-5 sm:-mb-6 mt-2 bg-white border-t border-bordergray px-4 sm:px-6 py-4 flex justify-end gap-3">
             <button type="button" onClick={() => setOpen(false)} className="h-11 px-4 font-body text-sm font-semibold text-charcoal hover:bg-warmwhite rounded-xl transition-colors">
               Cancel
             </button>
