@@ -45,7 +45,8 @@ export default function Modal({ open, onClose, title, description, children, siz
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={shouldReduceMotion ? { opacity: 0 } : { opacity: 0, y: 24, scale: 0.98 }}
             transition={{ duration: shouldReduceMotion ? 0 : 0.22, ease: [0.16, 1, 0.3, 1] }}
-            className={`bg-white w-full ${SIZES[size] || SIZES.md} rounded-t-2xl sm:rounded-2xl border border-bordergray shadow-2xl relative max-h-[88vh] flex flex-col overflow-hidden`}
+            className={`bg-white w-full ${SIZES[size] || SIZES.md} rounded-t-2xl sm:rounded-2xl border border-bordergray shadow-2xl relative overflow-hidden`}
+            style={{ maxHeight: "88vh", display: "flex", flexDirection: "column" }}
             onClick={(e) => e.stopPropagation()}
           >
             <div className="flex items-start justify-between gap-4 px-4 sm:px-6 py-4 sm:py-5 border-b border-bordergray shrink-0">
@@ -62,7 +63,10 @@ export default function Modal({ open, onClose, title, description, children, siz
                 <X className="h-5 w-5" />
               </button>
             </div>
-            <div className="thin-scrollbar flex-1 min-h-0 px-4 sm:px-6 py-5 sm:py-6 overflow-y-auto overflow-x-hidden">
+            <div
+              className="thin-scrollbar px-4 sm:px-6 py-5 sm:py-6"
+              style={{ flex: "1 1 auto", minHeight: 0, overflowY: "auto", overflowX: "hidden" }}
+            >
               {children}
             </div>
           </motion.div>
