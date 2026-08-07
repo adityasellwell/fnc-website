@@ -23,9 +23,15 @@ export default function Modal({ open, onClose, title, description, children, siz
     }
     document.addEventListener("keydown", onKeyDown);
     document.body.style.overflow = "hidden";
+    // Lenis (global smooth-scroll, see SmoothScrollProvider) hijacks wheel
+    // events for the whole page independently of body's CSS overflow —
+    // without pausing it directly, scrolling over the modal still smooth-
+    // scrolls the page behind it instead of the modal's own content.
+    window.__lenis?.stop();
     return () => {
       document.removeEventListener("keydown", onKeyDown);
       document.body.style.overflow = "";
+      window.__lenis?.start();
     };
   }, [open, onClose]);
 
@@ -66,6 +72,7 @@ export default function Modal({ open, onClose, title, description, children, siz
             <div
               className="thin-scrollbar px-4 sm:px-6 py-5 sm:py-6"
               style={{ flex: "1 1 auto", minHeight: 0, overflowY: "auto", overflowX: "hidden" }}
+              data-lenis-prevent
             >
               {children}
             </div>

@@ -19,6 +19,12 @@ export default function SmoothScrollProvider({ children }) {
       smoothWheel: true,
     });
 
+    // Exposed so Modal.js can pause/resume Lenis while a modal is open —
+    // data-lenis-prevent alone stops it hijacking wheel events over the
+    // modal's own scroll area, but doesn't stop it still smooth-scrolling
+    // the page behind a fixed-position overlay.
+    window.__lenis = lenis;
+
     // Watch dynamic height changes (DOM insertion, client rendering shifts)
     const resizeObserver = new ResizeObserver(() => {
       lenis.resize();
@@ -58,6 +64,7 @@ export default function SmoothScrollProvider({ children }) {
         img.removeEventListener("load", handleImageLoad);
       });
       lenis.destroy();
+      if (window.__lenis === lenis) window.__lenis = null;
     };
   }, []);
 
