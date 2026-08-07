@@ -20,6 +20,17 @@ const nextConfig = {
   devIndicators: {
     position: "top-right",
   },
+  images: {
+    // Admin-uploaded product/category/banner/store images are hosted on
+    // Firebase Storage (see lib/firebase/admin.js's uploadToStorage) at
+    // https://storage.googleapis.com/<bucket>/<path> — without this
+    // allowlisted, next/image silently refuses to render them (blank box,
+    // no error shown to the admin), while pre-seeded local /images/...
+    // paths keep working since those don't need remotePatterns at all.
+    remotePatterns: [
+      { protocol: "https", hostname: "storage.googleapis.com" },
+    ],
+  },
   async headers() {
     return [
       {
