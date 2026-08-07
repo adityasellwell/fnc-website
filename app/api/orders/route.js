@@ -223,6 +223,7 @@ export async function POST(request) {
     const settings = await getSettings();
     let calculatedDistance = null;
     let deliveryStoreId = null;
+    let deliveryCoords = null;
 
     // Settings-driven Delivery Radius & Fees Enforcement
     if (fulfillmentType === "DELIVERY") {
@@ -271,6 +272,7 @@ export async function POST(request) {
 
       calculatedDistance = distance;
       deliveryStoreId = nearest.store.id;
+      deliveryCoords = coords;
 
       const deliveryCharge =
         subtotal >= Number(settings.freeDeliveryThreshold) ? 0 : Number(settings.deliveryCharge);
@@ -309,6 +311,8 @@ export async function POST(request) {
           fulfillmentType,
           storeId: fulfillmentType === "PICKUP" ? storeId : deliveryStoreId,
           deliveryAddress: fulfillmentType === "DELIVERY" ? deliveryAddress : null,
+          latitude: deliveryCoords?.lat ?? null,
+          longitude: deliveryCoords?.lng ?? null,
           couponCode: couponCode ?? null,
           total,
           razorpayOrderId: rzpOrder.id,

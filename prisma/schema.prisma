@@ -387,6 +387,14 @@ model Order {
   storeId         String?
   deliveryAddress Json?
 
+  // First-class columns (matching Store's own latitude/longitude
+  // convention) rather than nested in deliveryAddress — powers the
+  // delivery partner's mini map + Google Maps navigation handoff.
+  // Nullable: geocoding failure at checkout must never block order
+  // creation, it just means no map/precise-navigation for that order.
+  latitude  Float?
+  longitude Float?
+
   status        OrderStatus   @default(PLACED)
   paymentStatus PaymentStatus @default(PENDING)
   total         Decimal       @db.Decimal(10, 2)

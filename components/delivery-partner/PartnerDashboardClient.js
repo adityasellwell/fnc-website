@@ -1,8 +1,14 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { Phone, MessageCircle, MapPin, Package, Truck, LogOut, Loader2 } from "lucide-react";
+import dynamic from "next/dynamic";
+import { Phone, MessageCircle, MapPin, Navigation, Package, Truck, LogOut, Loader2 } from "lucide-react";
 import { pickedUpAction, deliveredAction, partnerSignOutAction } from "@/app/delivery-partner/actions";
+
+const CustomerLocationMap = dynamic(() => import("./CustomerLocationMap"), {
+  ssr: false,
+  loading: () => <div className="w-full h-40 rounded-xl bg-warmwhite animate-pulse" />,
+});
 
 function OrderCard({ order }) {
   const [pending, startTransition] = useTransition();
@@ -11,7 +17,13 @@ function OrderCard({ order }) {
 
   const addr = order.deliveryAddress || {};
   const addressText = [addr.line1, addr.line2, addr.city, addr.state, addr.pincode].filter(Boolean).join(", ");
-  const mapsUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(addressText)}`;
+  const hasCoords = order.latitude != null && order.longitude != null;
+  // Coordinate-based directions when we have them (precise, turn-by-turn) —
+  // falls back to a text-address search for orders placed before this
+  // existed, or where geocoding failed at checkout.
+  const navigateUrl = hasCoords
+    ? `https://www.google.com/maps/dir/?api=1&destination=${order.latitude},${order.longitude}`
+    : `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(addressText)}`;
   const phone = order.customer?.phone;
 
   function handlePickedUp() {
@@ -40,6 +52,10 @@ function OrderCard({ order }) {
         <p className="text-slate mt-0.5">{addressText || "No address on file"}</p>
       </div>
 
+      {/* Mini map — visualization only ("where is the customer?"), not
+          navigation. Only renders when we actually have coordinates. */}
+      {hasCoords && <CustomerLocationMap lat={order.latitude} lng={order.longitude} />}
+
       <div className="flex flex-wrap gap-2">
         {phone && (
           <a href={`tel:${phone}`} className="h-9 px-3 rounded-full border border-bordergray flex items-center gap-1.5 font-body text-xs font-semibold text-charcoal hover:bg-warmwhite transition-colors">
@@ -51,8 +67,8 @@ function OrderCard({ order }) {
             <MessageCircle className="h-3.5 w-3.5" /> WhatsApp
           </a>
         )}
-        <a href={mapsUrl} target="_blank" rel="noopener noreferrer" className="h-9 px-3 rounded-full border border-bordergray flex items-center gap-1.5 font-body text-xs font-semibold text-charcoal hover:bg-warmwhite transition-colors">
-          <MapPin className="h-3.5 w-3.5" /> Navigate
+        <a href={navigateUrl} target="_blank" rel="noopener noreferrer" className="h-9 px-3 rounded-full border border-bordergray flex items-center gap-1.5 font-body text-xs font-semibold text-charcoal hover:bg-warmwhite transition-colors">
+          {hasCoords ? <Navigation className="h-3.5 w-3.5" /> : <MapPin className="h-3.5 w-3.5" />} Start Navigation
         </a>
       </div>
 
