@@ -62,7 +62,7 @@ export default function Modal({ open, onClose, title, description, children, siz
                 <X className="h-5 w-5" />
               </button>
             </div>
-            <div className="thin-scrollbar px-4 sm:px-6 py-5 sm:py-6 overflow-y-auto overflow-x-hidden">
+            <div className="thin-scrollbar flex-1 min-h-0 px-4 sm:px-6 py-5 sm:py-6 overflow-y-auto overflow-x-hidden">
               {children}
             </div>
           </motion.div>
