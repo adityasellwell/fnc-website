@@ -118,9 +118,9 @@ export default function CouponFormModal({ trigger, coupon, action, title }) {
             </div>
           </div>
 
-          <label className="flex items-center gap-2.5 font-body text-sm text-charcoal">
-            <input type="checkbox" name="active" defaultChecked={coupon?.active ?? true} className="h-4 w-4 rounded accent-fnc-red" />
+          <label className="flex items-center justify-between gap-2.5 font-body text-sm text-charcoal h-11 px-3.5 rounded-xl border border-bordergray">
             Active
+            <input type="checkbox" name="active" defaultChecked={coupon?.active ?? true} className="h-4 w-4 rounded accent-fnc-red shrink-0" />
           </label>
 
           <div className="flex justify-end gap-3 pt-2">

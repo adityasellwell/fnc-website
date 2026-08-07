@@ -183,13 +183,13 @@ export default function StoreFormModal({ trigger, store, action, title }) {
                 <option value="COMING_SOON">Coming Soon</option>
               </select>
             </div>
-            <label className="flex items-center gap-2 font-body text-sm text-charcoal h-11">
-              <input type="checkbox" name="deliveryAvailable" defaultChecked={store?.deliveryAvailable ?? false} className="h-4 w-4 rounded accent-fnc-red" />
+            <label className="flex items-center justify-between gap-2.5 font-body text-sm text-charcoal h-11 px-3.5 rounded-xl border border-bordergray">
               Delivery available
+              <input type="checkbox" name="deliveryAvailable" defaultChecked={store?.deliveryAvailable ?? false} className="h-4 w-4 rounded accent-fnc-red shrink-0" />
             </label>
-            <label className="flex items-center gap-2 font-body text-sm text-charcoal h-11">
-              <input type="checkbox" name="pickupAvailable" defaultChecked={store?.pickupAvailable ?? true} className="h-4 w-4 rounded accent-fnc-red" />
+            <label className="flex items-center justify-between gap-2.5 font-body text-sm text-charcoal h-11 px-3.5 rounded-xl border border-bordergray">
               Pickup available
+              <input type="checkbox" name="pickupAvailable" defaultChecked={store?.pickupAvailable ?? true} className="h-4 w-4 rounded accent-fnc-red shrink-0" />
             </label>
           </div>
 

@@ -98,9 +98,9 @@ export default function DeliveryPartnerFormModal({ trigger, partner, action, tit
                     <option value="OFFLINE">Offline</option>
                   </select>
                 </div>
-                <label className="flex items-center gap-2 font-body text-sm text-charcoal h-11">
-                  <input type="checkbox" name="isActive" defaultChecked={partner?.isActive ?? true} className="h-4 w-4 rounded accent-fnc-red" />
+                <label className="flex items-center justify-between gap-2.5 font-body text-sm text-charcoal h-11 px-3.5 rounded-xl border border-bordergray">
                   Active
+                  <input type="checkbox" name="isActive" defaultChecked={partner?.isActive ?? true} className="h-4 w-4 rounded accent-fnc-red shrink-0" />
                 </label>
               </div>
             )}
