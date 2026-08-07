@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { db } from "@/lib/db";
-import { checkRateLimit, rateLimitResponse } from "@/lib/rate-limit";
+import { checkPinLoginRateLimit, getClientIp, rateLimitResponse } from "@/lib/rate-limit";
 import { verifyPin, createPartnerSession, destroyPartnerSession } from "@/lib/delivery-partner-auth";
 
 const schema = z.object({
@@ -10,9 +10,6 @@ const schema = z.object({
 });
 
 export async function POST(request) {
-  const limitRes = await checkRateLimit(request);
-  if (!limitRes.success) return rateLimitResponse();
-
   const body = await request.json().catch(() => null);
   const parsed = schema.safeParse(body);
   if (!parsed.success) {
@@ -20,6 +17,13 @@ export async function POST(request) {
   }
 
   const { phone, pin } = parsed.data;
+
+  // Checked per-phone (stops guessing one rider's PIN) AND per-IP (stops
+  // cycling through many phone numbers from one source) — a 4-digit PIN
+  // is only 10,000 combinations, this is the most brute-forceable login
+  // on the site.
+  const limitRes = await checkPinLoginRateLimit({ phone, ip: getClientIp(request) });
+  if (!limitRes.success) return rateLimitResponse("Too many sign-in attempts. Please try again in a few minutes.");
 
   const partner = await db.deliveryPartner.findUnique({ where: { phone } });
   if (!partner || !partner.isActive || !verifyPin(pin, partner.pinHash, partner.pinSalt)) {
