@@ -8,7 +8,7 @@ import Link from "next/link";
 import Image from "next/image";
 import Button from "@/components/ui/Button";
 import PasswordInput from "@/components/ui/PasswordInput";
-import { BRAND } from "@/lib/constants";
+import { BRAND, PHONE_AUTH_ENABLED } from "@/lib/constants";
 
 export default function SignUpForm() {
   const router = useRouter();
@@ -247,27 +247,31 @@ export default function SignUpForm() {
         Register to save addresses and track your fresh protein orders.
       </p>
 
-      {/* Tabs */}
-      <div className="flex border-b border-bordergray mb-6">
-        <button
-          type="button"
-          onClick={() => { setActiveTab("email"); setError(""); }}
-          className={`flex-1 pb-3 font-body text-sm font-semibold text-center border-b-2 transition-colors ${
-            activeTab === "email" ? "border-fnc-red text-fnc-red" : "border-transparent text-slate hover:text-charcoal"
-          }`}
-        >
-          Email &amp; Password
-        </button>
-        <button
-          type="button"
-          onClick={() => { setActiveTab("phone"); setError(""); }}
-          className={`flex-1 pb-3 font-body text-sm font-semibold text-center border-b-2 transition-colors ${
-            activeTab === "phone" ? "border-fnc-red text-fnc-red" : "border-transparent text-slate hover:text-charcoal"
-          }`}
-        >
-          Phone &amp; OTP
-        </button>
-      </div>
+      {/* Tabs — phone auth is disabled for now (no Firebase Blaze billing set
+          up for SMS yet), so this only renders the switcher once there's
+          actually more than one tab to switch between. */}
+      {PHONE_AUTH_ENABLED && (
+        <div className="flex border-b border-bordergray mb-6">
+          <button
+            type="button"
+            onClick={() => { setActiveTab("email"); setError(""); }}
+            className={`flex-1 pb-3 font-body text-sm font-semibold text-center border-b-2 transition-colors ${
+              activeTab === "email" ? "border-fnc-red text-fnc-red" : "border-transparent text-slate hover:text-charcoal"
+            }`}
+          >
+            Email &amp; Password
+          </button>
+          <button
+            type="button"
+            onClick={() => { setActiveTab("phone"); setError(""); }}
+            className={`flex-1 pb-3 font-body text-sm font-semibold text-center border-b-2 transition-colors ${
+              activeTab === "phone" ? "border-fnc-red text-fnc-red" : "border-transparent text-slate hover:text-charcoal"
+            }`}
+          >
+            Phone &amp; OTP
+          </button>
+        </div>
+      )}
 
       {error && (
         <div className="p-4 bg-fnc-red/10 text-fnc-red rounded-xl mb-4 font-body text-xs font-semibold">
@@ -277,7 +281,7 @@ export default function SignUpForm() {
 
       <div id="recaptcha-container"></div>
 
-      {activeTab === "email" ? (
+      {!PHONE_AUTH_ENABLED || activeTab === "email" ? (
         <form onSubmit={handleEmailSignUp} className="flex flex-col gap-4">
           <div>
             <label className="block font-body text-xs font-bold text-charcoal uppercase tracking-wider mb-1">
