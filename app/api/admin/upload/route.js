@@ -1,18 +1,17 @@
 import { NextResponse } from "next/server";
 import { getAdminUser } from "@/lib/admin-auth";
-import { uploadToStorage } from "@/lib/firebase/admin";
+import { uploadToCloudinary } from "@/lib/cloudinary";
 
 const MAX_SIZE_BYTES = 5 * 1024 * 1024; // 5MB
 const ALLOWED_TYPES = ["image/jpeg", "image/png", "image/webp", "image/gif"];
 
 /**
  * Admin-only image upload — used by the admin panel's Products/Categories/
- * Banners/Store forms instead of pasting a raw URL. Uploads via the
- * Firebase Admin SDK (bypasses Storage security rules; authorization is
- * enforced here, the same way every other admin action in this app is
- * gated) and returns a public URL that gets saved into the same image
- * field every product/category/banner/store already uses — no schema
- * changes needed.
+ * Banners/Store forms instead of pasting a raw URL. Uploads to Cloudinary
+ * (authorization enforced here, the same way every other admin action in
+ * this app is gated) and returns a public URL that gets saved into the
+ * same image field every product/category/banner/store already uses —
+ * no schema changes needed.
  */
 export async function POST(request) {
   const admin = await getAdminUser();
@@ -38,9 +37,8 @@ export async function POST(request) {
 
   try {
     const buffer = Buffer.from(await file.arrayBuffer());
-    const ext = file.name.split(".").pop() || "jpg";
-    const path = `uploads/${folder}/${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${ext}`;
-    const url = await uploadToStorage(buffer, path, file.type);
+    const publicId = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+    const url = await uploadToCloudinary(buffer, folder, publicId);
     return NextResponse.json({ url });
   } catch (err) {
     console.error("[POST /api/admin/upload] failed:", err);

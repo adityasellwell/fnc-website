@@ -21,13 +21,13 @@ const nextConfig = {
     position: "top-right",
   },
   images: {
-    // Admin-uploaded product/category/banner/store images are hosted on
-    // Firebase Storage (see lib/firebase/admin.js's uploadToStorage) at
-    // https://storage.googleapis.com/<bucket>/<path> — without this
-    // allowlisted, next/image silently refuses to render them (blank box,
-    // no error shown to the admin), while pre-seeded local /images/...
-    // paths keep working since those don't need remotePatterns at all.
+    // res.cloudinary.com: new uploads (lib/cloudinary.js, since admin
+    // image uploads moved off Firebase Storage to avoid its usage costs).
+    // storage.googleapis.com: kept for any image uploaded before that
+    // switch — without this allowlisted, next/image silently refuses to
+    // render images from un-listed hosts (blank box, no error shown).
     remotePatterns: [
+      { protocol: "https", hostname: "res.cloudinary.com" },
       { protocol: "https", hostname: "storage.googleapis.com" },
     ],
   },
