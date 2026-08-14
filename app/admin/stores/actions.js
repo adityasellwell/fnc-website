@@ -58,35 +58,51 @@ function parseStoreForm(formData) {
 }
 
 export async function createStoreAction(formData) {
-  await requireFullAdminUser();
-  const data = parseStoreForm(formData);
-  const slug = await uniqueSlug(slugify(data.name));
-  const store = await createStoreAdmin({ ...data, slug });
-  revalidatePath("/admin/stores");
-  revalidatePath("/stores");
-  revalidatePath(`/store/${store.slug}`);
-  revalidatePath("/");
+  try {
+    await requireFullAdminUser();
+    const data = parseStoreForm(formData);
+    if (!data.name) return { error: "Store name is required" };
+    if (!data.address) return { error: "Store address is required" };
+    const slug = await uniqueSlug(slugify(data.name));
+    const store = await createStoreAdmin({ ...data, slug });
+    revalidatePath("/admin/stores");
+    revalidatePath("/stores");
+    revalidatePath(`/store/${store.slug}`);
+    revalidatePath("/");
+    return { ok: true, store };
+  } catch (err) {
+    return { error: err.message || "Failed to create store" };
+  }
 }
 
 export async function updateStoreAction(id, formData) {
-  await requireFullAdminUser();
-  const store = await updateStoreAdmin(id, parseStoreForm(formData));
-  revalidatePath("/admin/stores");
-  revalidatePath("/stores");
-  revalidatePath(`/store/${store.slug}`);
-  revalidatePath("/");
+  try {
+    await requireFullAdminUser();
+    const data = parseStoreForm(formData);
+    if (!data.name) return { error: "Store name is required" };
+    if (!data.address) return { error: "Store address is required" };
+    const store = await updateStoreAdmin(id, data);
+    revalidatePath("/admin/stores");
+    revalidatePath("/stores");
+    revalidatePath(`/store/${store.slug}`);
+    revalidatePath("/");
+    return { ok: true, store };
+  } catch (err) {
+    return { error: err.message || "Failed to update store" };
+  }
 }
 
 export async function deleteStoreAction(id) {
-  await requireFullAdminUser();
-  const store = await db.store.findUnique({ where: { id }, select: { slug: true } });
   try {
+    await requireFullAdminUser();
+    const store = await db.store.findUnique({ where: { id }, select: { slug: true } });
     await deleteStoreAdmin(id);
+    revalidatePath("/admin/stores");
+    revalidatePath("/stores");
+    if (store) revalidatePath(`/store/${store.slug}`);
+    revalidatePath("/");
+    return { ok: true };
   } catch (err) {
-    return { error: err.message };
+    return { error: err.message || "Failed to delete store" };
   }
-  revalidatePath("/admin/stores");
-  revalidatePath("/stores");
-  if (store) revalidatePath(`/store/${store.slug}`);
-  revalidatePath("/");
 }

@@ -18,4 +18,3 @@ function run(command, label) {
 }
 
 run("npx prisma migrate deploy", "prisma migrate deploy");
-run("node prisma/seed.js", "database seed");

@@ -37,37 +37,47 @@ function parseCategoryForm(formData) {
 }
 
 export async function createCategoryAction(formData) {
-  await requireFullAdminUser();
-  const data = parseCategoryForm(formData);
-  const slug = await uniqueSlug(slugify(data.name));
-  await createCategory({ ...data, slug });
-  revalidatePath("/admin/categories");
-  revalidatePath("/shop", "layout");
-  revalidatePath("/");
+  try {
+    await requireFullAdminUser();
+    const data = parseCategoryForm(formData);
+    if (!data.name) return { error: "Category name is required" };
+    const slug = await uniqueSlug(slugify(data.name));
+    const category = await createCategory({ ...data, slug });
+    revalidatePath("/admin/categories");
+    revalidatePath("/shop", "layout");
+    revalidatePath("/");
+    return { ok: true, category };
+  } catch (err) {
+    return { error: err.message || "Failed to create category" };
+  }
 }
 
 export async function updateCategoryAction(id, formData) {
-  await requireFullAdminUser();
-  const data = parseCategoryForm(formData);
-  await updateCategory(id, data);
-  revalidatePath("/admin/categories");
-  revalidatePath("/shop", "layout");
-  revalidatePath("/");
+  try {
+    await requireFullAdminUser();
+    const data = parseCategoryForm(formData);
+    if (!data.name) return { error: "Category name is required" };
+    const category = await updateCategory(id, data);
+    revalidatePath("/admin/categories");
+    revalidatePath("/shop", "layout");
+    revalidatePath("/");
+    return { ok: true, category };
+  } catch (err) {
+    return { error: err.message || "Failed to update category" };
+  }
 }
 
 export async function deleteCategoryAction(id) {
-  await requireFullAdminUser();
-  const category = await getCategoryById(id);
-  // Next.js redacts a thrown Error's message in production Server Action
-  // responses — deleteCategory()'s "has N products in it" message would
-  // never have reached the browser. Return it as plain data instead.
   try {
+    await requireFullAdminUser();
+    const category = await getCategoryById(id);
     await deleteCategory(id);
+    revalidatePath("/admin/categories");
+    revalidatePath("/shop", "layout");
+    if (category) revalidatePath(`/shop/${category.slug}`);
+    revalidatePath("/");
+    return { ok: true };
   } catch (err) {
-    return { error: err.message };
+    return { error: err.message || "Failed to delete category" };
   }
-  revalidatePath("/admin/categories");
-  revalidatePath("/shop", "layout");
-  if (category) revalidatePath(`/shop/${category.slug}`);
-  revalidatePath("/");
 }

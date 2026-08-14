@@ -57,8 +57,8 @@ export default function ProductsClientPage({
         emptyMessage="No products match these filters."
         columns={[
           { header: "Name", accessor: (p) => p.name },
-          { header: "Category", accessor: (p) => p.category.name },
-          { header: "Price", accessor: (p) => `₹${Number(p.price).toFixed(0)}` },
+          { header: "Category", accessor: (p) => p.category?.name ?? "—" },
+          { header: "Price", accessor: (p) => `₹${(Number(p.price) || 0).toFixed(0)}` },
           {
             header: "Inventory Stock",
             accessor: (p) => {
@@ -85,7 +85,7 @@ export default function ProductsClientPage({
               );
             },
           },
-          { header: "Rating", accessor: (p) => `${p.rating.toFixed(1)} (${p.reviewCount})` },
+          { header: "Rating", accessor: (p) => `${(Number(p.rating) || 0).toFixed(1)} (${p.reviewCount ?? 0})` },
           {
             header: "",
             className: "text-right",

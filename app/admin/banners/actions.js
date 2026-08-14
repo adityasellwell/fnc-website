@@ -23,22 +23,43 @@ function parseBannerForm(formData) {
 }
 
 export async function createBannerAction(formData) {
-  await requireFullAdminUser();
-  await createBanner(parseBannerForm(formData));
-  revalidatePath("/admin/banners");
-  revalidatePath("/");
+  try {
+    await requireFullAdminUser();
+    const data = parseBannerForm(formData);
+    if (!data.image) return { error: "Banner image is required" };
+    if (!data.link) return { error: "Banner link is required" };
+    await createBanner(data);
+    revalidatePath("/admin/banners");
+    revalidatePath("/");
+    return { ok: true };
+  } catch (err) {
+    return { error: err.message || "Failed to create banner" };
+  }
 }
 
 export async function updateBannerAction(id, formData) {
-  await requireFullAdminUser();
-  await updateBanner(id, parseBannerForm(formData));
-  revalidatePath("/admin/banners");
-  revalidatePath("/");
+  try {
+    await requireFullAdminUser();
+    const data = parseBannerForm(formData);
+    if (!data.image) return { error: "Banner image is required" };
+    if (!data.link) return { error: "Banner link is required" };
+    await updateBanner(id, data);
+    revalidatePath("/admin/banners");
+    revalidatePath("/");
+    return { ok: true };
+  } catch (err) {
+    return { error: err.message || "Failed to update banner" };
+  }
 }
 
 export async function deleteBannerAction(id) {
-  await requireFullAdminUser();
-  await deleteBanner(id);
-  revalidatePath("/admin/banners");
-  revalidatePath("/");
+  try {
+    await requireFullAdminUser();
+    await deleteBanner(id);
+    revalidatePath("/admin/banners");
+    revalidatePath("/");
+    return { ok: true };
+  } catch (err) {
+    return { error: err.message || "Failed to delete banner" };
+  }
 }

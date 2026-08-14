@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useSyncExternalStore } from "react";
 import { ShoppingCart, Check } from "lucide-react";
 import Button from "@/components/ui/Button";
 import { useCartStore } from "@/lib/store/cart";
@@ -8,20 +8,19 @@ import { useLocationStore } from "@/lib/store/location";
 import { ENFORCE_STOCK_GATING } from "@/lib/constants";
 import { cn } from "@/lib/utils";
 
+const emptySubscribe = () => () => {};
+
 export default function AddToCartButton({ product, image, className }) {
-  const [mounted, setMounted] = useState(false);
+  const mounted = useSyncExternalStore(
+    emptySubscribe,
+    () => true,
+    () => false
+  );
   const addItem = useCartStore((s) => s.addItem);
   const forceAddItem = useCartStore((s) => s.forceAddItem);
   const updateQty = useCartStore((s) => s.updateQty);
   const cartItems = useCartStore((s) => s.items);
   const storeId = useLocationStore((s) => s.storeId);
-
-  const cartItem = cartItems.find((i) => i.productId === product.id);
-  const qty = cartItem?.qty ?? 0;
-
-  useEffect(() => {
-    setMounted(true);
-  }, []);
 
   const storeInv = product.storeInventory?.find((i) => i.storeId === storeId);
   const isOutOfStock = ENFORCE_STOCK_GATING && mounted && storeId && (!storeInv || storeInv.stock <= 0);

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useMemo, useRef } from "react";
 import Image from "next/image";
 import { Percent, ChevronLeft, ChevronRight } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
@@ -11,7 +11,6 @@ import { cn } from "@/lib/utils";
 
 export default function RecommendationsSection({ products = [], initialCategories = [] }) {
   const [selectedCategory, setSelectedCategory] = useState(null);
-  const [filteredProducts, setFilteredProducts] = useState([]);
   const scrollContainerRef = useRef(null);
 
   // Map dynamic database categories and add virtual Offers item
@@ -27,12 +26,16 @@ export default function RecommendationsSection({ products = [], initialCategorie
 
   const isScrollable = categoriesList.length > 8;
 
-  useEffect(() => {
+  const filteredProducts = useMemo(() => {
     let list = [...products];
 
     if (selectedCategory) {
       if (selectedCategory === "offers") {
-        list = list.filter((p) => p.tags.includes("premium") || p.tags.includes("seasonal"));
+        list = list.filter(
+          (p) =>
+            Array.isArray(p.tags) &&
+            (p.tags.includes("premium") || p.tags.includes("seasonal"))
+        );
       } else {
         // p.categoryId is the synthetic "cat-<slug>" string lib/data/products.js
         // emits (see its header comment) — not the real Category.id cuid, so it
@@ -40,11 +43,15 @@ export default function RecommendationsSection({ products = [], initialCategorie
         list = list.filter((p) => p.categoryId === `cat-${selectedCategory}`);
       }
     } else {
-      list = list.filter((p) => p.tags.includes("bestseller") || p.tags.includes("premium"));
+      list = list.filter(
+        (p) =>
+          Array.isArray(p.tags) &&
+          (p.tags.includes("bestseller") || p.tags.includes("premium"))
+      );
     }
 
-    setFilteredProducts(list);
-  }, [selectedCategory, products, initialCategories]);
+    return list;
+  }, [selectedCategory, products]);
 
   const scrollLeft = () => {
     if (scrollContainerRef.current) {

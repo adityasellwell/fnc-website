@@ -43,9 +43,9 @@ function calculateDistance(lat1, lon1, lat2, lon2) {
   const a =
     Math.sin(dLat / 2) * Math.sin(dLat / 2) +
     Math.cos((lat1 * Math.PI) / 180) *
-      Math.cos((lat2 * Math.PI) / 180) *
-      Math.sin(dLon / 2) *
-      Math.sin(dLon / 2);
+    Math.cos((lat2 * Math.PI) / 180) *
+    Math.sin(dLon / 2) *
+    Math.sin(dLon / 2);
   const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
   return R * c;
 }
@@ -119,12 +119,12 @@ export default function CheckoutPageClient({ stores = [], settings = {}, savedPr
   // Auto-apply a code left behind by a /promo/[code] campaign page visit —
   // one-shot, cleared immediately so it doesn't reapply on a later, unrelated visit.
   useEffect(() => {
-    const pending = localStorage.getItem("fnc_pending_promo");
+    const pending = typeof window !== "undefined" ? localStorage.getItem("fnc_pending_promo") : null;
     if (!pending || subtotal <= 0) return;
     localStorage.removeItem("fnc_pending_promo");
-    setPromoInput(pending);
     validatePromoCodeAction(pending, subtotal).then((result) => {
-      if (result.ok) setAppliedPromo(result);
+      setPromoInput(pending);
+      if (result?.ok) setAppliedPromo(result);
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -309,7 +309,10 @@ export default function CheckoutPageClient({ stores = [], settings = {}, savedPr
 
   useEffect(() => {
     if (fulfillmentType === "DELIVERY" && typeof window !== "undefined" && navigator.geolocation) {
-      handleUseCurrentLocation();
+      const timer = setTimeout(() => {
+        handleUseCurrentLocation();
+      }, 0);
+      return () => clearTimeout(timer);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [fulfillmentType]);
@@ -372,12 +375,12 @@ export default function CheckoutPageClient({ stores = [], settings = {}, savedPr
           deliveryAddress:
             fulfillmentType === "DELIVERY"
               ? {
-                  line1: values.line1,
-                  line2: values.line2 || undefined,
-                  city: values.city,
-                  state: values.state,
-                  pincode: values.pincode,
-                }
+                line1: values.line1,
+                line2: values.line2 || undefined,
+                city: values.city,
+                state: values.state,
+                pincode: values.pincode,
+              }
               : undefined,
         }),
       });
@@ -534,11 +537,10 @@ export default function CheckoutPageClient({ stores = [], settings = {}, savedPr
               <button
                 type="button"
                 onClick={() => handleFulfillmentChange("DELIVERY")}
-                className={`flex items-center gap-3 rounded-2xl border-2 p-4 text-left transition-colors ${
-                  fulfillmentType === "DELIVERY"
+                className={`flex items-center gap-3 rounded-2xl border-2 p-4 text-left transition-colors ${fulfillmentType === "DELIVERY"
                     ? "border-fnc-red bg-fnc-red/5"
                     : "border-bordergray hover:border-charcoal/30"
-                }`}
+                  }`}
               >
                 <Truck className="h-5 w-5 text-fnc-red shrink-0" />
                 <div>
@@ -550,11 +552,10 @@ export default function CheckoutPageClient({ stores = [], settings = {}, savedPr
                 type="button"
                 onClick={() => handleFulfillmentChange("PICKUP")}
                 disabled={stores.length === 0}
-                className={`flex items-center gap-3 rounded-2xl border-2 p-4 text-left transition-colors disabled:opacity-40 disabled:cursor-not-allowed ${
-                  fulfillmentType === "PICKUP"
+                className={`flex items-center gap-3 rounded-2xl border-2 p-4 text-left transition-colors disabled:opacity-40 disabled:cursor-not-allowed ${fulfillmentType === "PICKUP"
                     ? "border-fnc-red bg-fnc-red/5"
                     : "border-bordergray hover:border-charcoal/30"
-                }`}
+                  }`}
               >
                 <StoreIcon className="h-5 w-5 text-fnc-red shrink-0" />
                 <div>
@@ -575,11 +576,10 @@ export default function CheckoutPageClient({ stores = [], settings = {}, savedPr
                       key={s.id}
                       type="button"
                       onClick={() => setSelectedStore(s)}
-                      className={`flex flex-col gap-1.5 rounded-2xl border-2 p-4 text-left transition-colors ${
-                        selectedStore?.id === s.id
+                      className={`flex flex-col gap-1.5 rounded-2xl border-2 p-4 text-left transition-colors ${selectedStore?.id === s.id
                           ? "border-fnc-red bg-fnc-red/5"
                           : "border-bordergray hover:border-charcoal/30"
-                      }`}
+                        }`}
                     >
                       <p className="font-display font-semibold text-charcoal text-sm">{s.name}</p>
                       <p className="font-body text-xs text-slate">{s.address}</p>
@@ -639,7 +639,7 @@ export default function CheckoutPageClient({ stores = [], settings = {}, savedPr
                     <div className="h-2 w-2 rounded-full bg-fnc-red animate-pulse shrink-0"></div>
                     <p className="text-[10px] font-bold text-fnc-red uppercase tracking-wider">Active Route Routing</p>
                   </div>
-                  
+
                   <div className="grid md:grid-cols-2 gap-4 relative">
                     {/* Left node */}
                     <div className="flex flex-col gap-1">

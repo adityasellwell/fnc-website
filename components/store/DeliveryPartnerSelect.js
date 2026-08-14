@@ -81,7 +81,7 @@ export default function DeliveryPartnerSelect() {
     <div className="bg-white border-2 border-bordergray rounded-2xl p-4 sm:p-5 flex flex-col gap-3.5">
       {outOfRadius ? (
         <p className="font-body text-sm text-fnc-red font-bold">
-          {store.name} doesn&apos;t deliver directly to you — order via a partner instead:
+          {store.name} {"doesn't deliver directly to you — order via a partner instead:"}
         </p>
       ) : (
         <p className="font-display text-base font-bold text-charcoal">

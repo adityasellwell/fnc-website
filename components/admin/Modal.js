@@ -51,7 +51,7 @@ export default function Modal({ open, onClose, title, description, children, siz
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={shouldReduceMotion ? { opacity: 0 } : { opacity: 0, y: 24, scale: 0.98 }}
             transition={{ duration: shouldReduceMotion ? 0 : 0.22, ease: [0.16, 1, 0.3, 1] }}
-            className={`bg-white w-full ${SIZES[size] || SIZES.md} rounded-t-2xl sm:rounded-2xl border border-bordergray shadow-2xl relative overflow-hidden`}
+            className={`bg-white w-full ${SIZES[size] || SIZES.md} rounded-t-2xl sm:rounded-2xl border border-bordergray shadow-2xl relative overflow-hidden text-left`}
             style={{ maxHeight: "88vh", display: "flex", flexDirection: "column" }}
             onClick={(e) => e.stopPropagation()}
           >

@@ -98,7 +98,7 @@ export default function StoresListInteractive({ stores = [] }) {
           <span className="text-4xl mb-3 block">📍</span>
           <h3 className="font-display text-lg font-bold text-charcoal">No stores found</h3>
           <p className="font-body text-sm text-slate mt-1 max-w-sm mx-auto">
-            We couldn't find any F&C stores matching "{searchQuery}" under this tab. Try searching for "Thane" or "400607".
+            We couldn&apos;t find any F&amp;C stores matching &ldquo;{searchQuery}&rdquo; under this tab. Try searching for &ldquo;Thane&rdquo; or &ldquo;400607&rdquo;.
           </p>
         </div>
       ) : (

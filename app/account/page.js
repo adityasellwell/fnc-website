@@ -39,14 +39,14 @@ export default async function AccountPage() {
 
   const [orders, addresses] = customer
     ? await Promise.all([
-        db.order.findMany({
-          where: { customerId: customer.id },
-          include: { items: { include: { product: true } } },
-          orderBy: { createdAt: "desc" },
-          take: 10,
-        }),
-        db.address.findMany({ where: { customerId: customer.id }, orderBy: { isDefault: "desc" } }),
-      ])
+      db.order.findMany({
+        where: { customerId: customer.id },
+        include: { items: { include: { product: true } } },
+        orderBy: { createdAt: "desc" },
+        take: 10,
+      }),
+      db.address.findMany({ where: { customerId: customer.id }, orderBy: { isDefault: "desc" } }),
+    ])
     : [[], []];
 
   return (
@@ -71,7 +71,7 @@ export default async function AccountPage() {
 
               {orders.length === 0 ? (
                 <div className="flex flex-col items-center text-center gap-3 py-10">
-                  <p className="font-body text-sm text-slate">You haven't placed any orders yet.</p>
+                  <p className="font-body text-sm text-slate">You haven&apos;t placed any orders yet.</p>
                   <Button href="/shop" size="md">
                     Browse the Shop
                   </Button>

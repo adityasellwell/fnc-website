@@ -110,7 +110,7 @@ export default function ReviewsSlider({ reviews = [] }) {
 
                 {/* Comment */}
                 <p className="font-body text-base sm:text-lg text-charcoal/80 leading-relaxed flex-1">
-                  "{review.comment}"
+                  &ldquo;{review.comment}&rdquo;
                 </p>
 
                 {/* Author */}

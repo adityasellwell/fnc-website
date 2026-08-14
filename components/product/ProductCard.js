@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import Image from "next/image";
-import { useState, useEffect } from "react";
+import { useState, useSyncExternalStore } from "react";
 import { Star, ChevronLeft, ChevronRight, Play, Volume2, VolumeX } from "lucide-react";
 import { AnimatePresence, motion } from "framer-motion";
 import Card from "@/components/ui/Card";
@@ -13,9 +13,15 @@ import { cn } from "@/lib/utils";
 import { useLocationStore } from "@/lib/store/location";
 import { useCartStore } from "@/lib/store/cart";
 
+const emptySubscribe = () => () => {};
+
 export default function ProductCard({ product, className }) {
   const storeId = useLocationStore((s) => s.storeId);
-  const [mounted, setMounted] = useState(false);
+  const mounted = useSyncExternalStore(
+    emptySubscribe,
+    () => true,
+    () => false
+  );
 
   // Cart operations
   const addItem = useCartStore((s) => s.addItem);
@@ -24,13 +30,9 @@ export default function ProductCard({ product, className }) {
   const cartItem = cartItems.find((i) => i.productId === product.id);
   const qty = cartItem?.qty ?? 0;
 
-  useEffect(() => {
-    setMounted(true);
-  }, []);
-
-  const categorySlug = product.categoryId.replace(/^cat-/, "");
+  const categorySlug = (product?.categoryId || "").replace(/^cat-/, "");
   const meta = CATEGORY_META[categorySlug] ?? { icon: "Fish", tone: "red" };
-  const href = `/product/${product.slug}`;
+  const href = `/product/${product?.slug || ""}`;
 
   // Check store-specific stock
   const storeInv = product.storeInventory?.find((i) => i.storeId === storeId);

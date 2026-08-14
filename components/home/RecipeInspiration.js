@@ -14,7 +14,7 @@ export default async function RecipeInspiration() {
             Recipe Inspiration
           </p>
           <h2 className="font-display text-section-heading font-bold text-charcoal max-w-lg">
-            Tonight's dinner, sorted.
+            Tonight&apos;s dinner, sorted.
           </h2>
         </div>
         <Button href="/recipes" variant="outline">

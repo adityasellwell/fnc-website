@@ -1,8 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { useFormStatus } from "react-dom";
-import { Loader2, Plus, Trash2 } from "lucide-react";
+import { Loader2, Plus, Trash2, AlertCircle } from "lucide-react";
 import Modal from "./Modal";
 import ImageUploadField from "./ImageUploadField";
 
@@ -19,16 +18,6 @@ const DAYS = [
   ["sun", "Sunday"],
 ];
 
-function SubmitButton({ label }) {
-  const { pending } = useFormStatus();
-  return (
-    <button type="submit" disabled={pending} className="h-11 px-5 rounded-xl bg-fnc-red text-white font-body text-sm font-semibold hover:bg-fnc-red/90 transition-colors disabled:opacity-60 flex items-center gap-2">
-      {pending && <Loader2 className="h-4 w-4 animate-spin" />}
-      {label}
-    </button>
-  );
-}
-
 /** Seeds the editable link list from deliveryPartnerLinks, falling back to the legacy fixed Swiggy/Zomato fields for stores that only have those set. */
 function initialLinks(store) {
   if (Array.isArray(store?.deliveryPartnerLinks) && store.deliveryPartnerLinks.length > 0) {
@@ -43,6 +32,8 @@ function initialLinks(store) {
 export default function StoreFormModal({ trigger, store, action, title }) {
   const [open, setOpen] = useState(false);
   const [links, setLinks] = useState(() => initialLinks(store));
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
 
   function addLink() {
     setLinks((cur) => [...cur, { label: "", url: "" }]);
@@ -54,22 +45,50 @@ export default function StoreFormModal({ trigger, store, action, title }) {
     setLinks((cur) => cur.map((l, i) => (i === idx ? { ...l, [field]: value } : l)));
   }
 
-  async function handleSubmit(formData) {
-    await action(formData);
-    setOpen(false);
+  async function handleSubmit(e) {
+    e.preventDefault();
+    setLoading(true);
+    setError("");
+
+    try {
+      const formData = new FormData(e.currentTarget);
+      const res = await action(formData);
+      if (res?.error) {
+        setError(res.error);
+        return;
+      }
+      setOpen(false);
+    } catch (err) {
+      setError(err?.message || "An unexpected error occurred. Please try again.");
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  function handleOpen() {
+    setError("");
+    setLoading(false);
+    setLinks(initialLinks(store));
+    setOpen(true);
   }
 
   return (
     <>
-      {trigger({ onClick: () => setOpen(true) })}
-      <Modal open={open} onClose={() => setOpen(false)} title={title} size="xl" description="Manage store details, hours, and delivery options.">
-        <form action={handleSubmit} className="flex flex-col gap-4">
+      {trigger({ onClick: handleOpen })}
+      <Modal open={open} onClose={() => !loading && setOpen(false)} title={title} size="xl" description="Manage store details, hours, and delivery options.">
+        <form onSubmit={handleSubmit} className="flex flex-col gap-4 text-left">
+          {error && (
+            <div className="p-3 bg-fnc-red/10 border border-fnc-red/20 rounded-xl text-fnc-red text-xs font-semibold flex items-center gap-2">
+              <AlertCircle className="h-4 w-4 shrink-0" />
+              <span>{error}</span>
+            </div>
+          )}
           <div className="flex flex-col gap-1.5">
             <label className="font-body text-xs font-semibold text-charcoal">Name <span className="text-fnc-red">*</span></label>
             <input name="name" defaultValue={store?.name} required className={inputClasses} />
             {store?.slug && (
-              <p className="font-body text-[11px] text-slate">
-                Page URL: /store/{store.slug} — set automatically, doesn&apos;t change when you edit the name.
+              <p className="font-body text-xs text-slate mt-0.5">
+                Store Page URL: <span className="font-mono text-charcoal bg-warmwhite px-1.5 py-0.5 rounded border border-bordergray">/store/{store.slug}</span>
               </p>
             )}
           </div>
@@ -210,10 +229,22 @@ export default function StoreFormModal({ trigger, store, action, title }) {
           </div>
 
           <div className="sticky bottom-0 -mx-4 sm:-mx-6 -mb-5 sm:-mb-6 mt-2 bg-white border-t border-bordergray px-4 sm:px-6 py-4 flex justify-end gap-3">
-            <button type="button" onClick={() => setOpen(false)} className="h-11 px-4 font-body text-sm font-semibold text-charcoal hover:bg-warmwhite rounded-xl transition-colors">
+            <button
+              type="button"
+              onClick={() => setOpen(false)}
+              disabled={loading}
+              className="h-11 px-4 font-body text-sm font-semibold text-charcoal hover:bg-warmwhite rounded-xl transition-colors disabled:opacity-50"
+            >
               Cancel
             </button>
-            <SubmitButton label={store ? "Save Changes" : "Create Store"} />
+            <button
+              type="submit"
+              disabled={loading}
+              className="h-11 px-5 rounded-xl bg-fnc-red text-white font-body text-sm font-semibold hover:bg-fnc-red/90 transition-colors disabled:opacity-60 flex items-center gap-2"
+            >
+              {loading && <Loader2 className="h-4 w-4 animate-spin" />}
+              {store ? "Save Changes" : "Create Store"}
+            </button>
           </div>
         </form>
       </Modal>

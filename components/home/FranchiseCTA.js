@@ -17,25 +17,30 @@ function useCountUp(rawValue, trigger) {
   useEffect(() => {
     if (!trigger) return;
 
-    // Extract numeric prefix and non-numeric suffix (e.g. "3+" → num=3, suffix="+")
     const match = String(rawValue).match(/^(\d+\.?\d*)(.*)$/);
-    if (!match) { setDisplay(rawValue); return; }
+    if (!match) {
+      const raf = requestAnimationFrame(() => setDisplay(rawValue));
+      return () => cancelAnimationFrame(raf);
+    }
 
-    const num    = parseFloat(match[1]);
+    const num = parseFloat(match[1]);
     const suffix = match[2] ?? "";
     const duration = 1200; // ms
+    let frameId;
     const startTime = performance.now();
 
     function tick(now) {
-      const elapsed  = now - startTime;
+      const elapsed = now - startTime;
       const progress = Math.min(elapsed / duration, 1);
-      // Ease-out cubic
-      const eased    = 1 - Math.pow(1 - progress, 3);
-      const current  = Math.round(eased * num * 10) / 10;
+      const eased = 1 - Math.pow(1 - progress, 3);
+      const current = Math.round(eased * num * 10) / 10;
       setDisplay(`${Number.isInteger(current) ? current : current.toFixed(1)}${suffix}`);
-      if (progress < 1) requestAnimationFrame(tick);
+      if (progress < 1) {
+        frameId = requestAnimationFrame(tick);
+      }
     }
-    requestAnimationFrame(tick);
+    frameId = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(frameId);
   }, [trigger, rawValue]);
 
   return display;

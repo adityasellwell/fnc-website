@@ -139,12 +139,13 @@ export default async function ProductDetailPage({ params }) {
     ],
   };
 
+  const rawNutrition = product.nutrition || {};
   const nutritionRows = [
-    ["Calories", product.nutrition?.calories],
-    ["Protein", product.nutrition?.protein],
-    ["Fat", product.nutrition?.fat],
-    ["Carbs", product.nutrition?.carbs],
-  ];
+    ["Calories", rawNutrition.calories],
+    ["Protein", rawNutrition.protein],
+    ["Fat", rawNutrition.fat],
+    ["Carbs", rawNutrition.carbs],
+  ].filter(([, val]) => val !== null && val !== undefined && String(val).trim() !== "");
 
   return (
     <>
@@ -265,49 +266,57 @@ export default async function ProductDetailPage({ params }) {
 
               <DeliveryPartnerSelect />
 
-              <div className="rounded-2xl border border-bordergray bg-white p-5 sm:p-6">
-                <h2 className="font-display text-base font-bold text-charcoal mb-4">
-                  Nutrition Information
-                </h2>
-                <div className="grid grid-cols-4 gap-3 text-center">
-                  {nutritionRows.map(([label, value]) => (
-                    <div key={label} className="bg-fnc-green/[0.03] border border-fnc-green/10 rounded-xl py-3 px-1">
-                      <p className="font-display text-lg font-extrabold text-fnc-green">
-                        {value ?? "—"}
-                      </p>
-                      <p className="font-body text-[10px] text-slate uppercase tracking-wider font-bold mt-1">
-                        {label}
-                      </p>
-                    </div>
-                  ))}
+              {nutritionRows.length > 0 && (
+                <div className="rounded-2xl border border-bordergray bg-white p-5 sm:p-6">
+                  <h2 className="font-display text-base font-bold text-charcoal mb-4">
+                    Nutrition Information
+                  </h2>
+                  <div className={`grid grid-cols-2 sm:grid-cols-${Math.min(nutritionRows.length, 4)} gap-3 text-center`}>
+                    {nutritionRows.map(([label, value]) => (
+                      <div key={label} className="bg-fnc-green/[0.03] border border-fnc-green/10 rounded-xl py-3 px-1">
+                        <p className="font-display text-lg font-extrabold text-fnc-green">
+                          {value}
+                        </p>
+                        <p className="font-body text-[10px] text-slate uppercase tracking-wider font-bold mt-1">
+                          {label}
+                        </p>
+                      </div>
+                    ))}
+                  </div>
                 </div>
-              </div>
+              )}
 
               {/* Cooking + storage */}
-              <div className="grid sm:grid-cols-2 gap-4">
-                <div className="rounded-2xl border border-fnc-red/20 bg-fnc-red/[0.02] p-5 flex flex-col gap-2">
-                  <div className="flex items-center gap-2 text-fnc-red">
-                    <Flame className="h-4 w-4 shrink-0 fill-fnc-red/10" />
-                    <h3 className="font-display text-sm font-bold">
-                      Cooking Instructions
-                    </h3>
-                  </div>
-                  <p className="font-body text-xs sm:text-sm text-slate leading-relaxed">
-                    {product.cookingInstructions}
-                  </p>
+              {(product.cookingInstructions || product.storageInstructions) && (
+                <div className="grid sm:grid-cols-2 gap-4">
+                  {product.cookingInstructions && (
+                    <div className={`rounded-2xl border border-fnc-red/20 bg-fnc-red/[0.02] p-5 flex flex-col gap-2 ${!product.storageInstructions ? "sm:col-span-2" : ""}`}>
+                      <div className="flex items-center gap-2 text-fnc-red">
+                        <Flame className="h-4 w-4 shrink-0 fill-fnc-red/10" />
+                        <h3 className="font-display text-sm font-bold">
+                          Cooking Instructions
+                        </h3>
+                      </div>
+                      <p className="font-body text-xs sm:text-sm text-slate leading-relaxed">
+                        {product.cookingInstructions}
+                      </p>
+                    </div>
+                  )}
+                  {product.storageInstructions && (
+                    <div className={`rounded-2xl border border-fnc-blue/20 bg-fnc-blue/[0.02] p-5 flex flex-col gap-2 ${!product.cookingInstructions ? "sm:col-span-2" : ""}`}>
+                      <div className="flex items-center gap-2 text-fnc-blue">
+                        <Snowflake className="h-4 w-4 shrink-0 fill-fnc-blue/10" />
+                        <h3 className="font-display text-sm font-bold">
+                          Storage Instructions
+                        </h3>
+                      </div>
+                      <p className="font-body text-xs sm:text-sm text-slate leading-relaxed">
+                        {product.storageInstructions}
+                      </p>
+                    </div>
+                  )}
                 </div>
-                <div className="rounded-2xl border border-fnc-blue/20 bg-fnc-blue/[0.02] p-5 flex flex-col gap-2">
-                  <div className="flex items-center gap-2 text-fnc-blue">
-                    <Snowflake className="h-4 w-4 shrink-0 fill-fnc-blue/10" />
-                    <h3 className="font-display text-sm font-bold">
-                      Storage Instructions
-                    </h3>
-                  </div>
-                  <p className="font-body text-xs sm:text-sm text-slate leading-relaxed">
-                    {product.storageInstructions}
-                  </p>
-                </div>
-              </div>
+              )}
             </Reveal>
           </div>
         </Section>

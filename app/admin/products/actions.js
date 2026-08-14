@@ -41,6 +41,13 @@ function parseProductForm(formData) {
   const tags = formData.get("tags")?.toString().trim();
   const videoUrl = formData.get("videoUrl")?.toString().trim() || null;
 
+  const nutrition = {
+    calories: formData.get("nutritionCalories")?.toString().trim() || null,
+    protein: formData.get("nutritionProtein")?.toString().trim() || null,
+    fat: formData.get("nutritionFat")?.toString().trim() || null,
+    carbs: formData.get("nutritionCarbs")?.toString().trim() || null,
+  };
+
   return {
     name: formData.get("name").toString().trim(),
     description: formData.get("description").toString().trim(),
@@ -53,55 +60,65 @@ function parseProductForm(formData) {
     tags: tags ? tags.split(",").map((t) => t.trim()).filter(Boolean) : [],
     categoryId: formData.get("categoryId").toString(),
     videoUrl,
+    nutrition,
   };
 }
 
 export async function createProductAction(formData) {
-  const admin = await requireAdminUser();
-  if (admin.role.name !== "admin") {
-    throw new Error("Unauthorized: Only super admins can create products");
+  try {
+    const admin = await requireAdminUser();
+    if (admin.role.name !== "admin") {
+      return { error: "Unauthorized: Only super admins can create products" };
+    }
+    const data = parseProductForm(formData);
+    if (!data.name) return { error: "Product name is required" };
+    if (!data.categoryId) return { error: "Category is required" };
+    if (isNaN(data.price) || data.price < 0) return { error: "Valid price is required" };
+
+    const slug = await uniqueSlug(slugify(data.name));
+    const product = await createProduct({ ...data, slug });
+    revalidatePath("/admin/products");
+    revalidatePath("/shop", "layout");
+    revalidatePath(`/product/${product.slug}`);
+    revalidatePath("/");
+    return { ok: true, product };
+  } catch (err) {
+    return { error: err.message || "Failed to create product" };
   }
-  const data = parseProductForm(formData);
-  const slug = await uniqueSlug(slugify(data.name));
-  const product = await createProduct({ ...data, slug, nutrition: {} });
-  revalidatePath("/admin/products");
-  revalidatePath("/shop", "layout");
-  revalidatePath(`/product/${product.slug}`);
-  revalidatePath("/");
 }
 
 export async function updateProductAction(id, formData) {
-  const admin = await requireAdminUser();
-  if (admin.role.name !== "admin") {
-    throw new Error("Unauthorized: Only super admins can edit products");
+  try {
+    const admin = await requireAdminUser();
+    if (admin.role.name !== "admin") {
+      return { error: "Unauthorized: Only super admins can edit products" };
+    }
+    const before = await getProductById(id);
+    const data = parseProductForm(formData);
+    if (!data.name) return { error: "Product name is required" };
+    if (!data.categoryId) return { error: "Category is required" };
+    if (isNaN(data.price) || data.price < 0) return { error: "Valid price is required" };
+
+    const product = await updateProduct(id, data);
+    revalidatePath("/admin/products");
+    revalidatePath("/shop", "layout");
+    revalidatePath(`/product/${product.slug}`);
+    if (before && before.slug !== product.slug) {
+      revalidatePath(`/product/${before.slug}`);
+    }
+    revalidatePath("/");
+    return { ok: true, product };
+  } catch (err) {
+    return { error: err.message || "Failed to update product" };
   }
-  const before = await getProductById(id);
-  const data = parseProductForm(formData);
-  const product = await updateProduct(id, data);
-  revalidatePath("/admin/products");
-  revalidatePath("/shop", "layout");
-  revalidatePath(`/product/${product.slug}`);
-  // Slug can change on edit (as it just did for the Surimi product) — the
-  // old URL's cached render would otherwise keep serving stale content
-  // indefinitely instead of 404ing once the slug no longer exists.
-  if (before && before.slug !== product.slug) {
-    revalidatePath(`/product/${before.slug}`);
-  }
-  revalidatePath("/");
 }
 
 export async function deleteProductAction(id) {
   const admin = await requireAdminUser();
   if (admin.role.name !== "admin") {
-    throw new Error("Unauthorized: Only super admins can delete products");
+    return { error: "Unauthorized: Only super admins can delete products" };
   }
   const product = await getProductById(id);
-  // Next.js redacts a thrown Error's message in production Server Action
-  // responses (the generic "An error occurred in the Server Components
-  // render..." text) — deleteProduct()'s "has order history" message would
-  // never have reached the browser as a thrown error. Catching it and
-  // returning it as plain data instead is the only way the real reason
-  // actually shows up in the confirm dialog.
   try {
     await deleteProduct(id);
   } catch (err) {
@@ -111,13 +128,19 @@ export async function deleteProductAction(id) {
   revalidatePath("/shop", "layout");
   if (product) revalidatePath(`/product/${product.slug}`);
   revalidatePath("/");
+  return { ok: true };
 }
 
 export async function updateStoreStockAction(productId, storeId, stock) {
-  const admin = await requireAdminUser();
-  if (admin.role.name !== "admin" && admin.storeId !== storeId) {
-    throw new Error("Unauthorized");
+  try {
+    const admin = await requireAdminUser();
+    if (admin.role.name !== "admin" && admin.storeId !== storeId) {
+      return { error: "Unauthorized" };
+    }
+    await updateStoreStock(productId, storeId, stock, admin.id);
+    revalidatePath("/admin/products");
+    return { ok: true };
+  } catch (err) {
+    return { error: err.message || "Failed to update stock" };
   }
-  await updateStoreStock(productId, storeId, stock, admin.id);
-  revalidatePath("/admin/products");
 }

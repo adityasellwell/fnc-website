@@ -571,12 +571,7 @@ async function seedCategories() {
   for (const cat of categoriesData) {
     const row = await db.category.upsert({
       where: { slug: cat.slug },
-      update: {
-        name: cat.name,
-        description: cat.description,
-        image: cat.image,
-        order: cat.order,
-      },
+      update: {},
       create: {
         slug: cat.slug,
         name: cat.name,
@@ -595,22 +590,7 @@ async function seedStores() {
   for (const store of storesData) {
     const row = await db.store.upsert({
       where: { slug: store.slug },
-      update: {
-        name: store.name,
-        status: store.status,
-        address: store.address,
-        city: store.city,
-        state: store.state,
-        latitude: store.latitude,
-        longitude: store.longitude,
-        phone: store.phone,
-        whatsapp: store.whatsapp,
-        openingHours: store.openingHours,
-        images: store.images,
-        deliveryAvailable: store.deliveryAvailable,
-        pickupAvailable: store.pickupAvailable,
-        googleMapsLink: store.googleMapsLink,
-      },
+      update: {},
       create: {
         slug: store.slug,
         name: store.name,
@@ -637,7 +617,7 @@ async function seedStores() {
 async function seedProducts(categorySlugToId, storeOldIdToId) {
   const oldIdToProduct = new Map();
 
-  // Pass 1: create/update every product's scalar fields + category + stores.
+  // Pass 1: create every product's scalar fields + category + stores if missing.
   for (const product of productsData) {
     const categorySlug = product.categoryId.replace(/^cat-/, "");
     const realCategoryId = categorySlugToId.get(categorySlug);
@@ -645,7 +625,7 @@ async function seedProducts(categorySlugToId, storeOldIdToId) {
       .map((oldId) => storeOldIdToId.get(oldId))
       .filter(Boolean);
 
-    const data = {
+    const createData = {
       name: product.name,
       description: product.description,
       images: product.images,
@@ -658,24 +638,18 @@ async function seedProducts(categorySlugToId, storeOldIdToId) {
       rating: product.rating,
       reviewCount: product.reviewCount,
       category: { connect: { id: realCategoryId } },
-      // `connect` (not `set`) — `set` is only a valid operation inside an
-      // `update`, and this `data` object is shared between upsert's
-      // `create` and `update` branches below.
       availableAtStores: { connect: storeIds.map((id) => ({ id })) },
     };
 
     const row = await db.product.upsert({
       where: { slug: product.slug },
-      update: data,
-      create: { slug: product.slug, ...data },
+      update: {},
+      create: { slug: product.slug, ...createData },
     });
     oldIdToProduct.set(product.id, { id: row.id, slug: row.slug });
   }
 
-  // Pass 2: wire up the self-relation (relatedProducts). Written from one
-  // direction only — lib/data/products.js merges both `relatedProducts`
-  // and `relatedProductsOf` when reading, so this is enough for the app to
-  // treat the link as symmetric.
+  // Pass 2: wire up the self-relation (relatedProducts) only for newly created products.
   for (const product of productsData) {
     if (!product.relatedProducts.length) continue;
     const self = oldIdToProduct.get(product.id);
@@ -684,10 +658,16 @@ async function seedProducts(categorySlugToId, storeOldIdToId) {
       .filter(Boolean);
     if (!relatedIds.length) continue;
 
-    await db.product.update({
+    const existing = await db.product.findUnique({
       where: { id: self.id },
-      data: { relatedProducts: { set: relatedIds.map((id) => ({ id })) } },
+      include: { relatedProducts: { select: { id: true } } },
     });
+    if (existing && existing.relatedProducts.length === 0) {
+      await db.product.update({
+        where: { id: self.id },
+        data: { relatedProducts: { set: relatedIds.map((id) => ({ id })) } },
+      });
+    }
   }
 
   return oldIdToProduct;
@@ -699,7 +679,7 @@ async function seedRecipes(productOldIdToProduct) {
       .map((oldId) => productOldIdToProduct.get(oldId)?.id)
       .filter(Boolean);
 
-    const data = {
+    const createData = {
       title: recipe.title,
       description: recipe.description,
       image: recipe.image,
@@ -707,15 +687,13 @@ async function seedRecipes(productOldIdToProduct) {
       steps: recipe.steps,
       cookTime: recipe.cookTime,
       servings: recipe.servings,
-      // `connect` (not `set`) — same reasoning as in seedProducts: this
-      // `data` object is shared between upsert's `create` and `update`.
       relatedProducts: { connect: relatedIds.map((id) => ({ id })) },
     };
 
     await db.recipe.upsert({
       where: { slug: recipe.slug },
-      update: data,
-      create: { slug: recipe.slug, ...data },
+      update: {},
+      create: { slug: recipe.slug, ...createData },
     });
   }
 }

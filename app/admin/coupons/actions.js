@@ -38,55 +38,70 @@ function parsePromotionForm(formData) {
 }
 
 export async function createPromotionAction(formData) {
-  await requireFullAdminUser();
-  const { base, appliesTo } = parsePromotionForm(formData);
-  
-  let scopeProductsConnect = undefined;
-  let scopeCategoryId = null;
+  try {
+    await requireFullAdminUser();
+    const { base, appliesTo } = parsePromotionForm(formData);
+    
+    let scopeProductsConnect = undefined;
+    let scopeCategoryId = null;
 
-  if (appliesTo === "PRODUCT") {
-    const productIds = formData.getAll("productIds").map((id) => id.toString());
-    if (productIds.length > 0) {
-      scopeProductsConnect = { connect: productIds.map((id) => ({ id })) };
+    if (appliesTo === "PRODUCT") {
+      const productIds = formData.getAll("productIds").map((id) => id.toString());
+      if (productIds.length > 0) {
+        scopeProductsConnect = { connect: productIds.map((id) => ({ id })) };
+      }
+    } else if (appliesTo === "CATEGORY") {
+      scopeCategoryId = formData.get("scopeCategoryId")?.toString() || null;
     }
-  } else if (appliesTo === "CATEGORY") {
-    scopeCategoryId = formData.get("scopeCategoryId")?.toString() || null;
-  }
 
-  await createPromotion({
-    ...base,
-    scopeCategoryId,
-    ...(scopeProductsConnect ? { scopeProducts: scopeProductsConnect } : {}),
-  });
-  revalidatePath("/admin/coupons");
+    await createPromotion({
+      ...base,
+      scopeCategoryId,
+      ...(scopeProductsConnect ? { scopeProducts: scopeProductsConnect } : {}),
+    });
+    revalidatePath("/admin/coupons");
+    return { ok: true };
+  } catch (err) {
+    return { error: err.message || "Failed to create promotion" };
+  }
 }
 
 export async function updatePromotionAction(id, formData) {
-  await requireFullAdminUser();
-  const { base, appliesTo } = parsePromotionForm(formData);
-  
-  let scopeProductsSet = [];
-  let scopeCategoryId = null;
+  try {
+    await requireFullAdminUser();
+    const { base, appliesTo } = parsePromotionForm(formData);
+    
+    let scopeProductsSet = [];
+    let scopeCategoryId = null;
 
-  if (appliesTo === "PRODUCT") {
-    const productIds = formData.getAll("productIds").map((id) => id.toString());
-    scopeProductsSet = productIds.map((id) => ({ id }));
-  } else if (appliesTo === "CATEGORY") {
-    scopeCategoryId = formData.get("scopeCategoryId")?.toString() || null;
+    if (appliesTo === "PRODUCT") {
+      const productIds = formData.getAll("productIds").map((id) => id.toString());
+      scopeProductsSet = productIds.map((id) => ({ id }));
+    } else if (appliesTo === "CATEGORY") {
+      scopeCategoryId = formData.get("scopeCategoryId")?.toString() || null;
+    }
+
+    await updatePromotion(id, {
+      ...base,
+      scopeCategoryId,
+      scopeProducts: {
+        set: scopeProductsSet,
+      },
+    });
+    revalidatePath("/admin/coupons");
+    return { ok: true };
+  } catch (err) {
+    return { error: err.message || "Failed to update promotion" };
   }
-
-  await updatePromotion(id, {
-    ...base,
-    scopeCategoryId,
-    scopeProducts: {
-      set: scopeProductsSet,
-    },
-  });
-  revalidatePath("/admin/coupons");
 }
 
 export async function deletePromotionAction(id) {
-  await requireFullAdminUser();
-  await deletePromotion(id);
-  revalidatePath("/admin/coupons");
+  try {
+    await requireFullAdminUser();
+    await deletePromotion(id);
+    revalidatePath("/admin/coupons");
+    return { ok: true };
+  } catch (err) {
+    return { error: err.message || "Failed to delete promotion" };
+  }
 }

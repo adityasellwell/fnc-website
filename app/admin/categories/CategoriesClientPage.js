@@ -34,8 +34,8 @@ export default function CategoriesClientPage({ initialCategories }) {
           { header: "Name", accessor: (c) => c.name },
           { header: "Slug", accessor: (c) => c.slug },
           { header: "Parent", accessor: (c) => c.parentCategory?.name ?? "—" },
-          { header: "Products", accessor: (c) => c._count.products },
-          { header: "Order", accessor: (c) => c.order },
+          { header: "Products", accessor: (c) => c._count?.products ?? 0 },
+          { header: "Order", accessor: (c) => c.order ?? 0 },
           {
             header: "",
             className: "text-right",
