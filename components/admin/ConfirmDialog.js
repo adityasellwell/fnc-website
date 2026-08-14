@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Loader2, AlertTriangle } from "lucide-react";
+import { Loader2, AlertTriangle, XCircle } from "lucide-react";
 import Modal from "./Modal";
 
 /**
@@ -19,12 +19,20 @@ export default function ConfirmDialog({
 }) {
   const [open, setOpen] = useState(false);
   const [pending, setPending] = useState(false);
+  const [error, setError] = useState("");
 
   async function handleConfirm() {
     setPending(true);
+    setError("");
     try {
       await onConfirm();
       setOpen(false);
+    } catch (err) {
+      // Previously this threw straight into an unhandled rejection — the
+      // dialog just sat there with no feedback ("why is delete not
+      // working?"). Server Actions serialize a thrown Error's message
+      // through to the client, so it's safe to show directly here.
+      setError(err?.message || "Something went wrong. Please try again.");
     } finally {
       setPending(false);
     }
@@ -39,6 +47,12 @@ export default function ConfirmDialog({
             <p className="font-body text-sm text-slate flex items-start gap-2">
               {danger && <AlertTriangle className="h-4 w-4 text-fnc-red shrink-0 mt-0.5" />}
               {description}
+            </p>
+          )}
+          {error && (
+            <p className="font-body text-sm text-fnc-red flex items-start gap-2 bg-fnc-red/5 border border-fnc-red/20 rounded-xl px-3 py-2.5">
+              <XCircle className="h-4 w-4 shrink-0 mt-0.5" />
+              {error}
             </p>
           )}
           <div className="flex gap-3 justify-end">

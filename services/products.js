@@ -146,7 +146,30 @@ export async function updateProduct(id, data) {
 }
 
 export async function deleteProduct(id) {
-  return db.product.delete({ where: { id } });
+  // A plain db.product.delete() always failed with a foreign key
+  // constraint (P2003): every product has StoreInventory rows (created
+  // automatically for every active store on createProduct), and Prisma
+  // has no cascade configured for that relation — so deletion was
+  // completely broken for every product, silently, since the confirm
+  // dialog doesn't surface the thrown error.
+  const orderCount = await db.orderItem.count({ where: { productId: id } });
+  if (orderCount > 0) {
+    // Hard-deleting would corrupt real order history (OrderItem rows
+    // pointing at a product that no longer exists) — refuse instead of
+    // silently breaking past orders. There's no "hide/archive" flag on
+    // Product yet; for now the admin's options are to edit stock to 0
+    // or remove it from its category, not delete it outright.
+    throw new Error(
+      "This product has order history and can't be deleted — it would break past orders' records. Set its stock to 0 instead to stop new sales."
+    );
+  }
+
+  return db.$transaction(async (tx) => {
+    await tx.storeInventory.deleteMany({ where: { productId: id } });
+    await tx.wishlist.deleteMany({ where: { productId: id } });
+    await tx.review.deleteMany({ where: { productId: id } });
+    return tx.product.delete({ where: { id } });
+  });
 }
 
 export async function updateStock(id, stock) {
