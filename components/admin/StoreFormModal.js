@@ -64,15 +64,14 @@ export default function StoreFormModal({ trigger, store, action, title }) {
       {trigger({ onClick: () => setOpen(true) })}
       <Modal open={open} onClose={() => setOpen(false)} title={title} size="xl" description="Manage store details, hours, and delivery options.">
         <form action={handleSubmit} className="flex flex-col gap-4">
-          <div className="grid sm:grid-cols-2 gap-4">
-            <div className="flex flex-col gap-1.5">
-              <label className="font-body text-xs font-semibold text-charcoal">Name <span className="text-fnc-red">*</span></label>
-              <input name="name" defaultValue={store?.name} required className={inputClasses} />
-            </div>
-            <div className="flex flex-col gap-1.5">
-              <label className="font-body text-xs font-semibold text-charcoal">Slug <span className="text-fnc-red">*</span></label>
-              <input name="slug" defaultValue={store?.slug} required className={inputClasses} />
-            </div>
+          <div className="flex flex-col gap-1.5">
+            <label className="font-body text-xs font-semibold text-charcoal">Name <span className="text-fnc-red">*</span></label>
+            <input name="name" defaultValue={store?.name} required className={inputClasses} />
+            {store?.slug && (
+              <p className="font-body text-[11px] text-slate">
+                Page URL: /store/{store.slug} — set automatically, doesn&apos;t change when you edit the name.
+              </p>
+            )}
           </div>
 
           <div className="flex flex-col gap-1.5">

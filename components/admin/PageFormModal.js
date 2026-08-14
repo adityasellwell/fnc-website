@@ -21,9 +21,8 @@ function SubmitButton() {
   );
 }
 
-export default function PageFormModal({ trigger, page, action, title, knownSlugs = [] }) {
+export default function PageFormModal({ trigger, page, action, title }) {
   const [open, setOpen] = useState(false);
-  const isKnownSlug = page && knownSlugs.includes(page.slug);
 
   async function handleSubmit(formData) {
     await action(formData);
@@ -35,17 +34,20 @@ export default function PageFormModal({ trigger, page, action, title, knownSlugs
       {trigger({ onClick: () => setOpen(true) })}
       <Modal open={open} onClose={() => setOpen(false)} title={title} size="xl" description="Edit page content.">
         <form action={handleSubmit} className="flex flex-col gap-4">
-          <div className="grid sm:grid-cols-2 gap-4">
-            <div className="flex flex-col gap-1.5">
-              <label className="font-body text-xs font-semibold text-charcoal">Title <span className="text-fnc-red">*</span></label>
-              <input name="title" defaultValue={page?.title} required className={inputClasses} />
-            </div>
-            <div className="flex flex-col gap-1.5">
-              <label className="font-body text-xs font-semibold text-charcoal">
-                Slug {isKnownSlug && <span className="text-slate font-normal">(fixed — used by the live page)</span>}
-              </label>
-              <input name="slug" defaultValue={page?.slug} required readOnly={isKnownSlug} className={`${inputClasses} ${isKnownSlug ? "bg-warmwhite text-slate" : ""}`} />
-            </div>
+          {/* Existing pages keep their slug fixed (submitted unchanged via
+              this hidden field) — savePageAction upserts by slug, so it must
+              stay stable or the edit would create a second page instead of
+              updating this one. New pages get a slug generated from Title
+              server-side, once, on first save. */}
+          {page && <input type="hidden" name="slug" value={page.slug} />}
+          <div className="flex flex-col gap-1.5">
+            <label className="font-body text-xs font-semibold text-charcoal">Title <span className="text-fnc-red">*</span></label>
+            <input name="title" defaultValue={page?.title} required className={inputClasses} />
+            {page?.slug && (
+              <p className="font-body text-[11px] text-slate">
+                Page URL: /{page.slug} — fixed, doesn&apos;t change when you edit the title.
+              </p>
+            )}
           </div>
 
           <div className="flex flex-col gap-1.5">

@@ -5,8 +5,6 @@ import Table from "@/components/admin/Table";
 import PageFormModal from "@/components/admin/PageFormModal";
 import { savePageAction } from "./actions";
 
-const KNOWN_SLUGS = ["privacy-policy", "terms", "refund-policy", "shipping-policy"];
-
 export default function PagesClientPage({ pages }) {
   return (
     <div>
@@ -15,7 +13,6 @@ export default function PagesClientPage({ pages }) {
         <PageFormModal
           title="Add Page"
           action={savePageAction}
-          knownSlugs={KNOWN_SLUGS}
           trigger={({ onClick }) => (
             <button type="button" onClick={onClick} className="h-10 px-4 rounded-full bg-fnc-red text-white font-body text-sm font-semibold hover:bg-fnc-red/90 transition-colors flex items-center gap-1.5">
               <Plus className="h-4 w-4" />
@@ -47,8 +44,7 @@ export default function PagesClientPage({ pages }) {
                 title={`Edit ${p.title}`}
                 page={p}
                 action={savePageAction}
-                knownSlugs={KNOWN_SLUGS}
-                trigger={({ onClick }) => (
+                      trigger={({ onClick }) => (
                   <button type="button" onClick={onClick} aria-label="Edit" className="h-8 w-8 flex items-center justify-center rounded-full text-slate hover:text-charcoal hover:bg-warmwhite transition-colors">
                     <Pencil className="h-3.5 w-3.5" />
                   </button>

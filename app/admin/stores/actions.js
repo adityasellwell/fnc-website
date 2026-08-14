@@ -3,8 +3,27 @@
 import { revalidatePath } from "next/cache";
 import { requireFullAdminUser } from "@/lib/admin-auth";
 import { createStoreAdmin, updateStoreAdmin, deleteStoreAdmin } from "@/services/stores";
+import { db } from "@/lib/db";
 
 const DAYS = ["mon", "tue", "wed", "thu", "fri", "sat", "sun"];
+
+function slugify(str) {
+  return str
+    .toLowerCase()
+    .replace(/&/g, "and")
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "");
+}
+
+async function uniqueSlug(base) {
+  let slug = base || "store";
+  let n = 2;
+  while (await db.store.findUnique({ where: { slug }, select: { id: true } })) {
+    slug = `${base}-${n}`;
+    n += 1;
+  }
+  return slug;
+}
 
 function parseStoreForm(formData) {
   const openingHours = {};
@@ -20,7 +39,6 @@ function parseStoreForm(formData) {
     .filter((l) => l.label && l.url);
 
   return {
-    slug: formData.get("slug").toString().trim(),
     name: formData.get("name").toString().trim(),
     address: formData.get("address").toString().trim(),
     city: formData.get("city").toString().trim(),
@@ -41,24 +59,34 @@ function parseStoreForm(formData) {
 
 export async function createStoreAction(formData) {
   await requireFullAdminUser();
-  await createStoreAdmin(parseStoreForm(formData));
+  const data = parseStoreForm(formData);
+  const slug = await uniqueSlug(slugify(data.name));
+  const store = await createStoreAdmin({ ...data, slug });
   revalidatePath("/admin/stores");
   revalidatePath("/stores");
+  revalidatePath(`/store/${store.slug}`);
   revalidatePath("/");
 }
 
 export async function updateStoreAction(id, formData) {
   await requireFullAdminUser();
-  await updateStoreAdmin(id, parseStoreForm(formData));
+  const store = await updateStoreAdmin(id, parseStoreForm(formData));
   revalidatePath("/admin/stores");
   revalidatePath("/stores");
+  revalidatePath(`/store/${store.slug}`);
   revalidatePath("/");
 }
 
 export async function deleteStoreAction(id) {
   await requireFullAdminUser();
-  await deleteStoreAdmin(id);
+  const store = await db.store.findUnique({ where: { id }, select: { slug: true } });
+  try {
+    await deleteStoreAdmin(id);
+  } catch (err) {
+    return { error: err.message };
+  }
   revalidatePath("/admin/stores");
   revalidatePath("/stores");
+  if (store) revalidatePath(`/store/${store.slug}`);
   revalidatePath("/");
 }
