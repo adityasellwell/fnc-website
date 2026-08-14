@@ -22,6 +22,9 @@ export default function AddToCartButton({ product, image, className }) {
   const cartItems = useCartStore((s) => s.items);
   const storeId = useLocationStore((s) => s.storeId);
 
+  const cartItem = cartItems.find((i) => i.id === product.id || i.productId === product.id);
+  const qty = cartItem?.qty ?? 0;
+
   const storeInv = product.storeInventory?.find((i) => i.storeId === storeId);
   const isOutOfStock = ENFORCE_STOCK_GATING && mounted && storeId && (!storeInv || storeInv.stock <= 0);
 

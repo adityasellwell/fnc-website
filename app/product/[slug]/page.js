@@ -58,9 +58,9 @@ export default async function ProductDetailPage({ params }) {
     notFound();
   }
 
-  const categorySlug = product.categoryId.replace(/^cat-/, "");
+  const categorySlug = (product.categoryId || "").replace(/^cat-/, "");
   const [category, allProducts, reviews] = await Promise.all([
-    getCategoryBySlug(categorySlug),
+    categorySlug ? getCategoryBySlug(categorySlug) : null,
     getProducts(),
     getReviewsForProduct(product.id),
   ]);
@@ -226,11 +226,11 @@ export default async function ProductDetailPage({ params }) {
                   <div className="flex items-center gap-1 rounded-full bg-white border border-bordergray px-2.5 py-1">
                     <Star className="h-3.5 w-3.5 fill-fnc-red text-fnc-red" />
                     <span className="font-body text-sm font-semibold text-charcoal">
-                      {product.rating.toFixed(1)}
+                      {(Number(product.rating) || 0).toFixed(1)}
                     </span>
                   </div>
                   <span className="font-body text-sm text-slate">
-                    ({product.reviewCount} review{product.reviewCount === 1 ? "" : "s"})
+                    ({product.reviewCount ?? 0} review{(product.reviewCount ?? 0) === 1 ? "" : "s"})
                   </span>
                 </div>
               </div>
@@ -366,10 +366,10 @@ export default async function ProductDetailPage({ params }) {
             <div className="flex items-center gap-1.5 shrink-0">
               <Star className="h-5 w-5 fill-fnc-red text-fnc-red" />
               <span className="font-display text-lg font-bold text-charcoal">
-                {product.rating.toFixed(1)}
+                {(Number(product.rating) || 0).toFixed(1)}
               </span>
               <span className="font-body text-sm text-slate">
-                ({product.reviewCount})
+                ({product.reviewCount ?? 0})
               </span>
             </div>
           </Reveal>
