@@ -2,8 +2,20 @@
 
 import { revalidatePath } from "next/cache";
 import { requireAdminUser } from "@/lib/admin-auth";
-import { createProduct, updateProduct, deleteProduct } from "@/services/products";
+import { createProduct, updateProduct, deleteProduct, getProductById } from "@/services/products";
 import { updateStoreStock } from "@/services/inventory";
+
+// Guards against exactly what happened with "F&C Surimi Fish Finger" being
+// typed straight into the Slug field: turns whatever the admin entered (or
+// left matching the Name field) into a URL-safe slug instead of silently
+// saving spaces/ampersands/capitals that later 404 on /product/[slug].
+function slugify(str) {
+  return str
+    .toLowerCase()
+    .replace(/&/g, "and")
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "");
+}
 
 function parseProductForm(formData) {
   const primaryImage = formData.get("image")?.toString().trim();
@@ -16,7 +28,7 @@ function parseProductForm(formData) {
   const videoUrl = formData.get("videoUrl")?.toString().trim() || null;
 
   return {
-    slug: formData.get("slug").toString().trim(),
+    slug: slugify(formData.get("slug").toString().trim()),
     name: formData.get("name").toString().trim(),
     description: formData.get("description").toString().trim(),
     images,
@@ -37,8 +49,11 @@ export async function createProductAction(formData) {
     throw new Error("Unauthorized: Only super admins can create products");
   }
   const data = parseProductForm(formData);
-  await createProduct({ ...data, nutrition: {} });
+  const product = await createProduct({ ...data, nutrition: {} });
   revalidatePath("/admin/products");
+  revalidatePath("/shop", "layout");
+  revalidatePath(`/product/${product.slug}`);
+  revalidatePath("/");
 }
 
 export async function updateProductAction(id, formData) {
@@ -46,9 +61,19 @@ export async function updateProductAction(id, formData) {
   if (admin.role.name !== "admin") {
     throw new Error("Unauthorized: Only super admins can edit products");
   }
+  const before = await getProductById(id);
   const data = parseProductForm(formData);
-  await updateProduct(id, data);
+  const product = await updateProduct(id, data);
   revalidatePath("/admin/products");
+  revalidatePath("/shop", "layout");
+  revalidatePath(`/product/${product.slug}`);
+  // Slug can change on edit (as it just did for the Surimi product) — the
+  // old URL's cached render would otherwise keep serving stale content
+  // indefinitely instead of 404ing once the slug no longer exists.
+  if (before && before.slug !== product.slug) {
+    revalidatePath(`/product/${before.slug}`);
+  }
+  revalidatePath("/");
 }
 
 export async function deleteProductAction(id) {
@@ -56,8 +81,12 @@ export async function deleteProductAction(id) {
   if (admin.role.name !== "admin") {
     throw new Error("Unauthorized: Only super admins can delete products");
   }
+  const product = await getProductById(id);
   await deleteProduct(id);
   revalidatePath("/admin/products");
+  revalidatePath("/shop", "layout");
+  if (product) revalidatePath(`/product/${product.slug}`);
+  revalidatePath("/");
 }
 
 export async function updateStoreStockAction(productId, storeId, stock) {
