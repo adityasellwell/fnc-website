@@ -10,7 +10,7 @@ import Reviews from "@/components/home/Reviews";
 import FinalCTA from "@/components/home/FinalCTA";
 
 import { getHeroBanners, getBannersByPlacement } from "@/lib/data/banners";
-import { getHomepageRecommendations } from "@/lib/data/recommendations";
+import { getProducts } from "@/lib/data/products";
 import { getCategories } from "@/lib/data/categories";
 import PromoStrip from "@/components/home/PromoStrip";
 
@@ -24,7 +24,7 @@ export default async function Home() {
   const [banners, promoBanners, products, categories] = await Promise.all([
     getHeroBanners(),
     getBannersByPlacement("promo_strip"),
-    getHomepageRecommendations(),
+    getProducts(),
     getCategories(),
   ]);
 

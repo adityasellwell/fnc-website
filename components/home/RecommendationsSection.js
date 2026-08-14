@@ -34,13 +34,10 @@ export default function RecommendationsSection({ products = [], initialCategorie
       if (selectedCategory === "offers") {
         list = list.filter((p) => p.tags.includes("premium") || p.tags.includes("seasonal"));
       } else {
-        // Find category ID matching selected slug
-        const cat = categoriesList.find((c) => c.slug === selectedCategory);
-        if (cat) {
-          list = list.filter((p) => p.categoryId === cat.id);
-        } else {
-          list = list.filter((p) => p.categoryId === `cat-${selectedCategory}`);
-        }
+        // p.categoryId is the synthetic "cat-<slug>" string lib/data/products.js
+        // emits (see its header comment) — not the real Category.id cuid, so it
+        // must be compared against the slug directly, not a categoriesList lookup.
+        list = list.filter((p) => p.categoryId === `cat-${selectedCategory}`);
       }
     } else {
       list = list.filter((p) => p.tags.includes("bestseller") || p.tags.includes("premium"));
