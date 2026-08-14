@@ -70,7 +70,7 @@ export default function ProductMediaGallery({ media = [], fallbackImage, seconda
               alt={`${productName} - Image ${activeIndex + 1}`}
               fill
               sizes="(min-width: 1024px) 45vw, 100vw"
-              className="object-cover transition-all duration-300"
+              className="object-contain transition-all duration-300"
               priority
             />
             {activeItem.title && (

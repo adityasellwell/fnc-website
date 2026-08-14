@@ -25,13 +25,20 @@ export default function ConfirmDialog({
     setPending(true);
     setError("");
     try {
-      await onConfirm();
+      // Next.js redacts a thrown Error's message from a Server Action in
+      // production (a generic "An error occurred..." replaces it) — so a
+      // meaningful failure reason has to come back as a normal return
+      // value, not a throw. Actions that can fail for a real, expected
+      // reason (e.g. "this product has order history") return
+      // { error: "..." } instead of throwing; this checks for that first
+      // and only falls through to catch for genuinely unexpected errors.
+      const result = await onConfirm();
+      if (result?.error) {
+        setError(result.error);
+        return;
+      }
       setOpen(false);
     } catch (err) {
-      // Previously this threw straight into an unhandled rejection — the
-      // dialog just sat there with no feedback ("why is delete not
-      // working?"). Server Actions serialize a thrown Error's message
-      // through to the client, so it's safe to show directly here.
       setError(err?.message || "Something went wrong. Please try again.");
     } finally {
       setPending(false);

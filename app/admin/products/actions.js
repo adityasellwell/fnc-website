@@ -96,7 +96,17 @@ export async function deleteProductAction(id) {
     throw new Error("Unauthorized: Only super admins can delete products");
   }
   const product = await getProductById(id);
-  await deleteProduct(id);
+  // Next.js redacts a thrown Error's message in production Server Action
+  // responses (the generic "An error occurred in the Server Components
+  // render..." text) — deleteProduct()'s "has order history" message would
+  // never have reached the browser as a thrown error. Catching it and
+  // returning it as plain data instead is the only way the real reason
+  // actually shows up in the confirm dialog.
+  try {
+    await deleteProduct(id);
+  } catch (err) {
+    return { error: err.message };
+  }
   revalidatePath("/admin/products");
   revalidatePath("/shop", "layout");
   if (product) revalidatePath(`/product/${product.slug}`);

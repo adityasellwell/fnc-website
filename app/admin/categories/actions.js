@@ -58,7 +58,14 @@ export async function updateCategoryAction(id, formData) {
 export async function deleteCategoryAction(id) {
   await requireFullAdminUser();
   const category = await getCategoryById(id);
-  await deleteCategory(id);
+  // Next.js redacts a thrown Error's message in production Server Action
+  // responses — deleteCategory()'s "has N products in it" message would
+  // never have reached the browser. Return it as plain data instead.
+  try {
+    await deleteCategory(id);
+  } catch (err) {
+    return { error: err.message };
+  }
   revalidatePath("/admin/categories");
   revalidatePath("/shop", "layout");
   if (category) revalidatePath(`/shop/${category.slug}`);
