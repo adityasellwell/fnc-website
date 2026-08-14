@@ -23,6 +23,16 @@ function thirdPartyOptionsFor(store) {
   return legacy;
 }
 
+// Real platform brand colors so each button is instantly recognizable —
+// a generic outline pill reads as "just another form field," a filled
+// brand-colored button reads as "tap here to order." Any other custom
+// platform the admin adds (Dunzo, ONDC...) falls back to solid charcoal.
+const BRAND_STYLES = {
+  Swiggy: "bg-[#FC8019] hover:bg-[#e57316] text-white",
+  Zomato: "bg-[#E23744] hover:bg-[#cc2f3b] text-white",
+};
+const DEFAULT_STYLE = "bg-charcoal hover:bg-charcoal/90 text-white";
+
 /**
  * Lets a customer route their order to F&C's own checkout (default,
  * unchanged flow) or open one of the store's admin-configured platform
@@ -65,30 +75,35 @@ export default function DeliveryPartnerSelect() {
   // Nothing to show: serviceable with no third-party listings (just use
   // the normal checkout, no picker needed), or out of radius with no
   // third-party listings either (genuinely nothing we can offer).
-  if (outOfRadius ? thirdPartyOptions.length === 0 : thirdPartyOptions.length === 0) return null;
+  if (thirdPartyOptions.length === 0) return null;
 
   return (
-    <div className="bg-white border border-bordergray rounded-2xl p-4 flex flex-col gap-3">
+    <div className="bg-white border-2 border-bordergray rounded-2xl p-4 sm:p-5 flex flex-col gap-3.5">
       {outOfRadius ? (
-        <p className="font-body text-xs text-fnc-red font-semibold">
+        <p className="font-body text-sm text-fnc-red font-bold">
           {store.name} doesn&apos;t deliver directly to you — order via a partner instead:
         </p>
       ) : (
-        <label className="font-body text-xs font-semibold text-charcoal">
+        <p className="font-display text-base font-bold text-charcoal">
           How would you like this delivered?
-        </label>
+        </p>
       )}
 
-      <div className="flex flex-col sm:flex-row gap-2">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
         {!outOfRadius && (
           <div
             className={cn(
-              "flex-1 h-11 px-3.5 rounded-xl border-2 border-fnc-red bg-fnc-red/5",
-              "flex items-center gap-2 font-body text-sm font-semibold text-fnc-red"
+              "h-16 px-4 rounded-2xl bg-fnc-red shadow-md",
+              "flex items-center gap-3 font-display text-base font-bold text-white"
             )}
           >
-            <Truck className="h-4 w-4 shrink-0" />
-            F&C Delivery
+            <div className="h-9 w-9 shrink-0 rounded-full bg-white/20 flex items-center justify-center">
+              <Truck className="h-5 w-5" />
+            </div>
+            <div className="flex flex-col leading-tight">
+              F&C Delivery
+              <span className="font-body text-[11px] font-medium text-white/85">Fastest, ordered here</span>
+            </div>
           </div>
         )}
         {thirdPartyOptions.map((p) => (
@@ -97,10 +112,14 @@ export default function DeliveryPartnerSelect() {
             href={p.url}
             target="_blank"
             rel="noopener noreferrer"
-            className="flex-1 h-11 px-3.5 rounded-xl border border-bordergray bg-white hover:border-charcoal transition-colors flex items-center justify-between gap-2 font-body text-sm font-semibold text-charcoal"
+            className={cn(
+              "h-16 px-4 rounded-2xl shadow-md transition-transform hover:scale-[1.02] active:scale-[0.98]",
+              "flex items-center justify-between gap-3 font-display text-base font-bold",
+              BRAND_STYLES[p.label] || DEFAULT_STYLE
+            )}
           >
             {p.label}
-            <ExternalLink className="h-3.5 w-3.5 text-slate shrink-0" />
+            <ExternalLink className="h-5 w-5 shrink-0 opacity-90" />
           </a>
         ))}
       </div>
