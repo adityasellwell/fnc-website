@@ -4,17 +4,31 @@ import { revalidatePath } from "next/cache";
 import { requireAdminUser } from "@/lib/admin-auth";
 import { createProduct, updateProduct, deleteProduct, getProductById } from "@/services/products";
 import { updateStoreStock } from "@/services/inventory";
+import { db } from "@/lib/db";
 
 // Guards against exactly what happened with "F&C Surimi Fish Finger" being
-// typed straight into the Slug field: turns whatever the admin entered (or
-// left matching the Name field) into a URL-safe slug instead of silently
-// saving spaces/ampersands/capitals that later 404 on /product/[slug].
+// typed straight into the Slug field: the Slug input is gone from the admin
+// form entirely now, and this always derives a clean URL-safe slug from the
+// product Name instead.
 function slugify(str) {
   return str
     .toLowerCase()
     .replace(/&/g, "and")
     .replace(/[^a-z0-9]+/g, "-")
     .replace(/^-+|-+$/g, "");
+}
+
+// Appends -2, -3, ... until the slug is free — two products named the same
+// thing ("F&C Chicken Nuggets 1000g" / "1500g" differ, but typos happen)
+// would otherwise collide on the unique slug column.
+async function uniqueSlug(base) {
+  let slug = base || "product";
+  let n = 2;
+  while (await db.product.findUnique({ where: { slug }, select: { id: true } })) {
+    slug = `${base}-${n}`;
+    n += 1;
+  }
+  return slug;
 }
 
 function parseProductForm(formData) {
@@ -28,7 +42,6 @@ function parseProductForm(formData) {
   const videoUrl = formData.get("videoUrl")?.toString().trim() || null;
 
   return {
-    slug: slugify(formData.get("slug").toString().trim()),
     name: formData.get("name").toString().trim(),
     description: formData.get("description").toString().trim(),
     images,
@@ -49,7 +62,8 @@ export async function createProductAction(formData) {
     throw new Error("Unauthorized: Only super admins can create products");
   }
   const data = parseProductForm(formData);
-  const product = await createProduct({ ...data, nutrition: {} });
+  const slug = await uniqueSlug(slugify(data.name));
+  const product = await createProduct({ ...data, slug, nutrition: {} });
   revalidatePath("/admin/products");
   revalidatePath("/shop", "layout");
   revalidatePath(`/product/${product.slug}`);

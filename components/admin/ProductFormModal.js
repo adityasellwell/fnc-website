@@ -40,15 +40,14 @@ export default function ProductFormModal({ trigger, categories, product, action,
       {trigger({ onClick: () => setOpen(true) })}
       <Modal open={open} onClose={() => setOpen(false)} title={title} size="xl" description="Manage product details, pricing, and media.">
         <form action={handleSubmit} className="flex flex-col gap-4">
-          <div className="grid sm:grid-cols-2 gap-4">
-            <div className="flex flex-col gap-1.5">
-              <label className="font-body text-xs font-semibold text-charcoal">Name <span className="text-fnc-red">*</span></label>
-              <input name="name" defaultValue={product?.name} required className={inputClasses} />
-            </div>
-            <div className="flex flex-col gap-1.5">
-              <label className="font-body text-xs font-semibold text-charcoal">Slug <span className="text-fnc-red">*</span></label>
-              <input name="slug" defaultValue={product?.slug} required className={inputClasses} />
-            </div>
+          <div className="flex flex-col gap-1.5">
+            <label className="font-body text-xs font-semibold text-charcoal">Name <span className="text-fnc-red">*</span></label>
+            <input name="name" defaultValue={product?.name} required className={inputClasses} />
+            {product?.slug && (
+              <p className="font-body text-[11px] text-slate">
+                Page URL: /product/{product.slug} — set automatically, doesn&apos;t change when you edit the name.
+              </p>
+            )}
           </div>
 
           <div className="grid sm:grid-cols-3 gap-4">
