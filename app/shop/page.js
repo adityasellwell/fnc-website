@@ -71,9 +71,7 @@ export default async function ShopPage({ searchParams }) {
   );
 
   const categoryMeta = activeCategory && categories.find(c => c.slug === activeCategory);
-  const bannerImage = activeCategory && CATEGORY_META[activeCategory]
-    ? CATEGORY_META[activeCategory].image
-    : "/images/categories/fish.jpg";
+  const bannerImage = categoryMeta?.image || CATEGORY_META[activeCategory]?.image || "/images/categories/fish.jpg";
   const bannerTitle = categoryMeta ? categoryMeta.name : "All Products";
   const bannerDescription = categoryMeta
     ? (categoryMeta.description || `Hygienically cleaned and freshly cut ${categoryMeta.name.toLowerCase()} for the perfect culinary experience.`)

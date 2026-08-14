@@ -97,7 +97,7 @@ export default async function ShopCategoryPage({ params, searchParams }) {
           {/* Background image */}
           <div className="absolute inset-0 z-0 opacity-70">
             <Image
-              src={CATEGORY_META[slug]?.image || "/images/categories/fish.jpg"}
+              src={category.image || CATEGORY_META[slug]?.image || "/images/categories/fish.jpg"}
               alt={category.name}
               fill
               className="object-cover object-center"
