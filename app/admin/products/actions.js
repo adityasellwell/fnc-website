@@ -48,6 +48,16 @@ function parseProductForm(formData) {
     carbs: formData.get("nutritionCarbs")?.toString().trim() || null,
   };
 
+  const attrLabels = formData.getAll("attribute_label").map((v) => v.toString().trim());
+  const attrValues = formData.getAll("attribute_value").map((v) => v.toString().trim());
+  const customAttributes = attrLabels
+    .map((label, i) => ({ label, value: attrValues[i] || "" }))
+    .filter((a) => a.label && a.value);
+
+  // Empty string, not null, would violate the unique constraint the
+  // moment a second product is also left without a SKU.
+  const sku = formData.get("sku")?.toString().trim() || null;
+
   return {
     name: formData.get("name").toString().trim(),
     description: formData.get("description").toString().trim(),
@@ -55,12 +65,14 @@ function parseProductForm(formData) {
     price: Number(formData.get("price")),
     unit: formData.get("unit").toString().trim(),
     stock: Number(formData.get("stock")) || 0,
+    sku,
     cookingInstructions: formData.get("cookingInstructions")?.toString().trim() ?? "",
     storageInstructions: formData.get("storageInstructions")?.toString().trim() ?? "",
     tags: tags ? tags.split(",").map((t) => t.trim()).filter(Boolean) : [],
     categoryId: formData.get("categoryId").toString(),
     videoUrl,
     nutrition,
+    customAttributes: customAttributes.length > 0 ? customAttributes : null,
   };
 }
 
@@ -83,6 +95,9 @@ export async function createProductAction(formData) {
     revalidatePath("/");
     return { ok: true, product };
   } catch (err) {
+    if (err.code === "P2002" && err.meta?.target?.includes("sku")) {
+      return { error: "That SKU is already used by another product — each SKU must be unique." };
+    }
     return { error: err.message || "Failed to create product" };
   }
 }
@@ -109,6 +124,9 @@ export async function updateProductAction(id, formData) {
     revalidatePath("/");
     return { ok: true, product };
   } catch (err) {
+    if (err.code === "P2002" && err.meta?.target?.includes("sku")) {
+      return { error: "That SKU is already used by another product — each SKU must be unique." };
+    }
     return { error: err.message || "Failed to update product" };
   }
 }

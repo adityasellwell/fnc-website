@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Loader2, AlertCircle } from "lucide-react";
+import { Loader2, AlertCircle, Plus, Trash2 } from "lucide-react";
 import Modal from "./Modal";
 import ImageUploadField from "./ImageUploadField";
 import MultiImageUploadField from "./MultiImageUploadField";
@@ -16,6 +16,19 @@ export default function ProductFormModal({ trigger, categories, product, action,
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [attributes, setAttributes] = useState(() =>
+    Array.isArray(product?.customAttributes) ? product.customAttributes : []
+  );
+
+  function addAttribute() {
+    setAttributes((cur) => [...cur, { label: "", value: "" }]);
+  }
+  function removeAttribute(idx) {
+    setAttributes((cur) => cur.filter((_, i) => i !== idx));
+  }
+  function updateAttribute(idx, field, value) {
+    setAttributes((cur) => cur.map((a, i) => (i === idx ? { ...a, [field]: value } : a)));
+  }
 
   async function handleSubmit(e) {
     e.preventDefault();
@@ -40,6 +53,7 @@ export default function ProductFormModal({ trigger, categories, product, action,
   function handleOpen() {
     setError("");
     setLoading(false);
+    setAttributes(Array.isArray(product?.customAttributes) ? product.customAttributes : []);
     setOpen(true);
   }
 
@@ -65,7 +79,7 @@ export default function ProductFormModal({ trigger, categories, product, action,
             )}
           </div>
 
-          <div className="grid sm:grid-cols-3 gap-4">
+          <div className="grid sm:grid-cols-4 gap-4">
             <div className="flex flex-col gap-1.5">
               <label className="font-body text-xs font-semibold text-charcoal">Category <span className="text-fnc-red">*</span></label>
               <select name="categoryId" defaultValue={product?.categoryId} required className={inputClasses}>
@@ -83,6 +97,10 @@ export default function ProductFormModal({ trigger, categories, product, action,
             <div className="flex flex-col gap-1.5">
               <label className="font-body text-xs font-semibold text-charcoal">Unit <span className="text-fnc-red">*</span></label>
               <input name="unit" defaultValue={product?.unit} placeholder="500 g" required className={inputClasses} />
+            </div>
+            <div className="flex flex-col gap-1.5">
+              <label className="font-body text-xs font-semibold text-charcoal">Product Code / SKU</label>
+              <input name="sku" defaultValue={product?.sku ?? ""} placeholder="e.g. FNC-FISH-001" className={inputClasses} />
             </div>
           </div>
 
@@ -136,6 +154,55 @@ export default function ProductFormModal({ trigger, categories, product, action,
               <input name="nutritionFat" defaultValue={product?.nutrition?.fat ?? ""} placeholder="Fat (e.g. 13g)" className={inputClasses} />
               <input name="nutritionCarbs" defaultValue={product?.nutrition?.carbs ?? ""} placeholder="Carbs (e.g. 0g)" className={inputClasses} />
             </div>
+          </div>
+
+          <div className="flex flex-col gap-2">
+            <div className="flex items-center justify-between">
+              <label className="font-body text-xs font-semibold text-charcoal">Custom Attributes (optional)</label>
+              <button
+                type="button"
+                onClick={addAttribute}
+                className="h-8 px-3 rounded-full border border-bordergray font-body text-xs font-semibold text-charcoal hover:border-fnc-red hover:text-fnc-red transition-colors flex items-center gap-1"
+              >
+                <Plus className="h-3.5 w-3.5" />
+                Add Attribute
+              </button>
+            </div>
+            <p className="font-body text-xs text-slate -mt-1">
+              Add any extra detail worth showing on the product page — e.g. &quot;Origin of Fish&quot; → &quot;West Bengal&quot;, &quot;Cut Type&quot; → &quot;Fillet&quot;.
+            </p>
+            {attributes.length === 0 ? (
+              <p className="font-body text-xs text-slate italic">No custom attributes added yet.</p>
+            ) : (
+              <div className="flex flex-col gap-2">
+                {attributes.map((attr, idx) => (
+                  <div key={idx} className="flex items-center gap-2">
+                    <input
+                      name="attribute_label"
+                      value={attr.label}
+                      onChange={(e) => updateAttribute(idx, "label", e.target.value)}
+                      placeholder="Attribute name (e.g. Origin of Fish)"
+                      className={`${inputClasses} min-w-0 flex-1`}
+                    />
+                    <input
+                      name="attribute_value"
+                      value={attr.value}
+                      onChange={(e) => updateAttribute(idx, "value", e.target.value)}
+                      placeholder="Value (e.g. West Bengal)"
+                      className={`${inputClasses} min-w-0 flex-1`}
+                    />
+                    <button
+                      type="button"
+                      onClick={() => removeAttribute(idx)}
+                      aria-label="Remove attribute"
+                      className="h-9 w-9 shrink-0 flex items-center justify-center rounded-full text-slate hover:text-fnc-red hover:bg-warmwhite transition-colors"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
 
           <div className="flex flex-col gap-1.5">

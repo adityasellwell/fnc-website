@@ -2,7 +2,8 @@
 
 import { useState, useMemo, useRef } from "react";
 import Image from "next/image";
-import { Percent, ChevronLeft, ChevronRight } from "lucide-react";
+import Link from "next/link";
+import { Percent, ChevronLeft, ChevronRight, ArrowRight } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import Container from "@/components/layout/Container";
 import ProductCard from "@/components/product/ProductCard";
@@ -213,6 +214,18 @@ export default function RecommendationsSection({ products = [], initialCategorie
                 ))}
               </AnimatePresence>
             </motion.div>
+          )}
+
+          {selectedCategory && selectedCategory !== "offers" && (
+            <div className="flex justify-center mt-8">
+              <Link
+                href={`/shop/${selectedCategory}`}
+                className="inline-flex items-center gap-2 h-12 px-6 rounded-full border-2 border-fnc-red text-fnc-red font-display text-sm font-bold hover:bg-fnc-red hover:text-white transition-colors"
+              >
+                View All in {categoriesList.find((c) => c.slug === selectedCategory)?.name}
+                <ArrowRight className="h-4 w-4" />
+              </Link>
+            </div>
           )}
         </div>
 

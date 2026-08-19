@@ -232,6 +232,9 @@ export default async function ProductDetailPage({ params }) {
                   <span className="font-body text-sm text-slate">
                     ({product.reviewCount ?? 0} review{(product.reviewCount ?? 0) === 1 ? "" : "s"})
                   </span>
+                  {product.sku && (
+                    <span className="font-body text-xs text-slate">SKU: {product.sku}</span>
+                  )}
                 </div>
               </div>
 
@@ -283,6 +286,23 @@ export default async function ProductDetailPage({ params }) {
                       </div>
                     ))}
                   </div>
+                </div>
+              )}
+
+              {/* Custom attributes (e.g. "Origin of Fish" -> "West Bengal") */}
+              {Array.isArray(product.customAttributes) && product.customAttributes.length > 0 && (
+                <div className="rounded-2xl border border-bordergray bg-white p-5 sm:p-6">
+                  <h2 className="font-display text-base font-bold text-charcoal mb-4">
+                    Product Details
+                  </h2>
+                  <dl className="grid sm:grid-cols-2 gap-x-6 gap-y-3">
+                    {product.customAttributes.map((attr, i) => (
+                      <div key={i} className="flex items-baseline justify-between gap-3 border-b border-bordergray/60 pb-2">
+                        <dt className="font-body text-xs text-slate">{attr.label}</dt>
+                        <dd className="font-body text-sm font-semibold text-charcoal text-right">{attr.value}</dd>
+                      </div>
+                    ))}
+                  </dl>
                 </div>
               )}
 

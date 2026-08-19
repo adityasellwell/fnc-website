@@ -48,6 +48,10 @@ model Product {
   slug                String   @unique
   name                String
   description         String
+  // Product Code / SKU — optional (existing products have none until an
+  // admin sets one), unique when set so it can be used to look products
+  // up unambiguously (barcode scan, supplier ordering, etc.).
+  sku                 String?  @unique
   images              Json
   // Money as Decimal, never Float — avoids floating-point rounding drift
   // on prices/totals throughout checkout and reporting.
@@ -60,6 +64,11 @@ model Product {
   cookingInstructions String
   storageInstructions String
   tags                Json
+  // Open-ended admin-defined label/value pairs shown on the product page
+  // (e.g. "Origin of Fish" -> "West Bengal") — shape varies per product,
+  // same reasoning as `nutrition` above, so Json rather than fixed columns.
+  // Stored as [{ label: string, value: string }, ...].
+  customAttributes    Json?
   rating              Float    @default(0)
   reviewCount         Int      @default(0)
 
