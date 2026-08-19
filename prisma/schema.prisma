@@ -781,21 +781,21 @@ model ProductMedia {
   @@index([displayOrder])
 }
 
-enum VariantOptionType {
-  WEIGHT
-  PIECES
-}
-
 // Reusable master list ("250 g", "500 g", "4 pcs"...) so the same value is
 // spelled and priced consistently everywhere it's used, instead of every
-// product typing its own slightly-different label. Admin manages this list
-// once (Admin -> Variation Options); each Product's own ProductVariant rows
-// then pick from here rather than free-typing a label.
+// product typing its own slightly-different label. Admin manages this
+// inline from the product form's "+ New Value" button; each Product's own
+// ProductVariant rows then pick from here rather than free-typing a label.
+//
+// `type` is a free-text category name (e.g. "Weight", "Pieces", "Size",
+// "Combo"), not a fixed enum — the admin types whatever category makes
+// sense when adding a new value, so the variation system isn't limited to
+// only Weight/Pieces forever.
 model VariantOption {
-  id       String            @id @default(cuid())
-  type     VariantOptionType
+  id       String           @id @default(cuid())
+  type     String
   label    String
-  order    Int               @default(0)
+  order    Int              @default(0)
   variants ProductVariant[]
 
   createdAt DateTime @default(now())

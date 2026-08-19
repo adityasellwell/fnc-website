@@ -13,8 +13,6 @@ const inputClasses =
 const textareaClasses =
   "w-full px-3.5 py-2.5 rounded-xl border border-bordergray bg-white font-body text-sm text-charcoal placeholder:text-slate focus:border-fnc-red focus:outline-none transition-colors resize-none";
 
-const VARIANT_TYPE_LABELS = { WEIGHT: "Weight", PIECES: "Pieces" };
-
 function initialVariantRows(product) {
   if (!Array.isArray(product?.variants) || product.variants.length === 0) return [];
   return product.variants.map((v) => ({
@@ -34,12 +32,23 @@ export default function ProductFormModal({ trigger, categories, product, action,
   const [variantRows, setVariantRows] = useState(() => initialVariantRows(product));
   const [localVariantOptions, setLocalVariantOptions] = useState(variantOptions);
   const [showNewValueForm, setShowNewValueForm] = useState(false);
-  const [newValueType, setNewValueType] = useState("WEIGHT");
+  const [newValueType, setNewValueType] = useState("Weight");
   const [newValueLabel, setNewValueLabel] = useState("");
   const [newValueError, setNewValueError] = useState("");
   const [savingNewValue, setSavingNewValue] = useState(false);
 
+  // "Weight"/"Pieces" always suggested as a starting point even before
+  // anything's been added under them; any other category the admin has
+  // typed before (e.g. "Size", "Combo") joins the list automatically.
+  const existingVariantTypes = Array.from(
+    new Set(["Weight", "Pieces", ...localVariantOptions.map((o) => o.type)])
+  );
+
   async function handleSaveNewValue() {
+    if (!newValueType.trim()) {
+      setNewValueError("Enter a category, e.g. \"Weight\".");
+      return;
+    }
     if (!newValueLabel.trim()) {
       setNewValueError("Enter a label, e.g. \"250 g\".");
       return;
@@ -47,7 +56,7 @@ export default function ProductFormModal({ trigger, categories, product, action,
     setSavingNewValue(true);
     setNewValueError("");
     const fd = new FormData();
-    fd.set("type", newValueType);
+    fd.set("type", newValueType.trim());
     fd.set("label", newValueLabel.trim());
     const res = await createVariantOptionAction(fd);
     setSavingNewValue(false);
@@ -110,6 +119,7 @@ export default function ProductFormModal({ trigger, categories, product, action,
     setVariantRows(initialVariantRows(product));
     setLocalVariantOptions(variantOptions);
     setShowNewValueForm(false);
+    setNewValueType("Weight");
     setNewValueLabel("");
     setNewValueError("");
     setOpen(true);
@@ -257,14 +267,22 @@ export default function ProductFormModal({ trigger, categories, product, action,
                   </button>
                 </div>
                 <div className="flex flex-col sm:flex-row gap-2">
-                  <select value={newValueType} onChange={(e) => setNewValueType(e.target.value)} className={`${inputClasses} sm:w-32 shrink-0`}>
-                    <option value="WEIGHT">Weight</option>
-                    <option value="PIECES">Pieces</option>
-                  </select>
+                  <input
+                    list="variant-type-suggestions"
+                    value={newValueType}
+                    onChange={(e) => setNewValueType(e.target.value)}
+                    placeholder="Category (e.g. Weight, Size, Combo)"
+                    className={`${inputClasses} sm:w-44 shrink-0`}
+                  />
+                  <datalist id="variant-type-suggestions">
+                    {existingVariantTypes.map((t) => (
+                      <option key={t} value={t} />
+                    ))}
+                  </datalist>
                   <input
                     value={newValueLabel}
                     onChange={(e) => setNewValueLabel(e.target.value)}
-                    placeholder="e.g. 250 g or 4 pcs"
+                    placeholder="e.g. 250 g, 4 pcs, or Large"
                     className={`${inputClasses} min-w-0 flex-1`}
                   />
                   <button
@@ -306,11 +324,10 @@ export default function ProductFormModal({ trigger, categories, product, action,
                           onChange={(e) => updateVariantRow(idx, "variantOptionId", e.target.value)}
                           className={`${inputClasses} min-w-0 sm:flex-1`}
                         >
-                          {["WEIGHT", "PIECES"].map((type) => {
+                          {Array.from(new Set(localVariantOptions.map((o) => o.type))).map((type) => {
                             const opts = localVariantOptions.filter((o) => o.type === type);
-                            if (opts.length === 0) return null;
                             return (
-                              <optgroup key={type} label={VARIANT_TYPE_LABELS[type]}>
+                              <optgroup key={type} label={type}>
                                 {opts.map((o) => (
                                   <option key={o.id} value={o.id}>{o.label}</option>
                                 ))}
