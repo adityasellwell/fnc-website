@@ -27,7 +27,19 @@ export default function ProductCard({ product, className }) {
   const addItem = useCartStore((s) => s.addItem);
   const updateQty = useCartStore((s) => s.updateQty);
   const cartItems = useCartStore((s) => s.items);
-  const cartItem = cartItems.find((i) => i.productId === product.id);
+
+  // A card has no room for a variant picker — if the product has
+  // variants, quick-add here always uses the default one (same price the
+  // customer would see pre-selected on the product page).
+  const variants = product.variants ?? [];
+  const defaultVariant = variants.find((v) => v.isDefault) ?? variants[0] ?? null;
+  const activePrice = defaultVariant ? defaultVariant.price : product.price;
+  const activeUnit = defaultVariant ? defaultVariant.label : product.unit;
+  const activeVariantLabel = defaultVariant?.label ?? null;
+
+  const cartItem = cartItems.find(
+    (i) => i.productId === product.id && (i.variantLabel ?? null) === activeVariantLabel
+  );
   const qty = cartItem?.qty ?? 0;
 
   const categorySlug = (product?.categoryId || "").replace(/^cat-/, "");
@@ -77,8 +89,9 @@ export default function ProductCard({ product, className }) {
       id: product.id,
       slug: product.slug,
       name: product.name,
-      unit: product.unit,
-      price: product.price,
+      unit: activeUnit,
+      price: activePrice,
+      variantLabel: activeVariantLabel,
       image: primaryImage,
       availableAtStores: product.availableAtStores,
     };
@@ -101,7 +114,7 @@ export default function ProductCard({ product, className }) {
   function handleDecrement(e) {
     e.preventDefault();
     e.stopPropagation();
-    updateQty(product.id, qty - 1);
+    updateQty(product.id, qty - 1, activeVariantLabel);
   }
 
   function handleIncrement(e) {
@@ -111,8 +124,9 @@ export default function ProductCard({ product, className }) {
       id: product.id,
       slug: product.slug,
       name: product.name,
-      unit: product.unit,
-      price: product.price,
+      unit: activeUnit,
+      price: activePrice,
+      variantLabel: activeVariantLabel,
       image: primaryImage,
       availableAtStores: product.availableAtStores,
     };
@@ -289,15 +303,18 @@ export default function ProductCard({ product, className }) {
         {/* Weight / Pieces Row */}
         <div className="mt-2 flex items-center justify-between text-[11px] font-body">
           <span className="bg-fnc-green/5 text-fnc-green border border-fnc-green/15 px-2 py-0.5 rounded font-bold">
-            {product.unit}
+            {activeUnit}
           </span>
+          {variants.length > 1 && (
+            <span className="text-slate font-medium">+{variants.length - 1} more size{variants.length > 2 ? "s" : ""}</span>
+          )}
         </div>
 
         {/* Price & Add to Cart Action Row */}
         <div className="mt-auto pt-2.5 border-t border-dashed border-bordergray/60 flex items-center justify-between gap-2">
           <div className="flex flex-col">
             <span className="font-display font-extrabold text-base sm:text-lg text-fnc-red">
-              ₹{product.price}
+              ₹{activePrice}
             </span>
           </div>
 

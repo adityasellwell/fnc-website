@@ -54,6 +54,26 @@ function parseProductForm(formData) {
     .map((label, i) => ({ label, value: attrValues[i] || "" }))
     .filter((a) => a.label && a.value);
 
+  const variantOptionIds = formData.getAll("variantOptionId").map((v) => v.toString());
+  const variantPrices = formData.getAll("variantPrice").map((v) => v.toString());
+  const variantSkus = formData.getAll("variantSku").map((v) => v.toString().trim());
+  const seenVariantOptionIds = new Set();
+  const variants = variantOptionIds
+    .map((variantOptionId, i) => ({
+      variantOptionId,
+      price: Number(variantPrices[i]),
+      sku: variantSkus[i] || null,
+    }))
+    .filter((v) => v.variantOptionId && !isNaN(v.price) && v.price >= 0)
+    // Same value picked twice would violate ProductVariant's
+    // [productId, variantOptionId] unique constraint — keep the first
+    // occurrence rather than letting the admin hit a raw DB error.
+    .filter((v) => {
+      if (seenVariantOptionIds.has(v.variantOptionId)) return false;
+      seenVariantOptionIds.add(v.variantOptionId);
+      return true;
+    });
+
   // Empty string, not null, would violate the unique constraint the
   // moment a second product is also left without a SKU.
   const sku = formData.get("sku")?.toString().trim() || null;
@@ -73,6 +93,7 @@ function parseProductForm(formData) {
     videoUrl,
     nutrition,
     customAttributes: customAttributes.length > 0 ? customAttributes : null,
+    variants,
   };
 }
 

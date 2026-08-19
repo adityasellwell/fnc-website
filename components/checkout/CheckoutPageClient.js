@@ -376,7 +376,7 @@ export default function CheckoutPageClient({ stores = [], settings = {}, savedPr
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          items: items.map((i) => ({ productId: i.productId, quantity: i.qty })),
+          items: items.map((i) => ({ productId: i.productId, quantity: i.qty, variantLabel: i.variantLabel ?? undefined })),
           fulfillmentType,
           storeId: fulfillmentType === "PICKUP" ? store?.id : undefined,
           couponCode: appliedPromo?.code || undefined,
@@ -779,9 +779,12 @@ export default function CheckoutPageClient({ stores = [], settings = {}, savedPr
           <h2 className="font-display text-lg font-bold text-charcoal">Order Summary</h2>
           <div className="flex flex-col gap-3 max-h-80 overflow-y-auto" data-lenis-prevent>
             {items.map((item) => (
-              <div key={item.productId} className="flex items-center justify-between gap-3 font-body text-sm">
+              <div key={`${item.productId}:${item.variantLabel ?? ""}`} className="flex items-center justify-between gap-3 font-body text-sm">
                 <span className="text-charcoal truncate">
-                  {item.name} <span className="text-slate">x{item.qty}</span>
+                  {item.name}
+                  {item.variantLabel ? <span className="text-slate"> ({item.variantLabel})</span> : null}
+                  {" "}
+                  <span className="text-slate">x{item.qty}</span>
                 </span>
                 <span className="font-semibold text-charcoal shrink-0">₹{item.price * item.qty}</span>
               </div>

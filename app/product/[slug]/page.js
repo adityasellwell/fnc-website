@@ -10,8 +10,7 @@ import Reveal from "@/components/motion/Reveal";
 import ProductCard from "@/components/product/ProductCard";
 import RecipeCard from "@/components/recipe/RecipeCard";
 import PlaceholderMedia from "@/components/ui/PlaceholderMedia";
-import AddToCartButton from "@/components/product/AddToCartButton";
-import BuyNowButton from "@/components/product/BuyNowButton";
+import ProductPurchasePanel from "@/components/product/ProductPurchasePanel";
 import ReviewForm from "@/components/product/ReviewForm";
 import ProductMediaGallery from "@/components/product/ProductMediaGallery";
 import StoreAvailabilityBadge from "@/components/product/StoreAvailabilityBadge";
@@ -241,13 +240,6 @@ export default async function ProductDetailPage({ params }) {
                 </div>
               </div>
 
-              <div className="flex items-baseline gap-2 pb-6 border-b border-bordergray">
-                <span className="font-display text-4xl font-extrabold text-fnc-red">
-                  ₹{product.price}
-                </span>
-                <span className="font-body text-base text-slate">/ {product.unit}</span>
-              </div>
-
               <p className="font-body text-body text-slate">{product.description}</p>
 
               {product.tags?.length > 0 && (
@@ -282,10 +274,7 @@ export default async function ProductDetailPage({ params }) {
 
               <StoreAvailabilityBadge storeInventory={product.storeInventory} />
 
-              <div className="flex flex-col sm:flex-row gap-3">
-                <AddToCartButton product={product} image={meta.image} className="w-full sm:w-auto" />
-                <BuyNowButton product={product} image={meta.image} className="w-full sm:w-auto" />
-              </div>
+              <ProductPurchasePanel product={product} image={meta.image} />
 
               <DeliveryPartnerSelect />
 

@@ -13,7 +13,7 @@ import { ENFORCE_STOCK_GATING } from "@/lib/constants";
  * shoppers who already know what they want, sitting next to (not instead
  * of) AddToCartButton.
  */
-export default function BuyNowButton({ product, image, className }) {
+export default function BuyNowButton({ product, image, variant, className }) {
   const [pending, setPending] = useState(false);
   const [mounted, setMounted] = useState(false);
   const router = useRouter();
@@ -34,8 +34,9 @@ export default function BuyNowButton({ product, image, className }) {
       id: product.id,
       slug: product.slug,
       name: product.name,
-      unit: product.unit,
-      price: product.price,
+      unit: variant ? variant.label : product.unit,
+      price: variant ? variant.price : product.price,
+      variantLabel: variant?.label ?? null,
       image,
       availableAtStores: product.availableAtStores,
     };

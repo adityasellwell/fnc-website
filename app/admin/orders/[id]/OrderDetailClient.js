@@ -384,7 +384,10 @@ export default function OrderDetailClient({ order, currentUser, availablePartner
               {order.items.map((item) => (
                 <div key={item.id} className="flex items-center gap-4 py-3 border-b border-bordergray last:border-0">
                   <div className="flex-1">
-                    <p className="font-display text-sm font-bold text-charcoal">{item.product.name}</p>
+                    <p className="font-display text-sm font-bold text-charcoal">
+                      {item.product.name}
+                      {item.variantLabel && <span className="text-fnc-red"> — {item.variantLabel}</span>}
+                    </p>
                     <p className="font-body text-xs text-slate mt-0.5">
                       ₹{Number(item.unitPrice).toFixed(2)} × {item.quantity}
                     </p>
@@ -574,7 +577,7 @@ export default function OrderDetailClient({ order, currentUser, availablePartner
           <tbody>
             {order.items.map((item) => (
               <tr key={item.id} className="border-b border-gray-200">
-                <td className="py-2 px-1 font-semibold">{item.product.name}</td>
+                <td className="py-2 px-1 font-semibold">{item.product.name}{item.variantLabel ? ` — ${item.variantLabel}` : ""}</td>
                 <td className="py-2 px-1 text-right">₹{Number(item.unitPrice).toFixed(2)}</td>
                 <td className="py-2 px-1 text-right">{item.quantity}</td>
                 <td className="py-2 px-1 text-right">₹{(Number(item.unitPrice) * item.quantity).toFixed(2)}</td>

@@ -10,7 +10,7 @@ import { cn } from "@/lib/utils";
 
 const emptySubscribe = () => () => {};
 
-export default function AddToCartButton({ product, image, className }) {
+export default function AddToCartButton({ product, image, variant, className }) {
   const mounted = useSyncExternalStore(
     emptySubscribe,
     () => true,
@@ -22,7 +22,13 @@ export default function AddToCartButton({ product, image, className }) {
   const cartItems = useCartStore((s) => s.items);
   const storeId = useLocationStore((s) => s.storeId);
 
-  const cartItem = cartItems.find((i) => i.id === product.id || i.productId === product.id);
+  const variantLabel = variant?.label ?? null;
+  // A product with variants needs its qty/quantity controls scoped to the
+  // SPECIFIC variant selected, not the product as a whole — otherwise
+  // "250 g" and "1 kg" in the cart would show/adjust the same counter.
+  const cartItem = cartItems.find(
+    (i) => (i.id === product.id || i.productId === product.id) && (i.variantLabel ?? null) === variantLabel
+  );
   const qty = cartItem?.qty ?? 0;
 
   const storeInv = product.storeInventory?.find((i) => i.storeId === storeId);
@@ -33,8 +39,9 @@ export default function AddToCartButton({ product, image, className }) {
       id: product.id,
       slug: product.slug,
       name: product.name,
-      unit: product.unit,
-      price: product.price,
+      unit: variant ? variant.label : product.unit,
+      price: variant ? variant.price : product.price,
+      variantLabel,
       image,
       availableAtStores: product.availableAtStores,
     };
@@ -58,7 +65,7 @@ export default function AddToCartButton({ product, image, className }) {
       <div className={cn("flex items-center bg-fnc-red text-white rounded-xl overflow-hidden h-12 border border-fnc-red shadow-md font-display font-bold text-base sm:text-lg", className)}>
         <button
           type="button"
-          onClick={() => updateQty(product.id, qty - 1)}
+          onClick={() => updateQty(product.id, qty - 1, variantLabel)}
           className="px-5 h-full hover:bg-black/10 flex items-center justify-center cursor-pointer transition-colors"
           aria-label="Decrease quantity"
         >

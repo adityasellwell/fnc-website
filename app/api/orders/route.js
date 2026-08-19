@@ -33,6 +33,10 @@ const addressSchema = z.object({
 const orderItemInputSchema = z.object({
   productId: z.string().min(1, "productId is required"),
   quantity: z.coerce.number().int().positive("quantity must be a positive integer"),
+  // Which variant (e.g. "500 g") was selected, if the product has any —
+  // the PRICE for it is never trusted from the client, only this label,
+  // resolved to a real ProductVariant row server-side below.
+  variantLabel: z.string().min(1).optional(),
 });
 
 const createOrderSchema = z
@@ -154,10 +158,13 @@ export async function POST(request) {
     }
 
     // Look up each product's CURRENT price server-side — a client-supplied
-    // price is never trusted for the unitPrice/total calculation.
+    // price is never trusted for the unitPrice/total calculation. Includes
+    // variants so a selected variant's own price can be resolved the same
+    // trusted way, from its label only (never a client-sent price/amount).
     const productIds = [...new Set(items.map((item) => item.productId))];
     const products = await db.product.findMany({
       where: { id: { in: productIds } },
+      include: { variants: { include: { variantOption: true } } },
     });
 
     const productById = new Map(products.map((product) => [product.id, product]));
@@ -169,15 +176,31 @@ export async function POST(request) {
       );
     }
 
+    for (const item of items) {
+      if (!item.variantLabel) continue;
+      const product = productById.get(item.productId);
+      const match = product.variants.find((v) => v.variantOption.label === item.variantLabel);
+      if (!match) {
+        return NextResponse.json(
+          { error: `"${item.variantLabel}" isn't a valid option for ${product.name}.` },
+          { status: 400 }
+        );
+      }
+    }
+
     let subtotal = 0;
     const orderItemsData = items.map((item) => {
       const product = productById.get(item.productId);
-      const unitPrice = product.price; // Prisma Decimal — snapshot at order time
+      const variantMatch = item.variantLabel
+        ? product.variants.find((v) => v.variantOption.label === item.variantLabel)
+        : null;
+      const unitPrice = variantMatch ? variantMatch.price : product.price; // Prisma Decimal — snapshot at order time
       subtotal += Number(unitPrice) * item.quantity;
       return {
         productId: item.productId,
         quantity: item.quantity,
         unitPrice,
+        variantLabel: item.variantLabel || null,
       };
     });
 

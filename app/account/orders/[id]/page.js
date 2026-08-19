@@ -213,7 +213,7 @@ export default async function TrackOrderPage({ params }) {
                           {item.product?.name}
                         </p>
                         <p className="font-body text-xs text-slate">
-                          {item.product?.unit || "Unit"} x {item.quantity}
+                          {item.variantLabel || item.product?.unit || "Unit"} x {item.quantity}
                         </p>
                       </div>
                       <span className="font-body font-semibold text-charcoal shrink-0">

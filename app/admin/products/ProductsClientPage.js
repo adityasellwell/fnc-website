@@ -14,6 +14,7 @@ export default function ProductsClientPage({
   categories,
   stores = [],
   currentUser,
+  variantOptions = [],
   page,
   totalPages,
   searchParams,
@@ -26,6 +27,7 @@ export default function ProductsClientPage({
           <ProductFormModal
             title="Add Product"
             categories={categories}
+            variantOptions={variantOptions}
             action={createProductAction}
             trigger={({ onClick }) => (
               <button
@@ -111,6 +113,7 @@ export default function ProductsClientPage({
                   <ProductFormModal
                     title="Edit Product"
                     categories={categories}
+                    variantOptions={variantOptions}
                     product={p}
                     action={updateProductAction.bind(null, p.id)}
                     trigger={({ onClick }) => (

@@ -38,7 +38,7 @@ function CartLine({ item }) {
           <button
             type="button"
             aria-label="Decrease quantity"
-            onClick={() => updateQty(item.productId, item.qty - 1)}
+            onClick={() => updateQty(item.productId, item.qty - 1, item.variantLabel ?? null)}
             className="h-9 w-9 flex items-center justify-center text-charcoal hover:bg-warmwhite rounded-full transition-colors"
           >
             <Minus className="h-3.5 w-3.5" />
@@ -47,7 +47,7 @@ function CartLine({ item }) {
           <button
             type="button"
             aria-label="Increase quantity"
-            onClick={() => updateQty(item.productId, item.qty + 1)}
+            onClick={() => updateQty(item.productId, item.qty + 1, item.variantLabel ?? null)}
             className="h-9 w-9 flex items-center justify-center text-charcoal hover:bg-warmwhite rounded-full transition-colors"
           >
             <Plus className="h-3.5 w-3.5" />
@@ -56,7 +56,7 @@ function CartLine({ item }) {
         <button
           type="button"
           aria-label="Remove item"
-          onClick={() => removeItem(item.productId)}
+          onClick={() => removeItem(item.productId, item.variantLabel ?? null)}
           className="h-9 w-9 flex items-center justify-center rounded-full text-slate hover:text-fnc-red hover:bg-warmwhite transition-colors"
         >
           <Trash2 className="h-4 w-4" />
@@ -96,7 +96,7 @@ export default function CartPageClient() {
         <div className="grid lg:grid-cols-3 gap-8 items-start">
           <div className="lg:col-span-2 bg-white border border-bordergray rounded-3xl px-5 sm:px-6">
             {items.map((item) => (
-              <CartLine key={item.productId} item={item} />
+              <CartLine key={`${item.productId}:${item.variantLabel ?? ""}`} item={item} />
             ))}
           </div>
 

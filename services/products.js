@@ -27,7 +27,12 @@ export async function listProducts({ search, categoryId, page = 1 } = {}) {
   const [products, totalCount] = await Promise.all([
     db.product.findMany({
       where,
-      include: { category: true, media: { orderBy: { displayOrder: "asc" } }, storeInventory: true },
+      include: {
+        category: true,
+        media: { orderBy: { displayOrder: "asc" } },
+        storeInventory: true,
+        variants: { include: { variantOption: true }, orderBy: { order: "asc" } },
+      },
       orderBy: { createdAt: "desc" },
       skip: (page - 1) * PAGE_SIZE,
       take: PAGE_SIZE,
@@ -45,7 +50,12 @@ export async function listProducts({ search, categoryId, page = 1 } = {}) {
 export async function getProductById(id) {
   const product = await db.product.findUnique({
     where: { id },
-    include: { category: true, media: { orderBy: { displayOrder: "asc" } }, storeInventory: true },
+    include: {
+      category: true,
+      media: { orderBy: { displayOrder: "asc" } },
+      storeInventory: true,
+      variants: { include: { variantOption: true }, orderBy: { order: "asc" } },
+    },
   });
   if (product) {
     product.images = resolveImages(product);
@@ -54,7 +64,7 @@ export async function getProductById(id) {
 }
 
 export async function createProduct(data) {
-  const { images, videoUrl, ...rest } = data;
+  const { images, videoUrl, variants, ...rest } = data;
   return db.$transaction(async (tx) => {
     const activeStores = await tx.store.findMany({ where: { status: "ACTIVE" }, select: { id: true } });
 
@@ -100,12 +110,25 @@ export async function createProduct(data) {
       });
     }
 
+    if (variants && variants.length > 0) {
+      await tx.productVariant.createMany({
+        data: variants.map((v, idx) => ({
+          productId: product.id,
+          variantOptionId: v.variantOptionId,
+          price: v.price,
+          sku: v.sku || null,
+          isDefault: idx === 0,
+          order: idx,
+        })),
+      });
+    }
+
     return product;
   });
 }
 
 export async function updateProduct(id, data) {
-  const { images, videoUrl, ...rest } = data;
+  const { images, videoUrl, variants, ...rest } = data;
   return db.$transaction(async (tx) => {
     const product = await tx.product.update({
       where: { id },
@@ -138,6 +161,24 @@ export async function updateProduct(id, data) {
           displayOrder: images ? images.length : 1,
           isPrimary: false,
         },
+      });
+    }
+
+    // Replace-on-save, same pattern as media above — simpler and safe
+    // here since variants have no order history of their own (OrderItem
+    // snapshots the label/price it needs at purchase time instead of
+    // referencing a live ProductVariant row).
+    await tx.productVariant.deleteMany({ where: { productId: id } });
+    if (variants && variants.length > 0) {
+      await tx.productVariant.createMany({
+        data: variants.map((v, idx) => ({
+          productId: id,
+          variantOptionId: v.variantOptionId,
+          price: v.price,
+          sku: v.sku || null,
+          isDefault: idx === 0,
+          order: idx,
+        })),
       });
     }
 

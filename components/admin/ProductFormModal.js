@@ -12,13 +12,25 @@ const inputClasses =
 const textareaClasses =
   "w-full px-3.5 py-2.5 rounded-xl border border-bordergray bg-white font-body text-sm text-charcoal placeholder:text-slate focus:border-fnc-red focus:outline-none transition-colors resize-none";
 
-export default function ProductFormModal({ trigger, categories, product, action, title }) {
+const VARIANT_TYPE_LABELS = { WEIGHT: "Weight", PIECES: "Pieces" };
+
+function initialVariantRows(product) {
+  if (!Array.isArray(product?.variants) || product.variants.length === 0) return [];
+  return product.variants.map((v) => ({
+    variantOptionId: v.variantOptionId,
+    price: v.price != null ? String(Number(v.price)) : "",
+    sku: v.sku || "",
+  }));
+}
+
+export default function ProductFormModal({ trigger, categories, product, action, title, variantOptions = [] }) {
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [attributes, setAttributes] = useState(() =>
     Array.isArray(product?.customAttributes) ? product.customAttributes : []
   );
+  const [variantRows, setVariantRows] = useState(() => initialVariantRows(product));
 
   function addAttribute() {
     setAttributes((cur) => [...cur, { label: "", value: "" }]);
@@ -28,6 +40,16 @@ export default function ProductFormModal({ trigger, categories, product, action,
   }
   function updateAttribute(idx, field, value) {
     setAttributes((cur) => cur.map((a, i) => (i === idx ? { ...a, [field]: value } : a)));
+  }
+
+  function addVariantRow() {
+    setVariantRows((cur) => [...cur, { variantOptionId: variantOptions[0]?.id ?? "", price: "", sku: "" }]);
+  }
+  function removeVariantRow(idx) {
+    setVariantRows((cur) => cur.filter((_, i) => i !== idx));
+  }
+  function updateVariantRow(idx, field, value) {
+    setVariantRows((cur) => cur.map((r, i) => (i === idx ? { ...r, [field]: value } : r)));
   }
 
   async function handleSubmit(e) {
@@ -54,6 +76,7 @@ export default function ProductFormModal({ trigger, categories, product, action,
     setError("");
     setLoading(false);
     setAttributes(Array.isArray(product?.customAttributes) ? product.customAttributes : []);
+    setVariantRows(initialVariantRows(product));
     setOpen(true);
   }
 
@@ -144,6 +167,86 @@ export default function ProductFormModal({ trigger, categories, product, action,
               <label className="font-body text-xs font-semibold text-charcoal">Storage Instructions</label>
               <input name="storageInstructions" defaultValue={product?.storageInstructions} className={inputClasses} />
             </div>
+          </div>
+
+          <div className="flex flex-col gap-2">
+            <div className="flex items-center justify-between">
+              <label className="font-body text-xs font-semibold text-charcoal">Variations (optional — e.g. 250g / 500g / 1kg, each its own price)</label>
+              <button
+                type="button"
+                onClick={addVariantRow}
+                disabled={variantOptions.length === 0}
+                className="h-8 px-3 rounded-full border border-bordergray font-body text-xs font-semibold text-charcoal hover:border-fnc-red hover:text-fnc-red transition-colors flex items-center gap-1 disabled:opacity-40 disabled:cursor-not-allowed"
+              >
+                <Plus className="h-3.5 w-3.5" />
+                Add Variation
+              </button>
+            </div>
+            {variantOptions.length === 0 ? (
+              <p className="font-body text-xs text-slate italic">
+                No variation values set up yet — add some in Admin → Variation Options first (e.g. &quot;250 g&quot;, &quot;4 pcs&quot;).
+              </p>
+            ) : (
+              <>
+                <p className="font-body text-xs text-slate -mt-1">
+                  When set, the product page shows these as selectable price options instead of the single Price/Unit
+                  above. The first row is shown selected by default.
+                </p>
+                {variantRows.length === 0 ? (
+                  <p className="font-body text-xs text-slate italic">No variations added — this product will show its normal single Price/Unit.</p>
+                ) : (
+                  <div className="flex flex-col gap-2">
+                    {variantRows.map((row, idx) => (
+                      <div key={idx} className="flex items-center gap-2">
+                        <select
+                          name="variantOptionId"
+                          value={row.variantOptionId}
+                          onChange={(e) => updateVariantRow(idx, "variantOptionId", e.target.value)}
+                          className={`${inputClasses} min-w-0 flex-1`}
+                        >
+                          {["WEIGHT", "PIECES"].map((type) => {
+                            const opts = variantOptions.filter((o) => o.type === type);
+                            if (opts.length === 0) return null;
+                            return (
+                              <optgroup key={type} label={VARIANT_TYPE_LABELS[type]}>
+                                {opts.map((o) => (
+                                  <option key={o.id} value={o.id}>{o.label}</option>
+                                ))}
+                              </optgroup>
+                            );
+                          })}
+                        </select>
+                        <input
+                          name="variantPrice"
+                          type="number"
+                          step="0.01"
+                          value={row.price}
+                          onChange={(e) => updateVariantRow(idx, "price", e.target.value)}
+                          placeholder="Price (₹)"
+                          required
+                          className={`${inputClasses} w-32 shrink-0`}
+                        />
+                        <input
+                          name="variantSku"
+                          value={row.sku}
+                          onChange={(e) => updateVariantRow(idx, "sku", e.target.value)}
+                          placeholder="SKU (optional)"
+                          className={`${inputClasses} w-36 shrink-0`}
+                        />
+                        <button
+                          type="button"
+                          onClick={() => removeVariantRow(idx)}
+                          aria-label="Remove variation"
+                          className="h-9 w-9 shrink-0 flex items-center justify-center rounded-full text-slate hover:text-fnc-red hover:bg-warmwhite transition-colors"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </>
+            )}
           </div>
 
           <div className="flex flex-col gap-1.5">

@@ -81,6 +81,7 @@ model Product {
 
   storeInventory StoreInventory[]
   media          ProductMedia[]
+  variants       ProductVariant[]
 
   category   Category @relation(fields: [categoryId], references: [id])
   categoryId String
@@ -495,6 +496,12 @@ model OrderItem {
   productId String
   quantity  Int
   unitPrice Decimal @db.Decimal(10, 2)
+  // Snapshot of the variant chosen at order time (e.g. "500 g"), not a live
+  // FK to ProductVariant — same reasoning as unitPrice already being a
+  // snapshot: an admin editing/deleting that variant later must never
+  // change or invalidate a past order's record. Null for products with no
+  // variants (the normal, unchanged case).
+  variantLabel String?
 
   @@index([orderId])
 }
@@ -759,6 +766,54 @@ model ProductMedia {
 
   @@index([productId])
   @@index([displayOrder])
+}
+
+enum VariantOptionType {
+  WEIGHT
+  PIECES
+}
+
+// Reusable master list ("250 g", "500 g", "4 pcs"...) so the same value is
+// spelled and priced consistently everywhere it's used, instead of every
+// product typing its own slightly-different label. Admin manages this list
+// once (Admin -> Variation Options); each Product's own ProductVariant rows
+// then pick from here rather than free-typing a label.
+model VariantOption {
+  id       String            @id @default(cuid())
+  type     VariantOptionType
+  label    String
+  order    Int               @default(0)
+  variants ProductVariant[]
+
+  createdAt DateTime @default(now())
+
+  @@unique([type, label])
+  @@index([type])
+}
+
+// One selectable, individually-priced option on a product's page (the
+// Amazon-style "250g / 500g / 1kg" boxes) — a product with zero rows here
+// just shows its normal single Price/Unit, unchanged from before this
+// feature existed. Stock is intentionally NOT split per variant (kept at
+// the whole-product level, same StoreInventory as today) to keep checkout
+// logic from having to change — a deliberate v1 scoping choice, not an
+// oversight.
+model ProductVariant {
+  id              String        @id @default(cuid())
+  product         Product       @relation(fields: [productId], references: [id], onDelete: Cascade)
+  productId       String
+  variantOption   VariantOption @relation(fields: [variantOptionId], references: [id])
+  variantOptionId String
+  price           Decimal       @db.Decimal(10, 2)
+  sku             String?
+  isDefault       Boolean       @default(false)
+  order           Int           @default(0)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([productId, variantOptionId])
+  @@index([productId])
 }
 
 enum RefundStatus {

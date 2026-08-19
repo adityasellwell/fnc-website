@@ -1,5 +1,6 @@
 import { listProducts } from "@/services/products";
 import { listCategories } from "@/services/categories";
+import { listVariantOptions } from "@/services/variantOptions";
 import { requireAdminUser, getScopedStoreId } from "@/lib/admin-auth";
 import { getStores } from "@/lib/data/stores";
 import ProductsClientPage from "./ProductsClientPage";
@@ -12,10 +13,11 @@ export default async function AdminProductsPage({ searchParams }) {
   const sp = await searchParams;
   const page = Number(sp.page) || 1;
 
-  const [{ products, totalPages }, categories, stores] = await Promise.all([
+  const [{ products, totalPages }, categories, stores, variantOptions] = await Promise.all([
     listProducts({ search: sp.search || undefined, categoryId: sp.categoryId || undefined, page }),
     listCategories(),
     getStores(),
+    listVariantOptions(),
   ]);
 
   // Ensure decimals/dates are converted to strings for complete serialization
@@ -23,6 +25,7 @@ export default async function AdminProductsPage({ searchParams }) {
   const serializedCategories = JSON.parse(JSON.stringify(categories));
   const serializedStores = JSON.parse(JSON.stringify(stores));
   const serializedAdmin = JSON.parse(JSON.stringify(admin));
+  const serializedVariantOptions = JSON.parse(JSON.stringify(variantOptions));
 
   return (
     <ProductsClientPage
@@ -30,6 +33,7 @@ export default async function AdminProductsPage({ searchParams }) {
       categories={serializedCategories}
       stores={serializedStores}
       currentUser={serializedAdmin}
+      variantOptions={serializedVariantOptions}
       page={page}
       totalPages={totalPages}
       searchParams={sp}
