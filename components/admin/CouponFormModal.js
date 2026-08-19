@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { Loader2, AlertCircle } from "lucide-react";
 import Modal from "./Modal";
+import ImageUploadField from "./ImageUploadField";
 
 const inputClasses =
   "w-full h-11 px-3.5 rounded-xl border border-bordergray bg-white font-body text-sm text-charcoal placeholder:text-slate focus:border-fnc-red focus:outline-none transition-colors";
@@ -12,11 +13,24 @@ function toDateInputValue(date) {
   return new Date(date).toISOString().slice(0, 10);
 }
 
-export default function CouponFormModal({ trigger, coupon, action, title }) {
+export default function CouponFormModal({ trigger, coupon, action, title, categories = [], products = [] }) {
   const [open, setOpen] = useState(false);
   const [type, setType] = useState(coupon?.type ?? "COUPON");
+  const [appliesTo, setAppliesTo] = useState(coupon?.appliesTo ?? "CART");
+  const [selectedProductIds, setSelectedProductIds] = useState(
+    () => new Set((coupon?.scopeProducts ?? []).map((p) => p.id))
+  );
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+
+  function toggleProduct(id) {
+    setSelectedProductIds((cur) => {
+      const next = new Set(cur);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  }
 
   async function handleSubmit(e) {
     e.preventDefault();
@@ -42,6 +56,8 @@ export default function CouponFormModal({ trigger, coupon, action, title }) {
     setError("");
     setLoading(false);
     setType(coupon?.type ?? "COUPON");
+    setAppliesTo(coupon?.appliesTo ?? "CART");
+    setSelectedProductIds(new Set((coupon?.scopeProducts ?? []).map((p) => p.id)));
     setOpen(true);
   }
 
@@ -110,21 +126,55 @@ export default function CouponFormModal({ trigger, coupon, action, title }) {
 
           <div className="flex flex-col gap-1.5">
             <label className="font-body text-xs font-semibold text-charcoal">Applies to</label>
-            <select name="appliesTo" defaultValue={coupon?.appliesTo ?? "CART"} className={inputClasses}>
+            <select name="appliesTo" value={appliesTo} onChange={(e) => setAppliesTo(e.target.value)} className={inputClasses}>
               <option value="CART">Whole cart</option>
               <option value="PRODUCT">Specific products</option>
               <option value="CATEGORY">Specific category</option>
             </select>
-            <p className="font-body text-xs text-slate">
-              Product/category scoping is set up in the schema but not yet pickable here — for now
-              those apply cart-wide until scoping UI is added.
-            </p>
           </div>
 
-          <div className="flex flex-col gap-1.5">
-            <label className="font-body text-xs font-semibold text-charcoal">Banner image URL (optional)</label>
-            <input name="bannerImage" defaultValue={coupon?.bannerImage ?? ""} placeholder="/images/banners/welcome-offer.jpg" className={inputClasses} />
-          </div>
+          {appliesTo === "PRODUCT" && (
+            <div className="flex flex-col gap-1.5">
+              <label className="font-body text-xs font-semibold text-charcoal">
+                Select product(s) <span className="text-fnc-red">*</span>
+              </label>
+              <div className="max-h-48 overflow-y-auto border border-bordergray rounded-xl p-2 flex flex-col gap-1">
+                {products.length === 0 && (
+                  <p className="font-body text-xs text-slate p-2">No products found.</p>
+                )}
+                {products.map((p) => (
+                  <label key={p.id} className="flex items-center gap-2.5 font-body text-sm text-charcoal px-2 py-1.5 rounded-lg hover:bg-warmwhite cursor-pointer">
+                    <input
+                      type="checkbox"
+                      name="productIds"
+                      value={p.id}
+                      checked={selectedProductIds.has(p.id)}
+                      onChange={() => toggleProduct(p.id)}
+                      className="h-4 w-4 rounded accent-fnc-red shrink-0"
+                    />
+                    {p.name}
+                  </label>
+                ))}
+              </div>
+              <p className="font-body text-xs text-slate">{selectedProductIds.size} selected</p>
+            </div>
+          )}
+
+          {appliesTo === "CATEGORY" && (
+            <div className="flex flex-col gap-1.5">
+              <label className="font-body text-xs font-semibold text-charcoal">
+                Select category <span className="text-fnc-red">*</span>
+              </label>
+              <select name="scopeCategoryId" defaultValue={coupon?.scopeCategoryId ?? ""} required className={inputClasses}>
+                <option value="" disabled>Choose a category</option>
+                {categories.map((c) => (
+                  <option key={c.id} value={c.id}>{c.name}</option>
+                ))}
+              </select>
+            </div>
+          )}
+
+          <ImageUploadField name="bannerImage" label="Banner Image (optional)" defaultValue={coupon?.bannerImage ?? ""} folder="banners" />
 
           <div className="grid sm:grid-cols-2 gap-4">
             <div className="flex flex-col gap-1.5">

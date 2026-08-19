@@ -12,7 +12,7 @@ function formatDiscount(p) {
   return "Buy One Get One";
 }
 
-export default function CouponsClientPage({ initialCoupons }) {
+export default function CouponsClientPage({ initialCoupons, categories = [], products = [] }) {
   return (
     <div>
       <div className="flex items-center justify-between gap-4 mb-6">
@@ -20,6 +20,8 @@ export default function CouponsClientPage({ initialCoupons }) {
         <CouponFormModal
           title="Add Promotion"
           action={createPromotionAction}
+          categories={categories}
+          products={products}
           trigger={({ onClick }) => (
             <button
               type="button"
@@ -39,7 +41,19 @@ export default function CouponsClientPage({ initialCoupons }) {
           { header: "Title", accessor: (p) => p.title },
           { header: "Code", accessor: (p) => (p.code ? <span className="font-semibold">{p.code}</span> : <span className="text-slate">— (offer)</span>) },
           { header: "Discount", accessor: (p) => formatDiscount(p) },
-          { header: "Applies To", accessor: (p) => p.appliesTo },
+          {
+            header: "Applies To",
+            accessor: (p) => {
+              if (p.appliesTo === "PRODUCT") {
+                const names = (p.scopeProducts ?? []).map((sp) => products.find((pr) => pr.id === sp.id)?.name).filter(Boolean);
+                return names.length > 0 ? names.join(", ") : "Specific products (none selected)";
+              }
+              if (p.appliesTo === "CATEGORY") {
+                return categories.find((c) => c.id === p.scopeCategoryId)?.name || "Specific category (none selected)";
+              }
+              return "Whole cart";
+            },
+          },
           { header: "Used", accessor: (p) => `${p.usedCount}${p.usageLimit ? ` / ${p.usageLimit}` : ""}` },
           {
             header: "Ends",

@@ -185,7 +185,10 @@ export async function POST(request) {
     let coupon = null;
 
     if (couponCode) {
-      coupon = await db.promotion.findUnique({ where: { code: couponCode } });
+      coupon = await db.promotion.findUnique({
+        where: { code: couponCode },
+        include: { scopeProducts: { select: { id: true } } },
+      });
 
       const now = new Date();
       const isExpired = coupon?.endsAt && coupon.endsAt < now;
@@ -211,11 +214,37 @@ export async function POST(request) {
         );
       }
 
+      // The discount previously always applied to the FULL cart subtotal,
+      // completely ignoring appliesTo/scopeProducts/scopeCategoryId — a
+      // coupon scoped to one product discounted the whole cart. Only the
+      // portion of the subtotal that's actually in scope is discountable
+      // now; anything outside scope is charged at full price.
+      let discountableAmount = subtotal;
+      if (coupon.appliesTo === "PRODUCT") {
+        const scopedIds = new Set(coupon.scopeProducts.map((p) => p.id));
+        discountableAmount = orderItemsData.reduce(
+          (sum, item) => (scopedIds.has(item.productId) ? sum + Number(item.unitPrice) * item.quantity : sum),
+          0
+        );
+      } else if (coupon.appliesTo === "CATEGORY" && coupon.scopeCategoryId) {
+        discountableAmount = orderItemsData.reduce((sum, item) => {
+          const product = productById.get(item.productId);
+          return product?.categoryId === coupon.scopeCategoryId ? sum + Number(item.unitPrice) * item.quantity : sum;
+        }, 0);
+      }
+
+      if ((coupon.appliesTo === "PRODUCT" || coupon.appliesTo === "CATEGORY") && discountableAmount === 0) {
+        return NextResponse.json(
+          { error: "This coupon doesn't apply to any items in your cart" },
+          { status: 400 }
+        );
+      }
+
       const discount =
         coupon.discountType === "PERCENT"
-          ? subtotal * (Number(coupon.value) / 100)
+          ? discountableAmount * (Number(coupon.value) / 100)
           : coupon.discountType === "FLAT"
-          ? Number(coupon.value)
+          ? Math.min(Number(coupon.value), discountableAmount)
           : 0; // BOGO discounts aren't computed as a flat cart discount here
       total = Math.max(0, subtotal - discount);
     }

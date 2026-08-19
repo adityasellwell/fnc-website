@@ -1,7 +1,10 @@
 import { db } from "@/lib/db";
 
 export async function listPromotions() {
-  return db.promotion.findMany({ orderBy: { createdAt: "desc" } });
+  return db.promotion.findMany({
+    orderBy: { createdAt: "desc" },
+    include: { scopeProducts: { select: { id: true } } },
+  });
 }
 
 export async function getPromotionById(id) {

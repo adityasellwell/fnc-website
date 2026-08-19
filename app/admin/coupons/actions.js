@@ -47,11 +47,15 @@ export async function createPromotionAction(formData) {
 
     if (appliesTo === "PRODUCT") {
       const productIds = formData.getAll("productIds").map((id) => id.toString());
-      if (productIds.length > 0) {
-        scopeProductsConnect = { connect: productIds.map((id) => ({ id })) };
+      if (productIds.length === 0) {
+        return { error: "Select at least one product for a product-scoped promotion." };
       }
+      scopeProductsConnect = { connect: productIds.map((id) => ({ id })) };
     } else if (appliesTo === "CATEGORY") {
       scopeCategoryId = formData.get("scopeCategoryId")?.toString() || null;
+      if (!scopeCategoryId) {
+        return { error: "Select a category for a category-scoped promotion." };
+      }
     }
 
     await createPromotion({
@@ -76,9 +80,15 @@ export async function updatePromotionAction(id, formData) {
 
     if (appliesTo === "PRODUCT") {
       const productIds = formData.getAll("productIds").map((id) => id.toString());
+      if (productIds.length === 0) {
+        return { error: "Select at least one product for a product-scoped promotion." };
+      }
       scopeProductsSet = productIds.map((id) => ({ id }));
     } else if (appliesTo === "CATEGORY") {
       scopeCategoryId = formData.get("scopeCategoryId")?.toString() || null;
+      if (!scopeCategoryId) {
+        return { error: "Select a category for a category-scoped promotion." };
+      }
     }
 
     await updatePromotion(id, {

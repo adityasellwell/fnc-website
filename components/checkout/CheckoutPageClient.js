@@ -100,7 +100,11 @@ export default function CheckoutPageClient({ stores = [], settings = {}, savedPr
   async function handleApplyPromo() {
     setCheckingPromo(true);
     setPromoError("");
-    const result = await validatePromoCodeAction(promoInput, subtotal);
+    const result = await validatePromoCodeAction(
+      promoInput,
+      subtotal,
+      items.map((i) => ({ productId: i.productId, qty: i.qty }))
+    );
     setCheckingPromo(false);
     if (!result.ok) {
       setPromoError(result.error);
@@ -122,7 +126,11 @@ export default function CheckoutPageClient({ stores = [], settings = {}, savedPr
     const pending = typeof window !== "undefined" ? localStorage.getItem("fnc_pending_promo") : null;
     if (!pending || subtotal <= 0) return;
     localStorage.removeItem("fnc_pending_promo");
-    validatePromoCodeAction(pending, subtotal).then((result) => {
+    validatePromoCodeAction(
+      pending,
+      subtotal,
+      items.map((i) => ({ productId: i.productId, qty: i.qty }))
+    ).then((result) => {
       setPromoInput(pending);
       if (result?.ok) setAppliedPromo(result);
     });
