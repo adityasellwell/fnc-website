@@ -1,0 +1,2 @@
+-- AlterTable
+ALTER TABLE `OrderItem` ADD COLUMN `gstRate` DECIMAL(5, 2) NOT NULL DEFAULT 0;

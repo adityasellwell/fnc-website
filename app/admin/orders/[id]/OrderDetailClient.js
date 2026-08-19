@@ -23,6 +23,7 @@ import {
   createRefundAction,
 } from "../actions";
 import { getNextStatus, getStatusLabel } from "@/lib/orderStatus";
+import { splitOrderGst } from "@/lib/utils/gst";
 
 const inputClasses =
   "w-full h-11 px-3.5 rounded-xl border border-bordergray bg-white font-body text-sm text-charcoal focus:border-fnc-red focus:outline-none transition-colors disabled:opacity-60";
@@ -41,6 +42,7 @@ export default function OrderDetailClient({ order, currentUser, availablePartner
   // from items (the one piece we do have) rather than reading fields that
   // don't exist on the Order model.
   const itemsSubtotal = order.items.reduce((sum, item) => sum + Number(item.unitPrice) * item.quantity, 0);
+  const gstBreakdown = splitOrderGst(order.items);
 
   const handleAdvanceStatus = () => {
     if (!nextStatus) return;
@@ -404,9 +406,17 @@ export default function OrderDetailClient({ order, currentUser, availablePartner
             {/* Calculations Card */}
             <div className="mt-6 pt-6 border-t border-bordergray flex flex-col gap-2.5">
               <div className="flex justify-between font-body text-sm text-slate">
-                <span>Items Subtotal</span>
+                <span>Items Subtotal (incl. GST)</span>
                 <span>₹{itemsSubtotal.toFixed(2)}</span>
               </div>
+              {gstBreakdown.totalTax > 0 && (
+                <div className="rounded-xl bg-warmwhite p-3 flex flex-col gap-1.5 font-body text-xs text-slate">
+                  <p className="font-semibold text-charcoal">GST Breakdown (already included above, not extra)</p>
+                  <div className="flex justify-between"><span>Taxable Value</span><span>₹{gstBreakdown.taxableValue.toFixed(2)}</span></div>
+                  <div className="flex justify-between"><span>CGST</span><span>₹{gstBreakdown.cgst.toFixed(2)}</span></div>
+                  <div className="flex justify-between"><span>SGST</span><span>₹{gstBreakdown.sgst.toFixed(2)}</span></div>
+                </div>
+              )}
               {order.couponCode && (
                 <div className="flex justify-between font-body text-sm text-fnc-green font-semibold">
                   <span>Coupon Applied</span>
@@ -590,7 +600,23 @@ export default function OrderDetailClient({ order, currentUser, availablePartner
         <div className="flex justify-end mt-4">
           <div className="w-64 flex flex-col gap-1.5 text-xs text-gray-800">
             <div className="flex justify-between">
-              <span>Items Subtotal</span>
+              <span>Taxable Value</span>
+              <span>₹{gstBreakdown.taxableValue.toFixed(2)}</span>
+            </div>
+            {gstBreakdown.totalTax > 0 && (
+              <>
+                <div className="flex justify-between">
+                  <span>CGST</span>
+                  <span>₹{gstBreakdown.cgst.toFixed(2)}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span>SGST</span>
+                  <span>₹{gstBreakdown.sgst.toFixed(2)}</span>
+                </div>
+              </>
+            )}
+            <div className="flex justify-between">
+              <span>Items Subtotal (incl. GST)</span>
               <span>₹{itemsSubtotal.toFixed(2)}</span>
             </div>
             {order.couponCode && (

@@ -57,6 +57,15 @@ model Product {
   // on prices/totals throughout checkout and reporting.
   price               Decimal  @db.Decimal(10, 2)
   unit                String
+  // GST %, e.g. 5 for 5% — per-product because India's GST schedule taxes
+  // fresh/unprocessed meat, fish and eggs at 0% while packaged/branded
+  // items (snacks, sausages) are taxed, exactly matching the "GST Rate"
+  // column already in the owner's own product pricing sheet. `price`
+  // above is always the final, tax-INCLUSIVE amount the customer pays —
+  // by Indian Legal Metrology rules MRP must already include GST, so this
+  // field only powers a tax breakdown shown on the invoice, never an
+  // extra charge added at checkout.
+  gstRate             Decimal  @default(0) @db.Decimal(5, 2)
   // Free-form per §7 ("nutrition{}") — shape varies per product (some
   // list fat/carbs, others don't), so Json is the right fit rather than
   // forcing a fixed set of columns.
@@ -502,6 +511,10 @@ model OrderItem {
   // change or invalidate a past order's record. Null for products with no
   // variants (the normal, unchanged case).
   variantLabel String?
+  // Snapshot of the product's GST rate at order time, same reasoning as
+  // unitPrice/variantLabel above — an admin correcting a product's GST
+  // rate later must never rewrite a past invoice's tax breakdown.
+  gstRate      Decimal  @default(0) @db.Decimal(5, 2)
 
   @@index([orderId])
 }

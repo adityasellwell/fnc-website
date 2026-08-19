@@ -7,7 +7,6 @@ const SUPER_ADMIN_NAV = [
   { href: "/admin/analytics", label: "Analytics", icon: "BarChart3" },
   { href: "/admin/products", label: "Products", icon: "Package" },
   { href: "/admin/categories", label: "Categories", icon: "Layers" },
-  { href: "/admin/variation-options", label: "Variation Options", icon: "Boxes" },
   { href: "/admin/customers", label: "Customers", icon: "Users" },
   { href: "/admin/reviews", label: "Reviews", icon: "Star" },
   { href: "/admin/coupons", label: "Coupons", icon: "Ticket" },

@@ -201,6 +201,9 @@ export async function POST(request) {
         quantity: item.quantity,
         unitPrice,
         variantLabel: item.variantLabel || null,
+        // Snapshot the product's current GST rate — an admin correcting it
+        // later must never rewrite the tax breakdown on a past invoice.
+        gstRate: product.gstRate,
       };
     });
 

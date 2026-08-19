@@ -83,6 +83,7 @@ function parseProductForm(formData) {
     description: formData.get("description").toString().trim(),
     images,
     price: Number(formData.get("price")),
+    gstRate: Number(formData.get("gstRate")) || 0,
     unit: formData.get("unit").toString().trim(),
     stock: Number(formData.get("stock")) || 0,
     sku,

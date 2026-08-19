@@ -1,10 +1,11 @@
 "use client";
 
 import { useState } from "react";
-import { Loader2, AlertCircle, Plus, Trash2 } from "lucide-react";
+import { Loader2, AlertCircle, Plus, Trash2, X } from "lucide-react";
 import Modal from "./Modal";
 import ImageUploadField from "./ImageUploadField";
 import MultiImageUploadField from "./MultiImageUploadField";
+import { createVariantOptionAction } from "@/app/admin/variation-options/actions";
 
 const inputClasses =
   "w-full h-11 px-3.5 rounded-xl border border-bordergray bg-white font-body text-sm text-charcoal placeholder:text-slate focus:border-fnc-red focus:outline-none transition-colors";
@@ -31,6 +32,36 @@ export default function ProductFormModal({ trigger, categories, product, action,
     Array.isArray(product?.customAttributes) ? product.customAttributes : []
   );
   const [variantRows, setVariantRows] = useState(() => initialVariantRows(product));
+  const [localVariantOptions, setLocalVariantOptions] = useState(variantOptions);
+  const [showNewValueForm, setShowNewValueForm] = useState(false);
+  const [newValueType, setNewValueType] = useState("WEIGHT");
+  const [newValueLabel, setNewValueLabel] = useState("");
+  const [newValueError, setNewValueError] = useState("");
+  const [savingNewValue, setSavingNewValue] = useState(false);
+
+  async function handleSaveNewValue() {
+    if (!newValueLabel.trim()) {
+      setNewValueError("Enter a label, e.g. \"250 g\".");
+      return;
+    }
+    setSavingNewValue(true);
+    setNewValueError("");
+    const fd = new FormData();
+    fd.set("type", newValueType);
+    fd.set("label", newValueLabel.trim());
+    const res = await createVariantOptionAction(fd);
+    setSavingNewValue(false);
+    if (res?.error) {
+      setNewValueError(res.error);
+      return;
+    }
+    setLocalVariantOptions((cur) => [...cur, res.option]);
+    // Drop it straight into a fresh variation row so the admin doesn't
+    // have to also click "Add Variation" and re-pick it from the list.
+    setVariantRows((cur) => [...cur, { variantOptionId: res.option.id, price: "", sku: "" }]);
+    setNewValueLabel("");
+    setShowNewValueForm(false);
+  }
 
   function addAttribute() {
     setAttributes((cur) => [...cur, { label: "", value: "" }]);
@@ -43,7 +74,7 @@ export default function ProductFormModal({ trigger, categories, product, action,
   }
 
   function addVariantRow() {
-    setVariantRows((cur) => [...cur, { variantOptionId: variantOptions[0]?.id ?? "", price: "", sku: "" }]);
+    setVariantRows((cur) => [...cur, { variantOptionId: localVariantOptions[0]?.id ?? "", price: "", sku: "" }]);
   }
   function removeVariantRow(idx) {
     setVariantRows((cur) => cur.filter((_, i) => i !== idx));
@@ -77,6 +108,10 @@ export default function ProductFormModal({ trigger, categories, product, action,
     setLoading(false);
     setAttributes(Array.isArray(product?.customAttributes) ? product.customAttributes : []);
     setVariantRows(initialVariantRows(product));
+    setLocalVariantOptions(variantOptions);
+    setShowNewValueForm(false);
+    setNewValueLabel("");
+    setNewValueError("");
     setOpen(true);
   }
 
@@ -102,7 +137,7 @@ export default function ProductFormModal({ trigger, categories, product, action,
             )}
           </div>
 
-          <div className="grid sm:grid-cols-4 gap-4">
+          <div className="grid sm:grid-cols-3 gap-4">
             <div className="flex flex-col gap-1.5">
               <label className="font-body text-xs font-semibold text-charcoal">Category <span className="text-fnc-red">*</span></label>
               <select name="categoryId" defaultValue={product?.categoryId} required className={inputClasses}>
@@ -114,12 +149,32 @@ export default function ProductFormModal({ trigger, categories, product, action,
               </select>
             </div>
             <div className="flex flex-col gap-1.5">
-              <label className="font-body text-xs font-semibold text-charcoal">Price (₹) <span className="text-fnc-red">*</span></label>
+              <label className="font-body text-xs font-semibold text-charcoal">Price — MRP, incl. GST (₹) <span className="text-fnc-red">*</span></label>
               <input name="price" type="number" step="0.01" defaultValue={product ? Number(product.price) : ""} required className={inputClasses} />
             </div>
             <div className="flex flex-col gap-1.5">
               <label className="font-body text-xs font-semibold text-charcoal">Unit <span className="text-fnc-red">*</span></label>
               <input name="unit" defaultValue={product?.unit} placeholder="500 g" required className={inputClasses} />
+            </div>
+          </div>
+
+          <div className="grid sm:grid-cols-2 gap-4">
+            <div className="flex flex-col gap-1.5">
+              <label className="font-body text-xs font-semibold text-charcoal">GST Rate (%)</label>
+              <input
+                name="gstRate"
+                type="number"
+                step="0.01"
+                min="0"
+                defaultValue={product?.gstRate != null ? Number(product.gstRate) : 0}
+                placeholder="0 for fresh/unprocessed items"
+                className={inputClasses}
+              />
+              <p className="font-body text-[11px] text-slate">
+                0% for fresh, unprocessed fish/chicken/crab/eggs. Packaged/branded items (snacks, sausages) are
+                usually taxed — check your GST rate sheet. This never changes the Price above; it only shows a tax
+                breakdown on the invoice.
+              </p>
             </div>
             <div className="flex flex-col gap-1.5">
               <label className="font-body text-xs font-semibold text-charcoal">Product Code / SKU</label>
@@ -172,19 +227,66 @@ export default function ProductFormModal({ trigger, categories, product, action,
           <div className="flex flex-col gap-2">
             <div className="flex items-center justify-between">
               <label className="font-body text-xs font-semibold text-charcoal">Variations (optional — e.g. 250g / 500g / 1kg, each its own price)</label>
-              <button
-                type="button"
-                onClick={addVariantRow}
-                disabled={variantOptions.length === 0}
-                className="h-8 px-3 rounded-full border border-bordergray font-body text-xs font-semibold text-charcoal hover:border-fnc-red hover:text-fnc-red transition-colors flex items-center gap-1 disabled:opacity-40 disabled:cursor-not-allowed"
-              >
-                <Plus className="h-3.5 w-3.5" />
-                Add Variation
-              </button>
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => setShowNewValueForm((v) => !v)}
+                  className="h-8 px-3 rounded-full border border-bordergray font-body text-xs font-semibold text-charcoal hover:border-fnc-red hover:text-fnc-red transition-colors flex items-center gap-1"
+                >
+                  <Plus className="h-3.5 w-3.5" />
+                  New Value
+                </button>
+                <button
+                  type="button"
+                  onClick={addVariantRow}
+                  disabled={localVariantOptions.length === 0}
+                  className="h-8 px-3 rounded-full border border-bordergray font-body text-xs font-semibold text-charcoal hover:border-fnc-red hover:text-fnc-red transition-colors flex items-center gap-1 disabled:opacity-40 disabled:cursor-not-allowed"
+                >
+                  <Plus className="h-3.5 w-3.5" />
+                  Add Variation
+                </button>
+              </div>
             </div>
-            {variantOptions.length === 0 ? (
+
+            {showNewValueForm && (
+              <div className="rounded-xl border border-fnc-red/30 bg-fnc-red/5 p-3 flex flex-col gap-2.5">
+                <div className="flex items-center justify-between">
+                  <p className="font-body text-xs font-semibold text-charcoal">Add a new value to the master list</p>
+                  <button type="button" onClick={() => setShowNewValueForm(false)} aria-label="Close" className="text-slate hover:text-charcoal">
+                    <X className="h-4 w-4" />
+                  </button>
+                </div>
+                <div className="flex items-center gap-2">
+                  <select value={newValueType} onChange={(e) => setNewValueType(e.target.value)} className={`${inputClasses} w-32 shrink-0`}>
+                    <option value="WEIGHT">Weight</option>
+                    <option value="PIECES">Pieces</option>
+                  </select>
+                  <input
+                    value={newValueLabel}
+                    onChange={(e) => setNewValueLabel(e.target.value)}
+                    placeholder="e.g. 250 g or 4 pcs"
+                    className={`${inputClasses} min-w-0 flex-1`}
+                  />
+                  <button
+                    type="button"
+                    onClick={handleSaveNewValue}
+                    disabled={savingNewValue}
+                    className="h-11 px-4 rounded-xl bg-fnc-red text-white font-body text-sm font-semibold hover:bg-fnc-red/90 transition-colors disabled:opacity-60 flex items-center gap-2 shrink-0"
+                  >
+                    {savingNewValue && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
+                    Save
+                  </button>
+                </div>
+                {newValueError && <p className="font-body text-xs text-fnc-red">{newValueError}</p>}
+                <p className="font-body text-[11px] text-slate">
+                  Saved once, reusable on every product from now on — this adds it straight to the list below too.
+                </p>
+              </div>
+            )}
+
+            {localVariantOptions.length === 0 ? (
               <p className="font-body text-xs text-slate italic">
-                No variation values set up yet — add some in Admin → Variation Options first (e.g. &quot;250 g&quot;, &quot;4 pcs&quot;).
+                No variation values yet — click &quot;New Value&quot; above to add one (e.g. &quot;250 g&quot;, &quot;4 pcs&quot;).
               </p>
             ) : (
               <>
@@ -205,7 +307,7 @@ export default function ProductFormModal({ trigger, categories, product, action,
                           className={`${inputClasses} min-w-0 flex-1`}
                         >
                           {["WEIGHT", "PIECES"].map((type) => {
-                            const opts = variantOptions.filter((o) => o.type === type);
+                            const opts = localVariantOptions.filter((o) => o.type === type);
                             if (opts.length === 0) return null;
                             return (
                               <optgroup key={type} label={VARIANT_TYPE_LABELS[type]}>
