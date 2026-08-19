@@ -5,7 +5,9 @@ import Section from "@/components/layout/Section";
 import Container from "@/components/layout/Container";
 import Button from "@/components/ui/Button";
 import Reveal from "@/components/motion/Reveal";
+import Image from "next/image";
 import { FRANCHISE_STATS, WHY_CHOOSE_FC } from "@/lib/constants";
+import { getSettings } from "@/services/settings";
 
 export const metadata = {
   title: "Franchise With F&C — Fresh Proteins & More",
@@ -73,52 +75,65 @@ const process = [
   },
 ];
 
-export default function FranchisePage() {
+export default async function FranchisePage() {
+  const settings = await getSettings();
+  const heroImage = settings?.franchiseHeroImage || null;
+
   return (
     <>
       <Navbar />
       <main className="flex-1 bg-offwhite">
         {/* Hero */}
         <Section spacing="lg" className="bg-charcoal text-white">
-          <Reveal className="max-w-3xl">
-            <p className="font-body text-sm font-semibold uppercase tracking-wider text-fnc-red mb-3">
-              Franchise With F&amp;C
-            </p>
-            <h1 className="font-display text-hero sm:text-hero-lg font-bold leading-[1.02]">
-              Bring F&amp;C&apos;s fresh protein model to your city.
-            </h1>
-            <p className="font-body text-body-lg text-white/75 mt-5 max-w-2xl">
-              A proven format, a trusted brand, and a supply chain built for
-              hygiene and consistency — ready to launch where you are.
-            </p>
-          </Reveal>
-
-          <div className="grid grid-cols-3 gap-6 max-w-xl mt-12">
-            {FRANCHISE_STATS.map((stat, i) => (
-              <Reveal key={stat.label} delay={0.1 + i * 0.06}>
-                <p className="font-display text-3xl sm:text-4xl font-bold text-fnc-red">
-                  {stat.value}
+          <div className={heroImage ? "grid lg:grid-cols-2 gap-12 items-center" : ""}>
+            <div>
+              <Reveal className={heroImage ? "" : "max-w-3xl"}>
+                <p className="font-body text-sm font-semibold uppercase tracking-wider text-fnc-red mb-3">
+                  Franchise With F&amp;C
                 </p>
-                <p className="font-body text-sm text-white/70 mt-1">
-                  {stat.label}
+                <h1 className="font-display text-hero sm:text-hero-lg font-bold leading-[1.02]">
+                  Bring F&amp;C&apos;s fresh protein model to your city.
+                </h1>
+                <p className={`font-body text-body-lg text-white/75 mt-5 ${heroImage ? "" : "max-w-2xl"}`}>
+                  A proven format, a trusted brand, and a supply chain built for
+                  hygiene and consistency — ready to launch where you are.
                 </p>
               </Reveal>
-            ))}
-          </div>
 
-          <Reveal delay={0.3} className="flex flex-wrap gap-4 mt-10">
-            <Button href="/franchise/apply" size="lg">
-              Apply for Franchise
-            </Button>
-            <Button
-              href="/franchise/brochure"
-              size="lg"
-              variant="outline"
-              className="border-white/30 text-white hover:border-white"
-            >
-              Download Brochure
-            </Button>
-          </Reveal>
+              <div className={`grid grid-cols-3 gap-6 mt-12 ${heroImage ? "" : "max-w-xl"}`}>
+                {FRANCHISE_STATS.map((stat, i) => (
+                  <Reveal key={stat.label} delay={0.1 + i * 0.06}>
+                    <p className="font-display text-3xl sm:text-4xl font-bold text-fnc-red">
+                      {stat.value}
+                    </p>
+                    <p className="font-body text-sm text-white/70 mt-1">
+                      {stat.label}
+                    </p>
+                  </Reveal>
+                ))}
+              </div>
+
+              <Reveal delay={0.3} className="flex flex-wrap gap-4 mt-10">
+                <Button href="/franchise/apply" size="lg">
+                  Apply for Franchise
+                </Button>
+                <Button
+                  href="/franchise/brochure"
+                  size="lg"
+                  variant="outline"
+                  className="border-white/30 text-white hover:border-white"
+                >
+                  Download Brochure
+                </Button>
+              </Reveal>
+            </div>
+
+            {heroImage && (
+              <Reveal delay={0.15} className="relative aspect-[4/3] w-full rounded-3xl overflow-hidden">
+                <Image src={heroImage} alt="F&C franchise storefront" fill sizes="(min-width: 1024px) 45vw, 100vw" className="object-cover" />
+              </Reveal>
+            )}
+          </div>
         </Section>
 
         {/* Investment pitch */}

@@ -1,19 +1,11 @@
 "use client";
 
 import { useRef } from "react";
+import Image from "next/image";
 import { motion, useInView, useReducedMotion } from "framer-motion";
 import Section from "@/components/layout/Section";
 import { icons } from "lucide-react";
-
-// Each card gets a color from the F&C logo palette
-const points = [
-  { icon: "Sunrise",      tone: "red",   title: "Fresh Every Morning",       detail: "Cut and packed in-store daily." },
-  { icon: "Award",        tone: "blue",  title: "Premium Quality",           detail: "Handpicked sourcing, every batch." },
-  { icon: "ChefHat",      tone: "green", title: "Expert Butchery",           detail: "Trained hands, precise cuts." },
-  { icon: "Snowflake",    tone: "blue",  title: "Cold Chain Maintained",     detail: "Fresh from counter to door." },
-  { icon: "Truck",        tone: "red",   title: "Fast Delivery",             detail: "Same-day, straight to your kitchen." },
-  { icon: "ShieldCheck",  tone: "green", title: "Quality Checked Daily",     detail: "Every batch verified before sale." },
-];
+import { WHY_CHOOSE_POINTS } from "@/lib/constants";
 
 const toneClasses = {
   red:   { icon: "bg-fnc-red/10 text-fnc-red",     border: "hover:border-fnc-red",   label: "group-hover:text-fnc-red"   },
@@ -27,7 +19,7 @@ const accentLine = {
   green: "bg-fnc-green",
 };
 
-function FeatureCard({ point, index }) {
+function FeatureCard({ point, index, image }) {
   const ref = useRef(null);
   const inView = useInView(ref, { once: true, margin: "-80px" });
   const shouldReduceMotion = useReducedMotion();
@@ -41,41 +33,51 @@ function FeatureCard({ point, index }) {
       animate={inView ? { opacity: 1, y: 0 } : {}}
       transition={{ duration: 0.55, delay: index * 0.07, ease: [0.16, 1, 0.3, 1] }}
       whileHover={shouldReduceMotion ? {} : { y: -6, transition: { duration: 0.25 } }}
-      className={`group bg-white border border-bordergray rounded-3xl p-8 flex flex-col items-center text-center gap-5 shadow-xs hover:shadow-xl transition-all duration-300 cursor-default ${tone.border}`}
+      className={`group bg-white border border-bordergray rounded-3xl overflow-hidden flex flex-col items-center text-center gap-5 shadow-xs hover:shadow-xl transition-all duration-300 cursor-default ${tone.border} ${image ? "" : "p-8"}`}
     >
-      {/* Icon — logo color per tone, springs on hover */}
-      <motion.div
-        whileHover={
-          shouldReduceMotion
-            ? {}
-            : { scale: 1.15, rotate: 8, transition: { type: "spring", stiffness: 300, damping: 15 } }
-        }
-        className={`h-16 w-16 rounded-2xl flex items-center justify-center shrink-0 ${tone.icon}`}
-      >
-        {Icon && <Icon className="h-8 w-8" strokeWidth={2.25} />}
-      </motion.div>
+      {/* Admin-uploaded image, when set — falls back to the icon-only
+          look every card had before this was addable. */}
+      {image && (
+        <div className="relative h-36 w-full">
+          <Image src={image} alt={point.title} fill sizes="(min-width: 1024px) 33vw, 100vw" className="object-cover" />
+        </div>
+      )}
 
-      <div className="flex flex-col gap-2">
-        <h3 className={`font-display text-xl sm:text-2xl font-bold text-charcoal transition-colors duration-200 ${tone.label}`}>
-          {point.title}
-        </h3>
-        <p className="font-body text-sm sm:text-base text-slate leading-relaxed max-w-xs">
-          {point.detail}
-        </p>
+      <div className={`flex flex-col items-center gap-5 ${image ? "px-8 pb-8 pt-2" : ""}`}>
+        {/* Icon — logo color per tone, springs on hover */}
+        <motion.div
+          whileHover={
+            shouldReduceMotion
+              ? {}
+              : { scale: 1.15, rotate: 8, transition: { type: "spring", stiffness: 300, damping: 15 } }
+          }
+          className={`h-16 w-16 rounded-2xl flex items-center justify-center shrink-0 ${tone.icon}`}
+        >
+          {Icon && <Icon className="h-8 w-8" strokeWidth={2.25} />}
+        </motion.div>
+
+        <div className="flex flex-col gap-2">
+          <h3 className={`font-display text-xl sm:text-2xl font-bold text-charcoal transition-colors duration-200 ${tone.label}`}>
+            {point.title}
+          </h3>
+          <p className="font-body text-sm sm:text-base text-slate leading-relaxed max-w-xs">
+            {point.detail}
+          </p>
+        </div>
+
+        {/* Accent underline in logo tone color */}
+        <motion.div
+          initial={{ scaleX: 0 }}
+          whileHover={shouldReduceMotion ? {} : { scaleX: 1 }}
+          transition={{ duration: 0.25 }}
+          className={`w-12 h-0.5 rounded-full origin-left ${accentLine[point.tone]}`}
+        />
       </div>
-
-      {/* Accent underline in logo tone color */}
-      <motion.div
-        initial={{ scaleX: 0 }}
-        whileHover={shouldReduceMotion ? {} : { scaleX: 1 }}
-        transition={{ duration: 0.25 }}
-        className={`w-12 h-0.5 rounded-full origin-left ${accentLine[point.tone]}`}
-      />
     </motion.div>
   );
 }
 
-export default function WhyChooseFC() {
+export default function WhyChooseFC({ cardImages = {} }) {
   const shouldReduceMotion = useReducedMotion();
 
   return (
@@ -103,8 +105,8 @@ export default function WhyChooseFC() {
       </motion.div>
 
       <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8">
-        {points.map((point, i) => (
-          <FeatureCard key={point.title} point={point} index={i} />
+        {WHY_CHOOSE_POINTS.map((point, i) => (
+          <FeatureCard key={point.title} point={point} index={i} image={cardImages?.[point.title]} />
         ))}
       </div>
     </Section>

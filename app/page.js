@@ -12,6 +12,7 @@ import FinalCTA from "@/components/home/FinalCTA";
 import { getHeroBanners, getBannersByPlacement } from "@/lib/data/banners";
 import { getProducts } from "@/lib/data/products";
 import { getCategories } from "@/lib/data/categories";
+import { getSettings } from "@/services/settings";
 import PromoStrip from "@/components/home/PromoStrip";
 
 export const metadata = {
@@ -21,11 +22,12 @@ export const metadata = {
 };
 
 export default async function Home() {
-  const [banners, promoBanners, products, categories] = await Promise.all([
+  const [banners, promoBanners, products, categories, settings] = await Promise.all([
     getHeroBanners(),
     getBannersByPlacement("promo_strip"),
     getProducts(),
     getCategories(),
+    getSettings(),
   ]);
 
   return (
@@ -42,7 +44,7 @@ export default async function Home() {
         <PromoStrip banners={promoBanners} />
 
         {/* 6. Why Choose F&C */}
-        <WhyChooseFC />
+        <WhyChooseFC cardImages={settings?.whyChooseCardImages || {}} />
 
         {/* 7. Health & Hygiene */}
         <HealthHygiene />

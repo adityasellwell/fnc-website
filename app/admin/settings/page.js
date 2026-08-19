@@ -1,6 +1,8 @@
 import { getSettings } from "@/services/settings";
 import { updateSettingsAction } from "./actions";
 import { requireFullAdminUser } from "@/lib/admin-auth";
+import { WHY_CHOOSE_POINTS } from "@/lib/constants";
+import ImageUploadField from "@/components/admin/ImageUploadField";
 
 export const metadata = { title: "Settings — Admin" };
 
@@ -85,6 +87,31 @@ export default async function AdminSettingsPage() {
           <label className="font-body text-xs font-semibold text-charcoal">Email</label>
           <input name="businessEmail" type="email" defaultValue={settings.businessInfo?.email || ""} placeholder="hello@fncmumbai.com" className={inputClasses} />
         </div>
+
+        <h2 className="font-display text-lg font-bold text-charcoal border-b border-bordergray pb-3 mt-4">Homepage &amp; Franchise Images</h2>
+        <p className="font-body text-xs text-slate -mt-4">
+          Optional — each &quot;Why Choose F&amp;C&quot; card and the Franchise page hero show an icon-only
+          look until an image is set here. Leave any of these blank to keep that default look.
+        </p>
+
+        <div className="grid sm:grid-cols-2 gap-5">
+          {WHY_CHOOSE_POINTS.map((point) => (
+            <ImageUploadField
+              key={point.title}
+              name={`whyCardImage__${point.title}`}
+              label={point.title}
+              defaultValue={settings.whyChooseCardImages?.[point.title] || ""}
+              folder="homepage"
+            />
+          ))}
+        </div>
+
+        <ImageUploadField
+          name="franchiseHeroImage"
+          label="Franchise Page Hero Image"
+          defaultValue={settings.franchiseHeroImage || ""}
+          folder="franchise"
+        />
 
         <div className="flex justify-end pt-3 border-t border-bordergray">
           <button

@@ -53,10 +53,12 @@ export default function AdminShell({ user, nav, children }) {
   const [collapsed, setCollapsed] = useState(false);
 
   return (
-    <div className="min-h-screen flex bg-warmwhite">
-      {/* Sidebar */}
+    <div className="h-screen overflow-hidden flex bg-warmwhite">
+      {/* Sidebar — its own scroll region so a long nav list never drags
+          the header/footer off-screen, independent of the main content
+          column's scroll below. */}
       <aside
-        className={`hidden md:flex ${collapsed ? "w-20" : "w-64"} shrink-0 flex-col bg-charcoal text-white transition-all duration-200`}
+        className={`hidden md:flex ${collapsed ? "w-20" : "w-64"} shrink-0 flex-col bg-charcoal text-white transition-all duration-200 h-screen overflow-y-auto`}
       >
         <div className="h-24 flex items-center justify-between px-4 border-b border-white/10">
           <Link href="/admin" className="flex items-center gap-2.5 min-w-0">
@@ -103,9 +105,9 @@ export default function AdminShell({ user, nav, children }) {
         </div>
       </aside>
 
-      <div className="flex-1 flex flex-col min-w-0">
+      <div className="flex-1 flex flex-col min-w-0 h-screen">
         {/* Header */}
-        <header className="h-24 flex items-center justify-between px-6 sm:px-8 bg-white border-b border-bordergray">
+        <header className="h-24 shrink-0 flex items-center justify-between px-6 sm:px-8 bg-white border-b border-bordergray">
           <div className="md:hidden flex items-center gap-2">
             <Image src={BRAND.logo} alt={BRAND.name} width={64} height={64} className="h-14 w-14 rounded-lg object-contain bg-white p-1 shrink-0" />
             <span className="font-display text-lg font-bold text-charcoal">F&amp;C Admin</span>
@@ -120,7 +122,7 @@ export default function AdminShell({ user, nav, children }) {
         </header>
 
         {/* Mobile nav */}
-        <nav className="md:hidden flex overflow-x-auto gap-1 px-4 py-3 bg-white border-b border-bordergray">
+        <nav className="md:hidden shrink-0 flex overflow-x-auto gap-1 px-4 py-3 bg-white border-b border-bordergray">
           {nav.map(({ href, label, icon }) => {
             const Icon = ICONS[icon];
             const active = pathname === href || pathname.startsWith(`${href}/`);
@@ -139,7 +141,7 @@ export default function AdminShell({ user, nav, children }) {
           })}
         </nav>
 
-        <main className="flex-1 p-6 sm:p-8">{children}</main>
+        <main className="flex-1 overflow-y-auto p-6 sm:p-8">{children}</main>
       </div>
     </div>
   );
