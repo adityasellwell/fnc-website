@@ -349,7 +349,18 @@ export default async function ProductDetailPage({ params }) {
                 You Might Also Like
               </h2>
             </Reveal>
-            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-5">
+            <div
+              className={cn(
+                "grid gap-4 sm:gap-5",
+                relatedProductList.length === 1
+                  ? "grid-cols-2 max-w-xs"
+                  : relatedProductList.length <= 2
+                  ? "grid-cols-2 max-w-lg"
+                  : relatedProductList.length === 3
+                  ? "grid-cols-2 sm:grid-cols-3 max-w-3xl"
+                  : "grid-cols-2 sm:grid-cols-3 lg:grid-cols-4"
+              )}
+            >
               {relatedProductList.map((related, i) => (
                 <Reveal key={related.id} delay={i * 0.05}>
                   <ProductCard product={related} />
@@ -367,7 +378,16 @@ export default async function ProductDetailPage({ params }) {
                 Recipes to Try
               </h2>
             </Reveal>
-            <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-5 max-w-5xl">
+            <div
+              className={cn(
+                "grid gap-4 sm:gap-5",
+                relatedRecipeList.length === 1
+                  ? "grid-cols-1 max-w-sm"
+                  : relatedRecipeList.length === 2
+                  ? "grid-cols-1 sm:grid-cols-2 max-w-3xl"
+                  : "grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 max-w-5xl"
+              )}
+            >
               {relatedRecipeList.map((recipe, i) => (
                 <Reveal key={recipe.id} delay={i * 0.05}>
                   <RecipeCard recipe={recipe} />
