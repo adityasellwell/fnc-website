@@ -8,7 +8,7 @@ import Container from "@/components/layout/Container";
 import Section from "@/components/layout/Section";
 import Reveal from "@/components/motion/Reveal";
 import ProductCard from "@/components/product/ProductCard";
-import { getCategoryBySlug, getCategories } from "@/lib/data/categories";
+import { getCategoryBySlug, getCategories, getCategoryChildren } from "@/lib/data/categories";
 import { getProductsByCategory } from "@/lib/data/products";
 import { cn } from "@/lib/utils";
 
@@ -55,10 +55,17 @@ export default async function ShopCategoryPage({ params, searchParams }) {
     notFound();
   }
 
-  const [products, allCategories] = await Promise.all([
-    getProductsByCategory(slug),
+  // Only top-level categories roll their subcategories' products up —
+  // a subcategory page (parentCategoryId set) just shows its own products,
+  // no further nesting supported.
+  const [subcategories, allCategories] = await Promise.all([
+    category.parentCategoryId ? [] : getCategoryChildren(category.id),
     getCategories(),
   ]);
+  const products = await getProductsByCategory(
+    slug,
+    subcategories.map((c) => c.slug)
+  );
 
   const requestedPage = Math.max(1, parseInt(sp?.page ?? "1", 10) || 1);
   const totalPages = Math.max(1, Math.ceil(products.length / PAGE_SIZE));
@@ -137,21 +144,38 @@ export default async function ShopCategoryPage({ params, searchParams }) {
         </div>
 
         <Section background="offwhite" spacing="sm">
-          {/* Category switch row */}
-          <div className="flex gap-2 sm:gap-3 mb-8 overflow-x-auto scrollbar-none -mx-5 px-5 sm:mx-0 sm:px-0 sm:flex-wrap">
+          {/* Category switch row — top-level categories only, subcategories
+              get their own pill row below so the two levels don't blur
+              together in one flat list. */}
+          <div className="flex gap-2 sm:gap-3 mb-4 overflow-x-auto scrollbar-none -mx-5 px-5 sm:mx-0 sm:px-0 sm:flex-wrap">
             <Link href="/shop" className={pillClasses(false)}>
               All
             </Link>
-            {allCategories.map((c) => (
+            {allCategories.filter((c) => !c.parentCategoryId).map((c) => (
               <Link
                 key={c.id}
                 href={`/shop/${c.slug}`}
-                className={pillClasses(c.slug === category.slug)}
+                className={pillClasses(c.slug === category.slug || c.id === category.parentCategoryId)}
               >
                 {c.name}
               </Link>
             ))}
           </div>
+
+          {/* Subcategory row — only shown on a parent category's own page */}
+          {subcategories.length > 0 && (
+            <div className="flex gap-2 mb-8 overflow-x-auto scrollbar-none -mx-5 px-5 sm:mx-0 sm:px-0 sm:flex-wrap">
+              {subcategories.map((c) => (
+                <Link
+                  key={c.id}
+                  href={`/shop/${c.slug}`}
+                  className="shrink-0 rounded-full px-3.5 py-1.5 font-body text-xs font-semibold border border-fnc-red/30 text-fnc-red bg-fnc-red/5 hover:bg-fnc-red/10 transition-colors"
+                >
+                  {c.name}
+                </Link>
+              ))}
+            </div>
+          )}
 
           <p className="font-body text-sm text-slate mb-6">
             {products.length} product{products.length === 1 ? "" : "s"}

@@ -49,8 +49,17 @@ export default async function ShopPage({ searchParams }) {
     getCategories(),
   ]);
 
+  // Viewing a top-level category rolls its subcategories' products up too
+  // (e.g. "Fish" shows "Raw" and "Snacks" together) — same behavior as
+  // /shop/[category].
+  const activeCategoryObj = activeCategory ? categories.find((c) => c.slug === activeCategory) : null;
+  const childSlugs = activeCategoryObj
+    ? categories.filter((c) => c.parentCategoryId === activeCategoryObj.id).map((c) => c.slug)
+    : [];
+  const activeSlugs = activeCategory ? [activeCategory, ...childSlugs] : [];
+
   let filtered = activeCategory
-    ? allProducts.filter((product) => product.categoryId === `cat-${activeCategory}`)
+    ? allProducts.filter((product) => activeSlugs.includes(product.categoryId.replace(/^cat-/, "")))
     : allProducts;
 
   if (searchQuery) {
@@ -125,21 +134,36 @@ export default async function ShopPage({ searchParams }) {
         </div>
 
         <Section background="offwhite" spacing="sm">
-          {/* Category filter row */}
-          <div className="flex gap-2 sm:gap-3 mb-8 overflow-x-auto scrollbar-none -mx-5 px-5 sm:mx-0 sm:px-0 sm:flex-wrap">
+          {/* Category filter row — top-level only, subcategories get their
+              own pill row below */}
+          <div className="flex gap-2 sm:gap-3 mb-4 overflow-x-auto scrollbar-none -mx-5 px-5 sm:mx-0 sm:px-0 sm:flex-wrap">
             <Link href={buildHref(null, 1, searchQuery)} className={pillClasses(!activeCategory)}>
               All
             </Link>
-            {categories.map((category) => (
+            {categories.filter((c) => !c.parentCategoryId).map((category) => (
               <Link
                 key={category.id}
                 href={buildHref(category.slug, 1, searchQuery)}
-                className={pillClasses(activeCategory === category.slug)}
+                className={pillClasses(activeCategory === category.slug || category.id === activeCategoryObj?.parentCategoryId)}
               >
                 {category.name}
               </Link>
             ))}
           </div>
+
+          {childSlugs.length > 0 && (
+            <div className="flex gap-2 mb-8 overflow-x-auto scrollbar-none -mx-5 px-5 sm:mx-0 sm:px-0 sm:flex-wrap">
+              {categories.filter((c) => c.parentCategoryId === activeCategoryObj.id).map((c) => (
+                <Link
+                  key={c.id}
+                  href={buildHref(c.slug, 1, searchQuery)}
+                  className="shrink-0 rounded-full px-3.5 py-1.5 font-body text-xs font-semibold border border-fnc-red/30 text-fnc-red bg-fnc-red/5 hover:bg-fnc-red/10 transition-colors"
+                >
+                  {c.name}
+                </Link>
+              ))}
+            </div>
+          )}
 
           <div className="flex items-center justify-between gap-4 mb-6 flex-wrap">
             <p className="font-body text-sm text-slate">

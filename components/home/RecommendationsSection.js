@@ -14,14 +14,18 @@ export default function RecommendationsSection({ products = [], initialCategorie
   const [selectedCategory, setSelectedCategory] = useState(null);
   const scrollContainerRef = useRef(null);
 
-  // Map dynamic database categories and add virtual Offers item
+  // Only top-level categories get their own circle — a subcategory (e.g.
+  // "Raw"/"Snacks" under "Fish") is reached via the parent's "View All"
+  // link on /shop/[category], not as its own flat circle here.
   const categoriesList = [
-    ...initialCategories.map((c) => ({
-      slug: c.slug,
-      name: c.name,
-      image: c.image || `/images/categories/${c.slug}.jpg`,
-      id: c.id,
-    })),
+    ...initialCategories
+      .filter((c) => !c.parentCategoryId)
+      .map((c) => ({
+        slug: c.slug,
+        name: c.name,
+        image: c.image || `/images/categories/${c.slug}.jpg`,
+        id: c.id,
+      })),
     { slug: "offers", name: "Offers", image: null, id: "offers" },
   ];
 
@@ -41,7 +45,15 @@ export default function RecommendationsSection({ products = [], initialCategorie
         // p.categoryId is the synthetic "cat-<slug>" string lib/data/products.js
         // emits (see its header comment) — not the real Category.id cuid, so it
         // must be compared against the slug directly, not a categoriesList lookup.
-        list = list.filter((p) => p.categoryId === `cat-${selectedCategory}`);
+        // Selecting a top-level category also pulls in its subcategories'
+        // products (e.g. "Fish" includes "Raw" and "Snacks"), matching
+        // /shop/[category]'s rollup behavior.
+        const selectedObj = initialCategories.find((c) => c.slug === selectedCategory);
+        const childSlugs = selectedObj
+          ? initialCategories.filter((c) => c.parentCategoryId === selectedObj.id).map((c) => c.slug)
+          : [];
+        const activeSlugs = [`cat-${selectedCategory}`, ...childSlugs.map((s) => `cat-${s}`)];
+        list = list.filter((p) => activeSlugs.includes(p.categoryId));
       }
     } else {
       list = list.filter(
@@ -52,7 +64,7 @@ export default function RecommendationsSection({ products = [], initialCategorie
     }
 
     return list;
-  }, [selectedCategory, products]);
+  }, [selectedCategory, products, initialCategories]);
 
   const scrollLeft = () => {
     if (scrollContainerRef.current) {
