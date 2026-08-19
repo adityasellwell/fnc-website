@@ -52,7 +52,7 @@ export default function MultiImageUploadField({ name, label, defaultValue = [], 
 
       <div className="flex flex-wrap gap-2.5">
         {urls.map((url, idx) => (
-          <div key={idx} className="relative h-16 w-16 shrink-0 rounded-xl border border-bordergray bg-warmwhite overflow-hidden group">
+          <div key={idx} className="relative h-28 w-28 shrink-0 rounded-xl border border-bordergray bg-warmwhite overflow-hidden group">
             {/* eslint-disable-next-line @next/next/no-img-element -- arbitrary uploaded URLs */}
             <img src={url} alt="" className="h-full w-full object-cover" />
             <button
@@ -66,7 +66,7 @@ export default function MultiImageUploadField({ name, label, defaultValue = [], 
           </div>
         ))}
 
-        <label className="h-16 w-16 shrink-0 rounded-xl border border-dashed border-bordergray bg-white hover:border-charcoal transition-colors cursor-pointer flex items-center justify-center">
+        <label className="h-28 w-28 shrink-0 rounded-xl border border-dashed border-bordergray bg-white hover:border-charcoal transition-colors cursor-pointer flex items-center justify-center">
           {uploading ? (
             <Loader2 className="h-4 w-4 animate-spin text-slate" />
           ) : (

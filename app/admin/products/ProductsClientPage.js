@@ -56,6 +56,20 @@ export default function ProductsClientPage({
       <Table
         emptyMessage="No products match these filters."
         columns={[
+          {
+            header: "",
+            accessor: (p) => {
+              const src = p.media?.[0]?.url || p.images?.[0];
+              return (
+                <div className="h-12 w-12 shrink-0 rounded-lg overflow-hidden bg-warmwhite border border-bordergray">
+                  {src ? (
+                    // eslint-disable-next-line @next/next/no-img-element -- arbitrary uploaded URLs, not a static/known asset
+                    <img src={src} alt="" className="h-full w-full object-cover" />
+                  ) : null}
+                </div>
+              );
+            },
+          },
           { header: "Name", accessor: (p) => p.name },
           { header: "Category", accessor: (p) => p.category?.name ?? "—" },
           { header: "Price", accessor: (p) => `₹${(Number(p.price) || 0).toFixed(0)}` },

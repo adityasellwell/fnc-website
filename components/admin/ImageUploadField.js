@@ -46,13 +46,13 @@ export default function ImageUploadField({ name, label, defaultValue, folder = "
       {label && <label className="font-body text-xs font-semibold text-charcoal">{label}</label>}
       <input type="hidden" name={name} value={url} />
 
-      <div className="flex items-center gap-3">
-        <div className="relative h-16 w-16 shrink-0 rounded-xl border border-bordergray bg-warmwhite overflow-hidden flex items-center justify-center">
+      <div className="flex items-center gap-4">
+        <div className="relative h-28 w-28 shrink-0 rounded-xl border border-bordergray bg-warmwhite overflow-hidden flex items-center justify-center">
           {url ? (
             // eslint-disable-next-line @next/next/no-img-element -- arbitrary uploaded URLs, not a static/known asset next/image can optimize
             <img src={url} alt="" className="h-full w-full object-cover" />
           ) : (
-            <ImagePlus className="h-5 w-5 text-slate" />
+            <ImagePlus className="h-7 w-7 text-slate" />
           )}
         </div>
 
