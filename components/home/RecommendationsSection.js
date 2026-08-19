@@ -12,7 +12,23 @@ import { cn } from "@/lib/utils";
 
 export default function RecommendationsSection({ products = [], initialCategories = [] }) {
   const [selectedCategory, setSelectedCategory] = useState(null);
+  const [selectedSubcategory, setSelectedSubcategory] = useState(null);
   const scrollContainerRef = useRef(null);
+
+  const subcategories = useMemo(() => {
+    const selectedCategoryObj = selectedCategory
+      ? initialCategories.find((c) => c.slug === selectedCategory)
+      : null;
+    return selectedCategoryObj
+      ? initialCategories.filter((c) => c.parentCategoryId === selectedCategoryObj.id)
+      : [];
+  }, [selectedCategory, initialCategories]);
+
+  function selectCategory(slug) {
+    const isActive = selectedCategory === slug;
+    setSelectedCategory(isActive ? null : slug);
+    setSelectedSubcategory(null); // switching (or clearing) the parent always resets any subcategory narrowing
+  }
 
   // Only top-level categories get their own circle — a subcategory (e.g.
   // "Raw"/"Snacks" under "Fish") is reached via the parent's "View All"
@@ -41,17 +57,19 @@ export default function RecommendationsSection({ products = [], initialCategorie
             Array.isArray(p.tags) &&
             (p.tags.includes("premium") || p.tags.includes("seasonal"))
         );
+      } else if (selectedSubcategory) {
+        // A subcategory pill was picked underneath the parent circle —
+        // narrows to ONLY that subcategory's products, not the parent's
+        // full rollup anymore (e.g. Fish + Snacks selected = Snacks only).
+        list = list.filter((p) => p.categoryId === `cat-${selectedSubcategory}`);
       } else {
         // p.categoryId is the synthetic "cat-<slug>" string lib/data/products.js
         // emits (see its header comment) — not the real Category.id cuid, so it
         // must be compared against the slug directly, not a categoriesList lookup.
-        // Selecting a top-level category also pulls in its subcategories'
+        // Selecting a top-level category alone pulls in its subcategories'
         // products (e.g. "Fish" includes "Raw" and "Snacks"), matching
         // /shop/[category]'s rollup behavior.
-        const selectedObj = initialCategories.find((c) => c.slug === selectedCategory);
-        const childSlugs = selectedObj
-          ? initialCategories.filter((c) => c.parentCategoryId === selectedObj.id).map((c) => c.slug)
-          : [];
+        const childSlugs = subcategories.map((c) => c.slug);
         const activeSlugs = [`cat-${selectedCategory}`, ...childSlugs.map((s) => `cat-${s}`)];
         list = list.filter((p) => activeSlugs.includes(p.categoryId));
       }
@@ -64,7 +82,7 @@ export default function RecommendationsSection({ products = [], initialCategorie
     }
 
     return list;
-  }, [selectedCategory, products, initialCategories]);
+  }, [selectedCategory, selectedSubcategory, products, subcategories]);
 
   const scrollLeft = () => {
     if (scrollContainerRef.current) {
@@ -116,7 +134,7 @@ export default function RecommendationsSection({ products = [], initialCategorie
                   key={item.slug}
                   delay={i * 0.04}
                   y={14}
-                  onClick={() => setSelectedCategory(isActive ? null : item.slug)}
+                  onClick={() => selectCategory(item.slug)}
                   className={cn(
                     "group flex flex-col items-center gap-2 cursor-pointer py-1.5 focus:outline-none",
                     isScrollable ? "shrink-0 px-0.5" : "px-1"
@@ -126,7 +144,7 @@ export default function RecommendationsSection({ products = [], initialCategorie
                   onKeyDown={(e) => {
                     if (e.key === "Enter" || e.key === " ") {
                       e.preventDefault();
-                      setSelectedCategory(isActive ? null : item.slug);
+                      selectCategory(item.slug);
                     }
                   }}
                 >
@@ -185,12 +203,41 @@ export default function RecommendationsSection({ products = [], initialCategorie
           )}
         </div>
 
+        {/* ── Subcategory pills — only when the selected circle is a parent
+             category with children. Picking one narrows the grid down to
+             just that subcategory; picking the same one again clears back
+             to the parent's full rollup. ─────────────────────────────── */}
+        {subcategories.length > 0 && (
+          <div className="flex flex-wrap gap-2 mb-6 -mt-1">
+            {subcategories.map((c) => {
+              const isActive = selectedSubcategory === c.slug;
+              return (
+                <button
+                  key={c.id}
+                  type="button"
+                  onClick={() => setSelectedSubcategory(isActive ? null : c.slug)}
+                  className={cn(
+                    "shrink-0 rounded-full px-4 py-2 font-body text-sm font-semibold border transition-colors",
+                    isActive
+                      ? "bg-fnc-red text-white border-fnc-red"
+                      : "bg-white text-charcoal border-bordergray hover:border-fnc-red"
+                  )}
+                >
+                  {c.name}
+                </button>
+              );
+            })}
+          </div>
+        )}
+
         {/* ── Recommendations Grid ───────────────────────────────── */}
         <div>
           <div className="mb-5 flex items-center justify-between gap-4">
             <h3 className="font-display text-xl sm:text-2xl font-extrabold text-charcoal">
-              {selectedCategory
-                ? `${categoriesList.find((c) => c.slug === selectedCategory)?.name}`
+              {selectedSubcategory
+                ? subcategories.find((c) => c.slug === selectedSubcategory)?.name
+                : selectedCategory
+                ? categoriesList.find((c) => c.slug === selectedCategory)?.name
                 : "Today's Fresh Picks"}
             </h3>
             <span className="font-body text-xs text-slate shrink-0">
@@ -231,10 +278,13 @@ export default function RecommendationsSection({ products = [], initialCategorie
           {selectedCategory && selectedCategory !== "offers" && (
             <div className="flex justify-center mt-8">
               <Link
-                href={`/shop/${selectedCategory}`}
+                href={`/shop/${selectedSubcategory || selectedCategory}`}
                 className="inline-flex items-center gap-2 h-12 px-6 rounded-full border-2 border-fnc-red text-fnc-red font-display text-sm font-bold hover:bg-fnc-red hover:text-white transition-colors"
               >
-                View All in {categoriesList.find((c) => c.slug === selectedCategory)?.name}
+                View All in{" "}
+                {selectedSubcategory
+                  ? subcategories.find((c) => c.slug === selectedSubcategory)?.name
+                  : categoriesList.find((c) => c.slug === selectedCategory)?.name}
                 <ArrowRight className="h-4 w-4" />
               </Link>
             </div>
