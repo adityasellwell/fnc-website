@@ -1,7 +1,7 @@
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
-import { Star, ChevronRight, Flame, Snowflake } from "lucide-react";
+import { Star, ChevronRight, Flame, Snowflake, ShieldCheck, PackageCheck } from "lucide-react";
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
 import Container from "@/components/layout/Container";
@@ -259,6 +259,23 @@ export default async function ProductDetailPage({ params }) {
                   ))}
                 </div>
               )}
+
+              {/* Trust strip — the same claims already made on /quality and
+                  /health-hygiene, not new ones invented for this page. */}
+              <div className="flex flex-wrap gap-x-5 gap-y-2 py-1">
+                <span className="inline-flex items-center gap-1.5 font-body text-xs font-semibold text-slate">
+                  <Snowflake className="h-3.5 w-3.5 text-fnc-blue" />
+                  Cold Chain Maintained
+                </span>
+                <span className="inline-flex items-center gap-1.5 font-body text-xs font-semibold text-slate">
+                  <PackageCheck className="h-3.5 w-3.5 text-fnc-green" />
+                  Hygienically Packed
+                </span>
+                <span className="inline-flex items-center gap-1.5 font-body text-xs font-semibold text-slate">
+                  <ShieldCheck className="h-3.5 w-3.5 text-fnc-red" />
+                  Quality Checked Daily
+                </span>
+              </div>
 
               <StoreAvailabilityBadge storeInventory={product.storeInventory} />
 
