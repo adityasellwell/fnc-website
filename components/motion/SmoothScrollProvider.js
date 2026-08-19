@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect } from "react";
+import { usePathname } from "next/navigation";
 import Lenis from "lenis";
 
 /**
@@ -9,7 +10,18 @@ import Lenis from "lenis";
  * sync when dynamic images or listings shift page height (solving scroll lock / jitter).
  */
 export default function SmoothScrollProvider({ children }) {
+  const pathname = usePathname();
+
   useEffect(() => {
+    // The admin panel is a fixed-sidebar dashboard with its OWN
+    // independently scrolling content column (components/admin/AdminShell.js),
+    // not a single smooth-scrolling page — Lenis hijacking every wheel
+    // event at the window level meant that inner column never received
+    // them at all, so it looked completely un-scrollable by mouse.
+    // data-lenis-prevent (used elsewhere for modals) isn't a fix here
+    // since the whole admin layout would need it, not one element.
+    if (pathname?.startsWith("/admin")) return;
+
     const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
     if (reduce) return;
 
@@ -66,7 +78,7 @@ export default function SmoothScrollProvider({ children }) {
       lenis.destroy();
       if (window.__lenis === lenis) window.__lenis = null;
     };
-  }, []);
+  }, [pathname]);
 
   return children;
 }
