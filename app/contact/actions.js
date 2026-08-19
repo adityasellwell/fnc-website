@@ -4,6 +4,7 @@ import { z } from "zod";
 import { headers } from "next/headers";
 import { db } from "@/lib/db";
 import { checkRateLimit } from "@/lib/rate-limit";
+import { sendContactMessageNotification } from "@/lib/email";
 
 const contactSchema = z.object({
   name: z.string().min(1),
@@ -23,6 +24,7 @@ export async function submitContactMessageAction(values) {
     return { ok: false, error: "Please fill in all required fields correctly." };
   }
 
-  await db.contactMessage.create({ data: parsed.data });
+  const message = await db.contactMessage.create({ data: parsed.data });
+  sendContactMessageNotification(message).catch(() => {});
   return { ok: true };
 }

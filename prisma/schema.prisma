@@ -693,6 +693,14 @@ model Settings {
   businessInfo          Json?    // e.g. { name, email, phone, address }
   seoTitle              String?
   seoDescription        String?
+  // Admin-editable homepage/franchise imagery. whyChooseCardImages maps a
+  // card's title (matches components/home/WhyChooseFC.js's hardcoded
+  // `points` array) to an uploaded image URL — Json rather than fixed
+  // columns since the card set itself isn't admin-editable, only the image
+  // per existing card. Both null/empty by default; each component falls
+  // back to its current icon-only look when unset.
+  whyChooseCardImages   Json?
+  franchiseHeroImage    String?
   createdAt             DateTime @default(now())
   updatedAt             DateTime @updatedAt
 }

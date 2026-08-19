@@ -105,6 +105,12 @@ export default function OrderDetailClient({ order, currentUser, availablePartner
             visibility: visible;
           }
           #printable-invoice {
+            /* Tailwind's "hidden" class (display: none) is applied
+               unconditionally in the markup so the invoice never shows
+               during normal browsing — visibility:visible above has no
+               effect on a display:none element, so display must be
+               forced back on here or the printed page comes out blank. */
+            display: flex !important;
             position: absolute;
             left: 0;
             top: 0;

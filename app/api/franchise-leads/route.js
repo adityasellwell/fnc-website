@@ -2,6 +2,7 @@ import { z } from "zod";
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { checkRateLimit, rateLimitResponse } from "@/lib/rate-limit";
+import { sendFranchiseLeadNotification } from "@/lib/email";
 
 /**
  * Franchise application leads.
@@ -51,6 +52,8 @@ export async function POST(request) {
         message: message ?? null,
       },
     });
+
+    sendFranchiseLeadNotification(lead).catch(() => {});
 
     return NextResponse.json(
       {

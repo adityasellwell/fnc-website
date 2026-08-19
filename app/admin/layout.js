@@ -15,6 +15,7 @@ const SUPER_ADMIN_NAV = [
   { href: "/admin/banners", label: "Banners", icon: "ImageIcon" },
   { href: "/admin/stores", label: "Stores", icon: "StoreIcon" },
   { href: "/admin/pages", label: "Pages", icon: "FileText" },
+  { href: "/admin/inquiries", label: "Inquiries", icon: "MessageSquare" },
   { href: "/admin/settings", label: "Settings", icon: "SettingsIcon" },
   { href: "/admin/team", label: "Team", icon: "UserCog" },
 ];
