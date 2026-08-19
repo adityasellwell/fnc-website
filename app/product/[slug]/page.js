@@ -191,11 +191,14 @@ export default async function ProductDetailPage({ params }) {
           </Container>
         </div>
 
-        {/* Main product detail */}
-        <Section background="offwhite" spacing="md">
+        {/* Main product detail — spacing="sm" here (not "md") since this
+            follows the breadcrumb bar directly, not open page whitespace;
+            the image column is capped to a max width so it can't tower
+            over a short content column on wide screens. */}
+        <Section background="offwhite" spacing="sm">
           <div className="grid lg:grid-cols-2 gap-6 lg:gap-10 items-start">
             {/* Image */}
-            <Reveal y={16} className="relative w-full">
+            <Reveal y={16} className="relative w-full lg:max-w-[520px]">
               <ProductMediaGallery
                 media={combinedMedia}
                 fallbackImage={meta.image}

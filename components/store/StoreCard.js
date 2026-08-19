@@ -1,3 +1,4 @@
+import Image from "next/image";
 import { MapPin, Clock } from "lucide-react";
 import Card from "@/components/ui/Card";
 import PlaceholderMedia from "@/components/ui/PlaceholderMedia";
@@ -11,6 +12,7 @@ import { cn } from "@/lib/utils";
 export default function StoreCard({ store, variant = "editorial", className }) {
   const isKinetic = variant === "kinetic";
   const comingSoon = store.status === "coming-soon";
+  const image = store.images?.[0];
 
   return (
     <Card
@@ -20,12 +22,18 @@ export default function StoreCard({ store, variant = "editorial", className }) {
         className
       )}
     >
-      <PlaceholderMedia
-        icon="Store"
-        tone={comingSoon ? "neutral" : "green"}
-        label={store.name}
-        className={cn("aspect-[16/9] w-full", isKinetic && "aspect-[4/3]")}
-      />
+      {image ? (
+        <div className={cn("relative aspect-[16/9] w-full overflow-hidden", isKinetic && "aspect-[4/3]")}>
+          <Image src={image} alt={store.name} fill sizes="(min-width: 1024px) 33vw, 100vw" className="object-cover" />
+        </div>
+      ) : (
+        <PlaceholderMedia
+          icon="Store"
+          tone={comingSoon ? "neutral" : "green"}
+          label={store.name}
+          className={cn("aspect-[16/9] w-full", isKinetic && "aspect-[4/3]")}
+        />
+      )}
       <div className="flex flex-col gap-3 p-6">
         <div className="flex items-center justify-between gap-3">
           <h3 className="font-display text-lg font-semibold text-charcoal">

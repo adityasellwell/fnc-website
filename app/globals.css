@@ -98,10 +98,13 @@
   --radius-2xl: 2rem;
   --radius-3xl: 2.5rem;
 
-  /* Named spacing for section rhythm, on top of Tailwind's default scale */
-  --spacing-section-sm: 3rem;
-  --spacing-section-md: 5rem;
-  --spacing-section-lg: 7rem;
+  /* Named spacing for section rhythm, on top of Tailwind's default scale.
+     Tightened sitewide — the original scale (3/5/7rem) read as too much
+     dead space stacking between adjacent sections (up to 160px combined
+     between two "md" sections back to back). */
+  --spacing-section-sm: 2rem;
+  --spacing-section-md: 3.5rem;
+  --spacing-section-lg: 5rem;
 }
 
 @media (prefers-color-scheme: dark) {
