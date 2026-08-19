@@ -256,8 +256,8 @@ export default function ProductFormModal({ trigger, categories, product, action,
                     <X className="h-4 w-4" />
                   </button>
                 </div>
-                <div className="flex items-center gap-2">
-                  <select value={newValueType} onChange={(e) => setNewValueType(e.target.value)} className={`${inputClasses} w-32 shrink-0`}>
+                <div className="flex flex-col sm:flex-row gap-2">
+                  <select value={newValueType} onChange={(e) => setNewValueType(e.target.value)} className={`${inputClasses} sm:w-32 shrink-0`}>
                     <option value="WEIGHT">Weight</option>
                     <option value="PIECES">Pieces</option>
                   </select>
@@ -271,7 +271,7 @@ export default function ProductFormModal({ trigger, categories, product, action,
                     type="button"
                     onClick={handleSaveNewValue}
                     disabled={savingNewValue}
-                    className="h-11 px-4 rounded-xl bg-fnc-red text-white font-body text-sm font-semibold hover:bg-fnc-red/90 transition-colors disabled:opacity-60 flex items-center gap-2 shrink-0"
+                    className="h-11 px-4 rounded-xl bg-fnc-red text-white font-body text-sm font-semibold hover:bg-fnc-red/90 transition-colors disabled:opacity-60 flex items-center justify-center gap-2 shrink-0"
                   >
                     {savingNewValue && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
                     Save
@@ -299,12 +299,12 @@ export default function ProductFormModal({ trigger, categories, product, action,
                 ) : (
                   <div className="flex flex-col gap-2">
                     {variantRows.map((row, idx) => (
-                      <div key={idx} className="flex items-center gap-2">
+                      <div key={idx} className="flex flex-col sm:flex-row sm:items-center gap-2">
                         <select
                           name="variantOptionId"
                           value={row.variantOptionId}
                           onChange={(e) => updateVariantRow(idx, "variantOptionId", e.target.value)}
-                          className={`${inputClasses} min-w-0 flex-1`}
+                          className={`${inputClasses} min-w-0 sm:flex-1`}
                         >
                           {["WEIGHT", "PIECES"].map((type) => {
                             const opts = localVariantOptions.filter((o) => o.type === type);
@@ -318,31 +318,33 @@ export default function ProductFormModal({ trigger, categories, product, action,
                             );
                           })}
                         </select>
-                        <input
-                          name="variantPrice"
-                          type="number"
-                          step="0.01"
-                          value={row.price}
-                          onChange={(e) => updateVariantRow(idx, "price", e.target.value)}
-                          placeholder="Price (₹)"
-                          required
-                          className={`${inputClasses} w-32 shrink-0`}
-                        />
-                        <input
-                          name="variantSku"
-                          value={row.sku}
-                          onChange={(e) => updateVariantRow(idx, "sku", e.target.value)}
-                          placeholder="SKU (optional)"
-                          className={`${inputClasses} w-36 shrink-0`}
-                        />
-                        <button
-                          type="button"
-                          onClick={() => removeVariantRow(idx)}
-                          aria-label="Remove variation"
-                          className="h-9 w-9 shrink-0 flex items-center justify-center rounded-full text-slate hover:text-fnc-red hover:bg-warmwhite transition-colors"
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </button>
+                        <div className="flex items-center gap-2">
+                          <input
+                            name="variantPrice"
+                            type="number"
+                            step="0.01"
+                            value={row.price}
+                            onChange={(e) => updateVariantRow(idx, "price", e.target.value)}
+                            placeholder="Price (₹)"
+                            required
+                            className={`${inputClasses} w-full sm:w-32 shrink-0`}
+                          />
+                          <input
+                            name="variantSku"
+                            value={row.sku}
+                            onChange={(e) => updateVariantRow(idx, "sku", e.target.value)}
+                            placeholder="SKU (optional)"
+                            className={`${inputClasses} w-full sm:w-36 shrink-0`}
+                          />
+                          <button
+                            type="button"
+                            onClick={() => removeVariantRow(idx)}
+                            aria-label="Remove variation"
+                            className="h-9 w-9 shrink-0 flex items-center justify-center rounded-full text-slate hover:text-fnc-red hover:bg-warmwhite transition-colors"
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </button>
+                        </div>
                       </div>
                     ))}
                   </div>
