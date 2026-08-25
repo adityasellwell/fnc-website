@@ -141,7 +141,7 @@ export default function ProfileForm({ customer }) {
               id="profile-phone"
               type="tel"
               className={inputClasses}
-              placeholder="e.g. +91 98765 43210"
+              placeholder="e.g. +91 70392 22266"
               value={formValues.phone}
               onChange={handleChange("phone")}
             />

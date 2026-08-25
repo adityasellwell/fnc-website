@@ -121,7 +121,7 @@ export default async function StoreDetailPage({ params }) {
                   <>
                     <p className="flex items-center gap-3">
                       <Clock className="h-5.5 w-5.5 text-[#DC2F26] shrink-0" />
-                      <span>{store.openingHours?.mon || "7:00 AM - 9:00 PM"}</span>
+                      <span>{store.openingHours?.mon || "10:00 AM - 9:00 PM"}</span>
                     </p>
                     <a
                       href={`tel:${store.phone.replace(/\s+/g, "")}`}

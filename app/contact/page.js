@@ -104,7 +104,7 @@ export default async function ContactPage() {
                 <Clock className="h-5 w-5 text-fnc-red shrink-0 mt-0.5" />
                 <p className="font-body text-sm text-slate">
                   Our support team typically responds within a few hours
-                  during store hours, 7:00 AM – 9:00 PM, every day.
+                  during store hours, 10:00 AM – 9:00 PM, every day.
                 </p>
               </div>
             </Reveal>
