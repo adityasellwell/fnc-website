@@ -18,6 +18,8 @@ import Button from "@/components/ui/Button";
 import StoreDetailMapWrapper from "@/components/store/StoreDetailMapWrapper";
 import { getStoreBySlug, getStores } from "@/lib/data/stores";
 
+export const dynamic = "force-dynamic";
+
 function whatsAppLink(phone, message) {
   const digits = phone.replace(/\D/g, "");
   return `https://wa.me/${digits}?text=${encodeURIComponent(message)}`;

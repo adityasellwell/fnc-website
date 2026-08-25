@@ -15,6 +15,8 @@ import { getCategories } from "@/lib/data/categories";
 import { getSettings } from "@/services/settings";
 import PromoStrip from "@/components/home/PromoStrip";
 
+export const dynamic = "force-dynamic";
+
 export const metadata = {
   title: "F&C — Fresh Proteins & More",
   description:

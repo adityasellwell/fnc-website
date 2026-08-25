@@ -5,6 +5,8 @@ import Container from "@/components/layout/Container";
 import StoresListInteractive from "@/components/store/StoresListInteractive";
 import { getStores } from "@/lib/data/stores";
 
+export const dynamic = "force-dynamic";
+
 export const metadata = {
   title: "Store Locator — F&C Fresh Proteins & More",
   description: "Find an F&C store near you. View locations, timings, phone numbers, and get instant directions to buy fresh proteins.",
