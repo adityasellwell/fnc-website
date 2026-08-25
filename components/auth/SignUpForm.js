@@ -309,7 +309,7 @@ export default function SignUpForm() {
                 type="tel"
                 required
                 maxLength={10}
-                placeholder="9876543210"
+                placeholder="7039222266"
                 value={phone}
                 onChange={(e) => setPhone(e.target.value)}
                 className="w-full h-12 pl-12 pr-4 rounded-xl border border-bordergray font-body text-sm text-charcoal focus:border-fnc-red focus:outline-none transition-colors"
@@ -375,7 +375,7 @@ export default function SignUpForm() {
                 <input
                   type="tel"
                   required
-                  placeholder="98765 43210"
+                  placeholder="70392 22266"
                   value={phone}
                   onChange={(e) => setPhone(e.target.value)}
                   className="w-full h-12 px-4 rounded-xl border border-bordergray font-body text-sm text-charcoal focus:border-fnc-red focus:outline-none transition-colors"

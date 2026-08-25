@@ -132,7 +132,7 @@ export default function ApplyForm() {
             type="tel"
             value={values.phone}
             onChange={handleChange("phone")}
-            placeholder="+91 98765 43210"
+            placeholder="+91 70392 22266"
             className={inputClasses}
           />
           {errors.phone && <p className="font-body text-xs text-fnc-red">{errors.phone}</p>}

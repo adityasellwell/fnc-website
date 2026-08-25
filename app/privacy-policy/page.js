@@ -23,7 +23,7 @@ We share your data with trusted partners only to the extent necessary to perform
 We implement standard security measures to safeguard transaction records, audit logs, and account details. However, no internet transmission is 100% secure. You are responsible for keeping your login credentials confidential.
 
 ## 5. Your Choices & Contact
-You may access and update your account details by visiting your Account dashboard. For questions about this policy, please contact us at hello@fncfresh.in.`;
+You may access and update your account details by visiting your Account dashboard. For questions about this policy, please contact us at anchospitalityllp@gmail.com.`;
 
 export default async function PrivacyPolicyPage() {
   const page = await getPageBySlug("privacy-policy");

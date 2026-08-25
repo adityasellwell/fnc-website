@@ -613,7 +613,7 @@ export default function CheckoutPageClient({ stores = [], settings = {}, savedPr
               <label htmlFor="phone" className="font-body text-sm font-semibold text-charcoal">
                 Phone number
               </label>
-              <input id="phone" type="tel" value={values.phone} onChange={handleChange("phone")} placeholder="+91 98765 43210" className={inputClasses} />
+              <input id="phone" type="tel" value={values.phone} onChange={handleChange("phone")} placeholder="+91 70392 22266" className={inputClasses} />
               {errors.phone && <p className="font-body text-xs text-fnc-red">{errors.phone}</p>}
             </div>
           </div>

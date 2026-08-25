@@ -76,11 +76,11 @@ export default async function AdminSettingsPage() {
         <div className="grid sm:grid-cols-2 gap-5">
           <div className="flex flex-col gap-1.5">
             <label className="font-body text-xs font-semibold text-charcoal">Phone</label>
-            <input name="businessPhone" defaultValue={settings.businessInfo?.phone || ""} placeholder="+91 98765 43210" className={inputClasses} />
+            <input name="businessPhone" defaultValue={settings.businessInfo?.phone || ""} placeholder="+91 70392 22266" className={inputClasses} />
           </div>
           <div className="flex flex-col gap-1.5">
-            <label className="font-body text-xs font-semibold text-charcoal">WhatsApp</label>
-            <input name="businessWhatsapp" defaultValue={settings.businessInfo?.whatsapp || ""} placeholder="+91 98765 43210" className={inputClasses} />
+            <label className="font-body text-xs font-semibold text-charcoal">WhatsApp Number</label>
+            <input name="businessWhatsapp" defaultValue={settings.businessInfo?.whatsapp || ""} placeholder="+91 70392 22266" className={inputClasses} />
           </div>
         </div>
         <div className="flex flex-col gap-1.5">

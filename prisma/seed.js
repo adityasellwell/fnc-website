@@ -99,16 +99,16 @@ const storesData = [
     state: "Maharashtra",
     latitude: 19.2588283,
     longitude: 72.9790149,
-    phone: "+91 98765 43210",
-    whatsapp: "+91 98765 43210",
+    phone: "+91 70392 22266",
+    whatsapp: "+91 70392 22266",
     openingHours: {
-      mon: "7:00 AM - 9:00 PM",
-      tue: "7:00 AM - 9:00 PM",
-      wed: "7:00 AM - 9:00 PM",
-      thu: "7:00 AM - 9:00 PM",
-      fri: "7:00 AM - 9:00 PM",
-      sat: "7:00 AM - 9:00 PM",
-      sun: "7:00 AM - 9:00 PM",
+      mon: "10:00 AM - 9:00 PM",
+      tue: "10:00 AM - 9:00 PM",
+      wed: "10:00 AM - 9:00 PM",
+      thu: "10:00 AM - 9:00 PM",
+      fri: "10:00 AM - 9:00 PM",
+      sat: "10:00 AM - 9:30 PM",
+      sun: "10:00 AM - 9:30 PM",
     },
     images: ["/images/categories/fish.jpg"],
     deliveryAvailable: true,
@@ -767,7 +767,7 @@ We share your data with trusted partners only to the extent necessary to perform
 We implement standard security measures to safeguard transaction records, audit logs, and account details. However, no internet transmission is 100% secure. You are responsible for keeping your login credentials confidential.
 
 ## 5. Your Choices & Contact
-You may access and update your account details by visiting your Account dashboard. For questions about this policy, please contact us at hello@fncfresh.in.`,
+You may access and update your account details by visiting your Account dashboard. For questions about this policy, please contact us at anchospitalityllp@gmail.com.`,
   },
   {
     slug: "terms",
@@ -800,7 +800,7 @@ You are eligible for a replacement or store refund in the following scenarios:
 - Quality standards or freshness are not met.
 
 ## 3. How to Request a Refund
-To request a refund, please send a message to our WhatsApp support line (+91 98765 43210) or email us at hello@fncfresh.in. You must include:
+To request a refund, please send a message to our WhatsApp support line (+91 70392 22266) or email us at anchospitalityllp@gmail.com. You must include:
 - Your local order ID (visible in your account/checkout screen).
 - A clear photograph of the product and its packaging.
 - A brief description of the issue.

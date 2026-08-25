@@ -45,7 +45,7 @@ export default function PartnerSignInForm() {
             required
             value={phone}
             onChange={(e) => setPhone(e.target.value)}
-            placeholder="98765 43210"
+            placeholder="70392 22266"
             className="w-full h-12 px-4 rounded-xl border border-bordergray font-body text-sm text-charcoal focus:border-fnc-red focus:outline-none transition-colors"
           />
         </div>

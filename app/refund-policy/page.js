@@ -17,7 +17,7 @@ You are eligible for a replacement or store refund in the following scenarios:
 - Quality standards or freshness are not met.
 
 ## 3. How to Request a Refund
-To request a refund, please send a message to our WhatsApp support line (+91 98765 43210) or email us at hello@fncfresh.in. You must include:
+To request a refund, please send a message to our WhatsApp support line (+91 70392 22266) or email us at anchospitalityllp@gmail.com. You must include:
 - Your local order ID (visible in your account/checkout screen).
 - A clear photograph of the product and its packaging.
 - A brief description of the issue.

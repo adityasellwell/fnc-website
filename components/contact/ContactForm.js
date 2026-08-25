@@ -93,7 +93,7 @@ export default function ContactForm() {
             type="tel"
             value={values.phone}
             onChange={handleChange("phone")}
-            placeholder="+91 98765 43210"
+            placeholder="+91 70392 22266"
             className={inputClasses}
           />
         </div>
