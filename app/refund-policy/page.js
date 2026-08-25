@@ -2,6 +2,8 @@ import PolicyPageLayout from "@/components/layout/PolicyPageLayout";
 import PolicyContent from "@/components/layout/PolicyContent";
 import { getPageBySlug } from "@/services/pages";
 
+export const dynamic = "force-dynamic";
+
 export const metadata = {
   title: "Refund Policy — F&C",
   description: "F&C's refund policy — freshness guarantee, replacement terms, and refund timelines.",

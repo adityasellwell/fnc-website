@@ -8,6 +8,8 @@ import ContactForm from "@/components/contact/ContactForm";
 import { BRAND, CURRENT_LOCATION } from "@/lib/constants";
 import { getSettings } from "@/services/settings";
 
+export const dynamic = "force-dynamic";
+
 export const metadata = {
   title: "Contact Us — F&C Fresh Proteins & More",
   description:
