@@ -14,7 +14,7 @@ const DEFAULT_SETTINGS = {
     email: "anchospitalityllp@gmail.com",
     phone: "+91 70392 22266",
     whatsapp: "+91 70392 22266",
-    address: "Shop No 11, next to Eden Super Mart, Crown Apartment, Hiranandani Estate, Thane West",
+    address: "Shop No 11, Next to Eden Super Mart, Crown Apartment, Hiranandani Estate, Thane West - 400607",
   },
   seoTitle: "F&C — Fresh Proteins & More",
   seoDescription: "River and ocean-fresh fish, chicken, crab, eggs, and more in Thane.",

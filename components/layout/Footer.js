@@ -10,15 +10,15 @@ import { getSettings } from "@/services/settings";
 function FooterColumn({ title, links }) {
   return (
     <div>
-      <h3 className="font-body text-sm font-semibold text-charcoal mb-4">
+      <h3 className="font-body text-base font-bold text-charcoal mb-4">
         {title}
       </h3>
-      <ul className="space-y-2.5">
+      <ul className="space-y-3">
         {links.map((link) => (
           <li key={link.href}>
             <Link
               href={link.href}
-              className="font-body text-sm text-slate hover:text-fnc-red transition-colors"
+              className="font-body text-base font-bold text-slate hover:text-fnc-red transition-colors"
             >
               {link.label}
             </Link>
@@ -51,38 +51,38 @@ export default async function Footer() {
                 className="h-28 w-32 object-contain"
               />
             </Link>
-            <p className="font-body text-base text-slate max-w-xs">
+            <p className="font-body text-lg font-bold text-charcoal max-w-xs leading-snug">
               {BRAND.tagline} — premium, hygienically sourced fish, chicken,
               crab and eggs.
             </p>
 
             {store && (
-              <div className="mt-5 flex flex-col gap-2">
+              <div className="mt-6 flex flex-col gap-3">
                 <a
                   href={store.googleMapsLink}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="inline-flex items-start gap-1.5 font-body text-xs text-slate hover:text-fnc-red transition-colors w-fit"
+                  className="inline-flex items-start gap-2.5 font-body text-base font-bold text-charcoal hover:text-fnc-red transition-colors w-fit leading-snug"
                 >
-                  <MapPin className="h-3.5 w-3.5 mt-0.5 shrink-0" />
-                  {store.address}, {store.city}, {store.state}
+                  <MapPin className="h-5 w-5 mt-0.5 shrink-0 text-fnc-red" />
+                  <span>{store.address}, {store.city}, {store.state}</span>
                 </a>
-                <span className="inline-flex items-center gap-1.5 font-body text-xs text-slate">
-                  <Clock className="h-3.5 w-3.5" />
-                  Open today · {store.openingHours.mon}
+                <span className="inline-flex items-center gap-2.5 font-body text-base font-bold text-charcoal leading-snug">
+                  <Clock className="h-5 w-5 text-fnc-green shrink-0" />
+                  <span>Open today · {store.openingHours.mon}</span>
                 </span>
               </div>
             )}
 
-            <div className="flex items-center gap-3 mt-5">
+            <div className="flex items-center gap-4 mt-6">
               {["Instagram", "Facebook"].map((label) => (
                 <a
                   key={label}
                   href={`https://${label.toLowerCase()}.com`}
                   aria-label={label}
-                  className="h-9 w-9 flex items-center justify-center rounded-full border border-bordergray text-charcoal hover:border-fnc-red hover:text-fnc-red transition-colors"
+                  className="h-11 w-11 flex items-center justify-center rounded-full border-2 border-bordergray text-charcoal hover:border-fnc-red hover:text-fnc-red transition-colors bg-white shadow-xs"
                 >
-                  <SocialIcon name={label} className="h-4 w-4" />
+                  <SocialIcon name={label} className="h-5 w-5" />
                 </a>
               ))}
             </div>
@@ -93,24 +93,23 @@ export default async function Footer() {
           <FooterColumn title="Support" links={FOOTER_LINKS.support} />
         </div>
 
-        <div className="mt-10 pt-6 border-t border-bordergray flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-          <p className="font-body text-xs text-slate">
-            © {new Date().getFullYear()} {BRAND.fullName}. All rights
-            reserved.
+        <div className="mt-12 pt-8 border-t border-bordergray flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+          <p className="font-body text-sm font-bold text-charcoal">
+            © {new Date().getFullYear()} {BRAND.fullName}. All rights reserved.
           </p>
-          <div className="flex items-center gap-5">
+          <div className="flex items-center gap-6">
             <a
               href={`tel:${contactPhone}`}
-              className="flex items-center gap-1.5 font-body text-xs text-slate hover:text-fnc-red transition-colors"
+              className="flex items-center gap-2 font-body text-sm font-bold text-charcoal hover:text-fnc-red transition-colors"
             >
-              <Phone className="h-3.5 w-3.5" />
+              <Phone className="h-4.5 w-4.5 text-fnc-red" />
               {contactPhone}
             </a>
             <a
               href={`mailto:${contactEmail}`}
-              className="flex items-center gap-1.5 font-body text-xs text-slate hover:text-fnc-red transition-colors"
+              className="flex items-center gap-2 font-body text-sm font-bold text-charcoal hover:text-fnc-red transition-colors"
             >
-              <Mail className="h-3.5 w-3.5" />
+              <Mail className="h-4.5 w-4.5 text-fnc-red" />
               {contactEmail}
             </a>
           </div>

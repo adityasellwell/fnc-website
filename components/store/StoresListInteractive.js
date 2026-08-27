@@ -149,7 +149,7 @@ export default function StoresListInteractive({ stores = [] }) {
                       <>
                         <p className="flex items-center gap-2.5">
                           <Clock className="h-4.5 w-4.5 text-fnc-red shrink-0" />
-                          <span>{store.openingHours?.mon || "10:00 AM - 9:00 PM"}</span>
+                          <span>{store.openingHours?.mon || "07:00 AM - 11:00 PM"}</span>
                         </p>
                         <a
                           href={`tel:${store.phone.replace(/\s+/g, "")}`}

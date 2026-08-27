@@ -220,7 +220,7 @@ export default function StoreFormModal({ trigger, store, action, title }) {
                   <input
                     name={`hours_${key}`}
                     defaultValue={store?.openingHours?.[key] ?? ""}
-                    placeholder="10:00 AM - 9:00 PM"
+                    placeholder="07:00 AM - 11:00 PM"
                     className={`${inputClasses} h-10`}
                   />
                 </div>

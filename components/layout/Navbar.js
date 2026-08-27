@@ -351,7 +351,7 @@ export default function Navbar() {
                 </span>
                 {storeId && storeList.find((s) => s.id === storeId) && (
                   <span className="font-body text-[9px] text-fnc-green font-bold">
-                    Open till 9:00 PM
+                    Open till 11:00 PM
                   </span>
                 )}
               </span>
@@ -443,7 +443,7 @@ export default function Navbar() {
                       Delivering from <span className="font-semibold text-charcoal">{storeList.find((s) => s.id === storeId).name}</span>
                     </p>
                     <p className="font-body text-[10px] text-fnc-green font-bold">
-                      Open till 9:00 PM
+                      Open till 11:00 PM
                     </p>
                   </div>
                 )}

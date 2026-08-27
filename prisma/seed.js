@@ -28,13 +28,28 @@ const db = new PrismaClient();
 
 const categoriesData = [
   {
-    id: "cat-fish",
-    slug: "fish",
-    name: "Fish",
-    description:
-      "River and ocean-fresh fish, hand-cleaned and cut to order every morning.",
-    image: "/images/categories/fish.jpg",
+    id: "cat-ready-to-cook",
+    slug: "ready-to-cook",
+    name: "Ready to Cook",
+    description: "Marinated, breaded and shaped proteins — oven or pan in minutes.",
+    image: "/images/categories/ready-to-cook.jpg",
     order: 1,
+  },
+  {
+    id: "cat-ready-to-eat",
+    slug: "ready-to-eat",
+    name: "Ready to Eat",
+    description: "Restaurant-style curries and biryanis, cooked and packed — just heat and serve.",
+    image: "/images/categories/ready-to-eat.jpg",
+    order: 2,
+  },
+  {
+    id: "cat-marinated",
+    slug: "marinated",
+    name: "Marinated",
+    description: "Pre-seasoned and marinated proteins, ready for the grill, pan, or oven.",
+    image: "/images/categories/marinated.jpg",
+    order: 3,
   },
   {
     id: "cat-chicken",
@@ -42,7 +57,15 @@ const categoriesData = [
     name: "Chicken",
     description: "Farm-sourced chicken, antibiotic-free, cut fresh in-store daily.",
     image: "/images/categories/chicken.jpg",
-    order: 2,
+    order: 4,
+  },
+  {
+    id: "cat-fish",
+    slug: "fish",
+    name: "Fish",
+    description: "River and ocean-fresh fish, hand-cleaned and cut to order every morning.",
+    image: "https://res.cloudinary.com/dqyhgq6hi/image/upload/v1786711374/fnc/categories/1786711372121-4sez8a.jpg",
+    order: 5,
   },
   {
     id: "cat-crab",
@@ -50,7 +73,7 @@ const categoriesData = [
     name: "Crab",
     description: "Live-sourced mud crab and cleaned crab meat, in season.",
     image: "/images/categories/crab.jpg",
-    order: 3,
+    order: 6,
   },
   {
     id: "cat-eggs",
@@ -58,33 +81,39 @@ const categoriesData = [
     name: "Eggs",
     description: "Farm and country eggs, sourced within 48 hours of lay.",
     image: "/images/categories/eggs.jpg",
-    order: 4,
+    order: 7,
   },
   {
-    id: "cat-ready-to-cook",
-    slug: "ready-to-cook",
-    name: "Ready to Cook",
-    description: "Marinated, breaded and shaped proteins — oven or pan in minutes.",
-    image: "/images/categories/ready-to-cook.jpg",
-    order: 5,
+    id: "cat-protein-salads",
+    slug: "protein-salads",
+    name: "Protein Salads",
+    description: "Fresh, nutrient-dense salads packed with clean, premium proteins.",
+    image: "/images/categories/protein-salads.jpg",
+    order: 8,
   },
   {
-    id: "cat-ready-to-eat",
-    slug: "ready-to-eat",
-    name: "Ready to Eat",
-    description:
-      "Restaurant-style curries and biryanis, cooked and packed — just heat and serve.",
-    image: "/images/categories/ready-to-eat.jpg",
-    order: 6,
+    id: "cat-healthy-snacks",
+    slug: "healthy-snacks",
+    name: "Healthy Snacks",
+    description: "High-protein, low-carb snacks to fuel your active lifestyle between meals.",
+    image: "/images/categories/healthy-snacks.jpg",
+    order: 9,
+  },
+  {
+    id: "cat-healthy-protein-drinks",
+    slug: "healthy-protein-drinks",
+    name: "Healthy Protein Drinks",
+    description: "Nutritious and delicious protein shakes and smoothies for post-workout recovery.",
+    image: "/images/categories/healthy-protein-drinks.jpg",
+    order: 10,
   },
   {
     id: "cat-cheese-dairy",
     slug: "cheese-dairy",
     name: "Cheese & Dairy",
-    description:
-      "Paneer, cheese and butter made fresh, delivered alongside your protein order.",
+    description: "Paneer, cheese and butter made fresh, delivered alongside your protein order.",
     image: "/images/categories/cheese-dairy.jpg",
-    order: 7,
+    order: 11,
   },
 ];
 
@@ -94,7 +123,7 @@ const storesData = [
     slug: "thane-west",
     name: "F&C Thane West",
     status: "ACTIVE",
-    address: "Shop No 11, Next to Eden Super Mart, Crown Apartment, Hiranandani Estate",
+    address: "Shop No 11, Next to Eden Super Mart, Crown Apartment, Hiranandani Estate, Thane West - 400607",
     city: "Thane",
     state: "Maharashtra",
     latitude: 19.2588283,
@@ -102,13 +131,13 @@ const storesData = [
     phone: "+91 70392 22266",
     whatsapp: "+91 70392 22266",
     openingHours: {
-      mon: "10:00 AM - 9:00 PM",
-      tue: "10:00 AM - 9:00 PM",
-      wed: "10:00 AM - 9:00 PM",
-      thu: "10:00 AM - 9:00 PM",
-      fri: "10:00 AM - 9:00 PM",
-      sat: "10:00 AM - 9:30 PM",
-      sun: "10:00 AM - 9:30 PM",
+      mon: "07:00 AM - 11:00 PM",
+      tue: "07:00 AM - 11:00 PM",
+      wed: "07:00 AM - 11:00 PM",
+      thu: "07:00 AM - 11:00 PM",
+      fri: "07:00 AM - 11:00 PM",
+      sat: "07:00 AM - 11:00 PM",
+      sun: "07:00 AM - 11:00 PM",
     },
     images: ["/images/categories/fish.jpg"],
     deliveryAvailable: true,
@@ -824,7 +853,7 @@ Delivery charges are dynamically computed based on your order subtotal:
 We offer daily delivery slots to keep the cold chain intact. Orders placed before 2:00 PM are scheduled for same-day evening delivery. Orders placed after the cutoff time will be delivered the following morning.
 
 ## 4. Store Pickup Alternative
-If your address is outside our delivery radius or fails geocoding validation, you can select the Store Pickup option at checkout. Pickups are free and can be collected during our regular store operating hours (10:00 AM – 9:00 PM).`,
+If your address is outside our delivery radius or fails geocoding validation, you can select the Store Pickup option at checkout. Pickups are free and can be collected during our regular store operating hours (07:00 AM – 11:00 PM).`,
   },
 ];
 

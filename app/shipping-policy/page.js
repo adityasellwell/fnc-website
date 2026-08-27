@@ -22,7 +22,7 @@ Delivery charges are dynamically computed based on your order subtotal:
 We offer daily delivery slots to keep the cold chain intact. Orders placed before 2:00 PM are scheduled for same-day evening delivery. Orders placed after the cutoff time will be delivered the following morning.
 
 ## 4. Store Pickup Alternative
-If your address is outside our delivery radius or fails geocoding validation, you can select the Store Pickup option at checkout. Pickups are free and can be collected during our regular store operating hours (10:00 AM – 9:00 PM).`;
+If your address is outside our delivery radius or fails geocoding validation, you can select the Store Pickup option at checkout. Pickups are free and can be collected during our regular store operating hours (07:00 AM – 11:00 PM).`;
 
 export default async function ShippingPolicyPage() {
   const page = await getPageBySlug("shipping-policy");

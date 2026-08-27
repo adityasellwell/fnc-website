@@ -7,13 +7,16 @@ import Container from "@/components/layout/Container";
 import { CATEGORY_META } from "@/lib/constants";
 
 const items = [
-  { slug: "fish", name: "Fish" },
-  { slug: "chicken", name: "Chicken" },
-  { slug: "crab", name: "Crab" },
   { slug: "ready-to-cook", name: "Ready to Cook" },
   { slug: "ready-to-eat", name: "Ready to Eat" },
-  { slug: "cheese-dairy", name: "Cheese & Dairy" },
+  { slug: "marinated", name: "Marinated" },
+  { slug: "chicken", name: "Chicken" },
+  { slug: "fish", name: "Fish" },
+  { slug: "crab", name: "Crab" },
   { slug: "eggs", name: "Eggs" },
+  { slug: "protein-salads", name: "Protein Salads" },
+  { slug: "healthy-snacks", name: "Healthy Snacks" },
+  { slug: "healthy-protein-drinks", name: "Healthy Protein Drinks" },
   { slug: "offers", name: "Offers" },
 ];
 
@@ -24,7 +27,7 @@ const items = [
  * exist, so this click state doesn't do anything beyond the highlight yet.
  */
 export default function CategoryNav() {
-  const [active, setActive] = useState("fish");
+  const [active, setActive] = useState("ready-to-cook");
 
   return (
     <div className="border-b border-bordergray bg-white">
