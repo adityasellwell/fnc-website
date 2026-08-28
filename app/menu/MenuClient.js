@@ -1,14 +1,11 @@
 "use client";
 
 import { useState } from "react";
-import Image from "next/image";
-import { motion, AnimatePresence } from "framer-motion";
-import { Flame, Eye, Download, X, Sparkles, ShieldAlert, BadgeCheck } from "lucide-react";
+import { Flame, Eye, Download, Sparkles, ShieldAlert, BadgeCheck } from "lucide-react";
 import Button from "@/components/ui/Button";
 
 export default function MenuClient({ menuData }) {
   const [activeCategory, setActiveCategory] = useState(menuData.categories[0].id);
-  const [isModalOpen, setIsModalOpen] = useState(false);
 
   const activeCategoryData = menuData.categories.find(
     (cat) => cat.id === activeCategory
@@ -28,18 +25,20 @@ export default function MenuClient({ menuData }) {
         </div>
         <div className="flex items-center gap-3">
           <Button
-            type="button"
+            href="https://share.google/bJPdnV23o229Ykbo9"
+            target="_blank"
+            rel="noopener noreferrer"
             variant="outline"
             size="sm"
-            onClick={() => setIsModalOpen(true)}
             className="flex items-center gap-2"
           >
             <Eye className="h-4 w-4 text-fnc-red" />
             View Menu Card
           </Button>
           <a
-            href="/images/menu-card.jpg"
-            download="FC-Menu-Card.jpg"
+            href="https://share.google/bJPdnV23o229Ykbo9"
+            target="_blank"
+            rel="noopener noreferrer"
             className="inline-flex items-center gap-2 h-9 px-4 rounded-xl border border-bordergray bg-charcoal text-white hover:bg-black font-body text-xs font-semibold transition-colors"
           >
             <Download className="h-4 w-4" />
@@ -182,61 +181,6 @@ export default function MenuClient({ menuData }) {
         </div>
       </div>
 
-      {/* Lightbox / Modal for printed menu card */}
-      <AnimatePresence>
-        {isModalOpen && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="fixed inset-0 z-60 bg-black/90 flex flex-col items-center justify-center p-4 backdrop-blur-sm"
-          >
-            {/* Close Button */}
-            <button
-              onClick={() => setIsModalOpen(false)}
-              className="absolute top-4 right-4 h-12 w-12 bg-white/10 hover:bg-white/20 text-white rounded-full flex items-center justify-center transition-colors"
-            >
-              <X className="h-6 w-6" />
-            </button>
-
-            {/* Content Container */}
-            <motion.div
-              initial={{ scale: 0.9, y: 20 }}
-              animate={{ scale: 1, y: 0 }}
-              exit={{ scale: 0.9, y: 20 }}
-              className="relative max-w-4xl w-full aspect-[4/3] max-h-[80vh] rounded-2xl overflow-hidden shadow-2xl bg-charcoal"
-            >
-              <Image
-                src="/images/menu-card.jpg"
-                alt="F&C Official Menu Card"
-                fill
-                sizes="(max-width: 1024px) 100vw, 1024px"
-                className="object-contain"
-                priority
-              />
-            </motion.div>
-
-            {/* Bottom Actions */}
-            <div className="mt-6 flex items-center gap-4">
-              <a
-                href="/images/menu-card.jpg"
-                download="FC-Menu-Card.jpg"
-                className="inline-flex items-center gap-2 px-6 h-12 rounded-xl bg-fnc-red hover:bg-fnc-red/90 text-white font-body text-sm font-bold transition-all shadow-lg"
-              >
-                <Download className="h-4.5 w-4.5" />
-                Download Menu Card
-              </a>
-              <button
-                type="button"
-                onClick={() => setIsModalOpen(false)}
-                className="px-6 h-12 rounded-xl border border-white/20 hover:bg-white/10 text-white font-body text-sm font-semibold transition-colors"
-              >
-                Close
-              </button>
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
     </div>
   );
 }

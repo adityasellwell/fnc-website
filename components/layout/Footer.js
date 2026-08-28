@@ -51,9 +51,11 @@ export default async function Footer() {
                 className="h-28 w-32 object-contain"
               />
             </Link>
-            <p className="font-body text-lg font-bold text-charcoal max-w-xs leading-snug">
+            <p className="font-body text-lg font-bold text-charcoal max-w-md leading-snug">
               {BRAND.tagline} — premium, hygienically sourced fish, chicken,
-              crab and eggs.
+              crab, eggs, kebab, sausages, salame, fish finger, crab lollypop,
+              proteins drinks, healthy bakes, chicken Keema pav, chicken vada pav,
+              korean bun, baked vada pav, chicken borrek puf, chicken puff and many more.
             </p>
 
             {store && (
