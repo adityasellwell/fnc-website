@@ -179,7 +179,7 @@ export default function RecommendationsSection({ products = [], initialCategorie
                   {/* Label */}
                   <span
                     className={cn(
-                      "font-body text-[11px] sm:text-xs lg:text-sm font-bold text-center transition-colors leading-tight max-w-[6.5rem]",
+                      "font-body text-[11px] sm:text-xs lg:text-sm font-bold text-center transition-colors leading-tight block max-w-[5.5rem] sm:max-w-[6.5rem] xl:max-w-[7.5rem]",
                       isActive ? "text-fnc-red" : "text-charcoal group-hover:text-fnc-red"
                     )}
                   >
