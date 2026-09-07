@@ -8,7 +8,7 @@ import { AnimatePresence, motion } from "framer-motion";
 import Card from "@/components/ui/Card";
 import PlaceholderMedia from "@/components/ui/PlaceholderMedia";
 import WishlistButton from "@/components/product/WishlistButton";
-import { CATEGORY_META, ENFORCE_STOCK_GATING } from "@/lib/constants";
+import { resolveCategoryMeta, ENFORCE_STOCK_GATING } from "@/lib/constants";
 import { cn } from "@/lib/utils";
 import { useLocationStore } from "@/lib/store/location";
 import { useCartStore } from "@/lib/store/cart";
@@ -43,7 +43,7 @@ export default function ProductCard({ product, className }) {
   const qty = cartItem?.qty ?? 0;
 
   const categorySlug = (product?.categoryId || "").replace(/^cat-/, "");
-  const meta = CATEGORY_META[categorySlug] ?? { icon: "Fish", tone: "red" };
+  const meta = resolveCategoryMeta(categorySlug, product?.parentCategorySlug);
   const href = `/product/${product?.slug || ""}`;
 
   // Check store-specific stock

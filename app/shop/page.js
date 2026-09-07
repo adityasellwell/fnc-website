@@ -10,7 +10,7 @@ import { getProducts } from "@/lib/data/products";
 import { getCategories } from "@/lib/data/categories";
 import { logProductSearch } from "@/lib/utils/analytics";
 import { cn } from "@/lib/utils";
-import { CATEGORY_META } from "@/lib/constants";
+import { resolveCategoryMeta } from "@/lib/constants";
 
 const PAGE_SIZE = 12;
 
@@ -80,7 +80,7 @@ export default async function ShopPage({ searchParams }) {
   );
 
   const categoryMeta = activeCategory && categories.find(c => c.slug === activeCategory);
-  const bannerImage = categoryMeta?.image || CATEGORY_META[activeCategory]?.image || "/images/categories/fish.jpg";
+  const bannerImage = categoryMeta?.image || resolveCategoryMeta(activeCategory, categoryMeta?.parentCategory?.slug).image || "/images/categories/fish.jpg";
   const bannerTitle = categoryMeta ? categoryMeta.name : "All Products";
   const bannerDescription = categoryMeta
     ? (categoryMeta.description || `Hygienically cleaned and freshly cut ${categoryMeta.name.toLowerCase()} for the perfect culinary experience.`)
@@ -152,16 +152,24 @@ export default async function ShopPage({ searchParams }) {
           </div>
 
           {childSlugs.length > 0 && (
-            <div className="flex gap-2 mb-8 overflow-x-auto scrollbar-none -mx-5 px-5 sm:mx-0 sm:px-0 sm:flex-wrap">
-              {categories.filter((c) => c.parentCategoryId === activeCategoryObj.id).map((c) => (
-                <Link
-                  key={c.id}
-                  href={buildHref(c.slug, 1, searchQuery)}
-                  className="shrink-0 rounded-full px-3.5 py-1.5 font-body text-xs font-semibold border border-fnc-red/30 text-fnc-red bg-fnc-red/5 hover:bg-fnc-red/10 transition-colors"
-                >
-                  {c.name}
-                </Link>
-              ))}
+            <div className="flex gap-2 sm:gap-3 mb-8 overflow-x-auto scrollbar-none -mx-5 px-5 sm:mx-0 sm:px-0 sm:flex-wrap">
+              {categories.filter((c) => c.parentCategoryId === activeCategoryObj.id).map((c) => {
+                const isActive = activeCategory === c.slug;
+                return (
+                  <Link
+                    key={c.id}
+                    href={buildHref(c.slug, 1, searchQuery)}
+                    className={cn(
+                      "shrink-0 rounded-full px-4 py-2 font-body text-sm font-semibold border transition-colors",
+                      isActive
+                        ? "bg-fnc-red text-white border-fnc-red"
+                        : "bg-fnc-red/5 text-fnc-red border-fnc-red/30 hover:bg-fnc-red/10"
+                    )}
+                  >
+                    {c.name}
+                  </Link>
+                );
+              })}
             </div>
           )}
 

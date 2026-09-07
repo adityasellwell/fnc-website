@@ -19,7 +19,7 @@ import { getProductBySlug, getProducts } from "@/lib/data/products";
 import { getCategoryBySlug } from "@/lib/data/categories";
 import { getRecipeBySlug } from "@/lib/data/recipes";
 import { getReviewsForProduct } from "@/lib/data/reviews";
-import { CATEGORY_META } from "@/lib/constants";
+import { resolveCategoryMeta } from "@/lib/constants";
 import { cn } from "@/lib/utils";
 
 export async function generateMetadata({ params }) {
@@ -77,7 +77,7 @@ export default async function ProductDetailPage({ params }) {
   // Per-product photography hasn't been shot yet — fall back to the
   // category's representative image, same as ProductCard.js does across
   // every listing on the site.
-  const meta = CATEGORY_META[categorySlug] ?? { icon: "Fish", tone: "red" };
+  const meta = resolveCategoryMeta(categorySlug, product.parentCategorySlug);
 
   const recipeMedia = relatedRecipeList
     .filter((r) => r.image)

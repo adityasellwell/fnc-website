@@ -1,7 +1,7 @@
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
-import { CATEGORY_META } from "@/lib/constants";
+import { resolveCategoryMeta } from "@/lib/constants";
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
 import Container from "@/components/layout/Container";
@@ -104,7 +104,7 @@ export default async function ShopCategoryPage({ params, searchParams }) {
           {/* Background image */}
           <div className="absolute inset-0 z-0 opacity-70">
             <Image
-              src={category.image || CATEGORY_META[slug]?.image || "/images/categories/fish.jpg"}
+              src={category.image || resolveCategoryMeta(slug, category.parentCategory?.slug).image || "/images/categories/fish.jpg"}
               alt={category.name}
               fill
               className="object-cover object-center"
