@@ -17,6 +17,12 @@ export default function ProductPurchasePanel({ product, image }) {
   const defaultVariant = variants.find((v) => v.isDefault) ?? variants[0] ?? null;
   const [selectedVariant, setSelectedVariant] = useState(defaultVariant);
 
+  // The product's own real uploaded photo, not the generic category
+  // stock photo — `image` (the fallback passed down from the page) was
+  // being used unconditionally before, so even a product with a real
+  // photo showed the category placeholder in the cart instead of itself.
+  const cartImage = product.images?.[0] || image;
+
   const activePrice = hasVariants ? selectedVariant?.price : product.price;
   const activeUnit = hasVariants ? selectedVariant?.label : product.unit;
 
@@ -58,8 +64,8 @@ export default function ProductPurchasePanel({ product, image }) {
       </div>
 
       <div className="flex flex-col sm:flex-row gap-3">
-        <AddToCartButton product={product} image={image} variant={hasVariants ? selectedVariant : null} className="w-full sm:w-auto" />
-        <BuyNowButton product={product} image={image} variant={hasVariants ? selectedVariant : null} className="w-full sm:w-auto" />
+        <AddToCartButton product={product} image={cartImage} variant={hasVariants ? selectedVariant : null} redirectToCart className="w-full sm:w-auto" />
+        <BuyNowButton product={product} image={cartImage} variant={hasVariants ? selectedVariant : null} className="w-full sm:w-auto" />
       </div>
     </div>
   );

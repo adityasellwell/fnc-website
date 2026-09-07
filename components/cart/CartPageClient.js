@@ -1,8 +1,9 @@
 "use client";
 
+import { useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { Minus, Plus, Trash2, ShoppingBag, ArrowRight } from "lucide-react";
+import { Minus, Plus, Trash2, ShoppingBag, ArrowRight, ImageOff } from "lucide-react";
 import Section from "@/components/layout/Section";
 import Button from "@/components/ui/Button";
 import DeliveryPartnerSelect from "@/components/store/DeliveryPartnerSelect";
@@ -11,13 +12,22 @@ import { useCartStore } from "@/lib/store/cart";
 function CartLine({ item }) {
   const updateQty = useCartStore((s) => s.updateQty);
   const removeItem = useCartStore((s) => s.removeItem);
+  // A cart item's image is a plain stored URL, not re-resolved from the
+  // live product — if it was a broken/legacy path when added (or the
+  // photo was later removed), there was no recovery at all before this;
+  // this at least swaps in a neutral icon instead of a dead image box.
+  const [imgError, setImgError] = useState(false);
 
   return (
     <div className="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4 py-5 border-b border-bordergray last:border-b-0">
       <div className="flex items-center gap-3 sm:gap-4 min-w-0">
         <div className="relative h-16 w-16 sm:h-24 sm:w-24 shrink-0 rounded-2xl overflow-hidden bg-warmwhite border border-bordergray">
-          {item.image && (
-            <Image src={item.image} alt={item.name} fill sizes="96px" className="object-cover" />
+          {item.image && !imgError ? (
+            <Image src={item.image} alt={item.name} fill sizes="96px" className="object-cover" onError={() => setImgError(true)} />
+          ) : (
+            <div className="h-full w-full flex items-center justify-center text-slate">
+              <ImageOff className="h-5 w-5" />
+            </div>
           )}
         </div>
 

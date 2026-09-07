@@ -1,6 +1,7 @@
 "use client";
 
 import { useSyncExternalStore } from "react";
+import { useRouter } from "next/navigation";
 import { ShoppingCart, Check } from "lucide-react";
 import Button from "@/components/ui/Button";
 import { useCartStore } from "@/lib/store/cart";
@@ -10,7 +11,11 @@ import { cn } from "@/lib/utils";
 
 const emptySubscribe = () => () => {};
 
-export default function AddToCartButton({ product, image, variant, className }) {
+// redirectToCart: only the product detail page's main Add to Cart button
+// wants this (a deliberate "I want this" click, not a quick-add from a
+// grid) — ProductCard's own inline quick-add stays on the grid.
+export default function AddToCartButton({ product, image, variant, redirectToCart = false, className }) {
+  const router = useRouter();
   const mounted = useSyncExternalStore(
     emptySubscribe,
     () => true,
@@ -57,6 +62,13 @@ export default function AddToCartButton({ product, image, variant, className }) 
       );
       if (confirmed) handleAddToCart(true);
       return;
+    }
+
+    // Only the initial "Add to Cart" click (qty was 0 before this call)
+    // redirects — otherwise every "+" tap on the quantity stepper that
+    // replaces this button afterward would also bounce to the cart page.
+    if (result.ok && redirectToCart && qty === 0) {
+      router.push("/cart");
     }
   }
 

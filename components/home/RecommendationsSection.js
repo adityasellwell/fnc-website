@@ -15,6 +15,38 @@ export default function RecommendationsSection({ products = [], initialCategorie
   const [selectedSubcategory, setSelectedSubcategory] = useState(null);
   const scrollContainerRef = useRef(null);
 
+  // Native overflow-x-auto only scrolls via touch/trackpad/scrollbar — a
+  // mouse has no built-in "grab and drag" gesture, so without this the
+  // circle row was only draggable on touch devices. dragState is a ref
+  // (not state) so dragging doesn't re-render on every pixel of movement.
+  const dragState = useRef({ isDown: false, startX: 0, startScrollLeft: 0, moved: false });
+
+  function handlePointerDown(e) {
+    const el = scrollContainerRef.current;
+    if (!el) return;
+    dragState.current = { isDown: true, startX: e.clientX, startScrollLeft: el.scrollLeft, moved: false };
+  }
+  function handlePointerMove(e) {
+    const d = dragState.current;
+    const el = scrollContainerRef.current;
+    if (!d.isDown || !el) return;
+    const delta = e.clientX - d.startX;
+    if (Math.abs(delta) > 3) d.moved = true;
+    el.scrollLeft = d.startScrollLeft - delta;
+  }
+  function endDrag() {
+    dragState.current.isDown = false;
+  }
+  // Suppresses the click that would otherwise fire right after a drag —
+  // without this, releasing the mouse after dragging past a circle
+  // selects it, which reads as the drag "not working."
+  function handleCircleClickCapture(e) {
+    if (dragState.current.moved) {
+      e.preventDefault();
+      e.stopPropagation();
+    }
+  }
+
   const subcategories = useMemo(() => {
     const selectedCategoryObj = selectedCategory
       ? initialCategories.find((c) => c.slug === selectedCategory)
@@ -117,8 +149,12 @@ export default function RecommendationsSection({ products = [], initialCategorie
           {/* Scrollable / Grid Container */}
           <div
             ref={scrollContainerRef}
+            onMouseDown={handlePointerDown}
+            onMouseMove={handlePointerMove}
+            onMouseUp={endDrag}
+            onMouseLeave={endDrag}
             className={cn(
-              "scrollbar-none px-4 sm:px-0 pb-3 w-full",
+              "scrollbar-none px-4 sm:px-0 pb-3 w-full cursor-grab active:cursor-grabbing",
               isScrollable
                 ? "flex gap-4 sm:gap-6 overflow-x-auto scroll-smooth -mx-4 sm:mx-0"
                 : "flex gap-3 overflow-x-auto sm:grid sm:grid-cols-8 sm:gap-0"
@@ -134,6 +170,7 @@ export default function RecommendationsSection({ products = [], initialCategorie
                   key={item.slug}
                   delay={i * 0.04}
                   y={14}
+                  onClickCapture={handleCircleClickCapture}
                   onClick={() => selectCategory(item.slug)}
                   className={cn(
                     "group flex flex-col items-center gap-2 cursor-pointer py-1.5 focus:outline-none",
