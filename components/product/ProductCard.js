@@ -51,18 +51,34 @@ export default function ProductCard({ product, className }) {
   const isOutOfStock = ENFORCE_STOCK_GATING && mounted && storeId && (!storeInv || storeInv.stock <= 0);
 
   const [imgError, setImgError] = useState(false);
-  const primaryImage = imgError ? meta.image : (product.images && product.images[0]) || meta.image;
+  const [activeIndex, setActiveIndex] = useState(0);
+  const primaryImage = (product.images && product.images[0]) || meta.image;
 
   // Real media (images + video) uploaded for this product, falling back to
   // the single legacy image/category-photo chain when none exists yet.
-  const mediaItems =
+  const rawMediaItems =
     product.media && product.media.length > 0
       ? product.media
       : primaryImage
       ? [{ id: "fallback", type: "IMAGE", url: primaryImage }]
       : [];
 
-  const [activeIndex, setActiveIndex] = useState(0);
+  // A ProductMedia row itself can point at a dead pre-Cloudinary path
+  // (legacy seed data) — without this, that broken URL would win outright
+  // and show nothing, since it takes priority over `images`/meta above.
+  // Swapping just the active item's url in place (not skipping/filtering
+  // it out) keeps its id/index stable so goPrev/goNext/dots still work.
+  const activeRaw = rawMediaItems[activeIndex];
+  const mediaItems =
+    imgError && activeRaw?.type === "IMAGE" && meta.image
+      ? rawMediaItems.map((item, idx) => (idx === activeIndex ? { ...item, url: meta.image } : item))
+      : rawMediaItems;
+
+  // What actually gets sent to the cart/wishlist — falls back to the
+  // category photo once we know the product's own image is dead, so a
+  // broken product photo doesn't also show up broken in the cart.
+  const cartImage = imgError ? meta.image : primaryImage;
+
   const [isMuted, setIsMuted] = useState(true);
   const activeItem = mediaItems[activeIndex];
 
@@ -70,16 +86,19 @@ export default function ProductCard({ product, className }) {
     e.preventDefault();
     e.stopPropagation();
     setActiveIndex(idx);
+    setImgError(false); // a different item may load fine even if this one didn't
   }
   function goPrev(e) {
     e.preventDefault();
     e.stopPropagation();
     setActiveIndex((i) => (i - 1 + mediaItems.length) % mediaItems.length);
+    setImgError(false);
   }
   function goNext(e) {
     e.preventDefault();
     e.stopPropagation();
     setActiveIndex((i) => (i + 1) % mediaItems.length);
+    setImgError(false);
   }
 
   function handleAdd(e) {
@@ -92,7 +111,7 @@ export default function ProductCard({ product, className }) {
       unit: activeUnit,
       price: activePrice,
       variantLabel: activeVariantLabel,
-      image: primaryImage,
+      image: cartImage,
       availableAtStores: product.availableAtStores,
     };
     const result = addItem(item);
@@ -127,7 +146,7 @@ export default function ProductCard({ product, className }) {
       unit: activeUnit,
       price: activePrice,
       variantLabel: activeVariantLabel,
-      image: primaryImage,
+      image: cartImage,
       availableAtStores: product.availableAtStores,
     };
     const result = addItem(item);
@@ -193,9 +212,7 @@ export default function ProductCard({ product, className }) {
                     fill
                     sizes="(min-width: 1024px) 22vw, 45vw"
                     className="object-cover transition-transform duration-500 group-hover:scale-105"
-                    onError={() => {
-                      if (activeIndex === 0) setImgError(true);
-                    }}
+                    onError={() => setImgError(true)}
                   />
                 </motion.div>
               )}
@@ -226,7 +243,7 @@ export default function ProductCard({ product, className }) {
 
         <WishlistButton
           product={product}
-          image={primaryImage}
+          image={cartImage}
           className="absolute top-2.5 right-2.5 z-10"
         />
 

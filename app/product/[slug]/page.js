@@ -201,6 +201,7 @@ export default async function ProductDetailPage({ params }) {
               <ProductMediaGallery
                 media={combinedMedia}
                 fallbackImage={meta.image}
+                secondaryFallbackImage={meta.image}
                 productName={product.name}
               />
               {product.tags?.includes("bestseller") && (

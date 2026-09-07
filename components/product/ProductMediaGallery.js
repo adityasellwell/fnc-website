@@ -9,6 +9,11 @@ export default function ProductMediaGallery({ media = [], fallbackImage, seconda
   const [activeIndex, setActiveIndex] = useState(0);
   const [isMuted, setIsMuted] = useState(true);
   const [fallbackErrored, setFallbackErrored] = useState(false);
+  // A ProductMedia row can itself point at a dead pre-Cloudinary path
+  // (legacy seed data) — without this, that broken URL wins outright
+  // with no recovery, since having media at all skips the fallback
+  // branch below entirely.
+  const [activeMediaErrored, setActiveMediaErrored] = useState(false);
 
   if (!media || media.length === 0) {
     // fallbackImage (the product's own, possibly-broken URL) is tried
@@ -36,7 +41,16 @@ export default function ProductMediaGallery({ media = [], fallbackImage, seconda
     );
   }
 
-  const activeItem = media[activeIndex];
+  const rawActiveItem = media[activeIndex];
+  const activeItem =
+    activeMediaErrored && rawActiveItem?.type === "IMAGE" && secondaryFallbackImage
+      ? { ...rawActiveItem, url: secondaryFallbackImage }
+      : rawActiveItem;
+
+  function selectIndex(idx) {
+    setActiveIndex(idx);
+    setActiveMediaErrored(false); // a different item may load fine even if this one didn't
+  }
 
   return (
     <div className="flex flex-col gap-4 w-full">
@@ -72,6 +86,7 @@ export default function ProductMediaGallery({ media = [], fallbackImage, seconda
               sizes="(min-width: 1024px) 45vw, 100vw"
               className="object-contain transition-all duration-300"
               priority
+              onError={() => setActiveMediaErrored(true)}
             />
             {activeItem.title && (
               <span className="absolute bottom-4 left-4 rounded-full bg-charcoal/80 text-white font-body text-xs font-semibold px-3 py-1.5 backdrop-blur-sm z-10">
@@ -89,7 +104,7 @@ export default function ProductMediaGallery({ media = [], fallbackImage, seconda
             <button
               key={item.id || idx}
               type="button"
-              onClick={() => setActiveIndex(idx)}
+              onClick={() => selectIndex(idx)}
               className={cn(
                 "relative h-20 w-20 flex-shrink-0 rounded-xl overflow-hidden border-2 bg-warmwhite transition-all",
                 activeIndex === idx ? "border-fnc-red scale-95" : "border-bordergray hover:border-slate"
