@@ -88,6 +88,13 @@ model Product {
   // path has moved to StoreInventory (tracked cleanup, not yet done).
   stock Int @default(0)
 
+  // Admin-only visibility switch — an inactive product is hidden from every
+  // public listing/detail page/search but still fully editable in the
+  // admin panel (e.g. seasonal items, or a product being prepped before
+  // launch). Distinct from stock-out (out of stock still shows, just
+  // can't be ordered); this hides it entirely.
+  isActive Boolean @default(true)
+
   storeInventory StoreInventory[]
   media          ProductMedia[]
   variants       ProductVariant[]

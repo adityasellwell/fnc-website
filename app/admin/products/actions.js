@@ -91,6 +91,9 @@ function parseProductForm(formData) {
     storageInstructions: formData.get("storageInstructions")?.toString().trim() ?? "",
     tags: tags ? tags.split(",").map((t) => t.trim()).filter(Boolean) : [],
     categoryId: formData.get("categoryId").toString(),
+    // Checkbox: present in the form data (any value) when checked, absent
+    // entirely when unchecked — never sends "false" itself.
+    isActive: formData.get("isActive") != null,
     videoUrl,
     nutrition,
     customAttributes: customAttributes.length > 0 ? customAttributes : null,
@@ -169,6 +172,32 @@ export async function deleteProductAction(id) {
   if (product) revalidatePath(`/product/${product.slug}`);
   revalidatePath("/");
   return { ok: true };
+}
+
+// Quick Active/Inactive flip from the products list — a raw scalar-only
+// update (not the full updateProduct service, which expects a plain form
+// payload, not a fetched product with relation objects attached) so it
+// can't accidentally clobber images/variants/etc. the way re-running the
+// whole edit form would.
+export async function toggleProductActiveAction(id, isActive) {
+  try {
+    const admin = await requireAdminUser();
+    if (admin.role.name !== "admin") {
+      return { error: "Unauthorized: Only super admins can change product visibility" };
+    }
+    const product = await db.product.update({
+      where: { id },
+      data: { isActive },
+      select: { slug: true },
+    });
+    revalidatePath("/admin/products");
+    revalidatePath("/shop", "layout");
+    revalidatePath(`/product/${product.slug}`);
+    revalidatePath("/");
+    return { ok: true };
+  } catch (err) {
+    return { error: err.message || "Failed to update product visibility" };
+  }
 }
 
 export async function updateStoreStockAction(productId, storeId, stock) {

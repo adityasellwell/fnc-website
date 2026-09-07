@@ -36,7 +36,9 @@ export async function GET(request, { params }) {
       },
     });
 
-    if (!product) {
+    // Not found and admin-deactivated read the same from a public caller's
+    // perspective — neither should be distinguishable from a bad slug.
+    if (!product || !product.isActive) {
       return NextResponse.json({ error: "Product not found" }, { status: 404 });
     }
 

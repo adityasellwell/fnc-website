@@ -8,6 +8,7 @@ import ConfirmDialog from "@/components/admin/ConfirmDialog";
 import ProductFormModal from "@/components/admin/ProductFormModal";
 import { createProductAction, updateProductAction, deleteProductAction } from "./actions";
 import StockAdjuster from "@/components/admin/StockAdjuster";
+import ActiveToggle from "@/components/admin/ActiveToggle";
 
 export default function ProductsClientPage({
   initialProducts,
@@ -102,6 +103,23 @@ export default function ProductsClientPage({
             },
           },
           { header: "Rating", accessor: (p) => `${(Number(p.rating) || 0).toFixed(1)} (${p.reviewCount ?? 0})` },
+          {
+            header: "Status",
+            accessor: (p) => {
+              const isSuperAdmin = currentUser?.role?.name === "admin";
+              // Store admins can see the current status but only a super
+              // admin can flip it — matches every other product-editing
+              // permission on this page.
+              if (!isSuperAdmin) {
+                return (
+                  <span className={p.isActive ? "text-fnc-green font-body text-xs font-semibold" : "text-slate font-body text-xs font-semibold"}>
+                    {p.isActive ? "Active" : "Inactive"}
+                  </span>
+                );
+              }
+              return <ActiveToggle productId={p.id} isActive={p.isActive} />;
+            },
+          },
           {
             header: "",
             className: "text-right",

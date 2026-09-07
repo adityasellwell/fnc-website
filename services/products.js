@@ -197,11 +197,10 @@ export async function deleteProduct(id) {
   if (orderCount > 0) {
     // Hard-deleting would corrupt real order history (OrderItem rows
     // pointing at a product that no longer exists) — refuse instead of
-    // silently breaking past orders. There's no "hide/archive" flag on
-    // Product yet; for now the admin's options are to edit stock to 0
-    // or remove it from its category, not delete it outright.
+    // silently breaking past orders. Use the Active/Inactive toggle to
+    // hide it from the storefront instead of deleting it outright.
     throw new Error(
-      "This product has order history and can't be deleted — it would break past orders' records. Set its stock to 0 instead to stop new sales."
+      "This product has order history and can't be deleted — it would break past orders' records. Set it to Inactive instead to hide it from the storefront."
     );
   }
 

@@ -137,14 +137,28 @@ export default function ProductFormModal({ trigger, categories, product, action,
             </div>
           )}
 
-          <div className="flex flex-col gap-1.5">
-            <label className="font-body text-xs font-semibold text-charcoal">Name <span className="text-fnc-red">*</span></label>
-            <input name="name" defaultValue={product?.name} required className={inputClasses} />
-            {product?.slug && (
-              <p className="font-body text-xs text-slate mt-0.5">
-                Page URL: <span className="font-mono text-charcoal bg-warmwhite px-1.5 py-0.5 rounded border border-bordergray">/product/{product.slug}</span>
-              </p>
-            )}
+          <div className="flex items-start justify-between gap-4">
+            <div className="flex flex-col gap-1.5 flex-1">
+              <label className="font-body text-xs font-semibold text-charcoal">Name <span className="text-fnc-red">*</span></label>
+              <input name="name" defaultValue={product?.name} required className={inputClasses} />
+              {product?.slug && (
+                <p className="font-body text-xs text-slate mt-0.5">
+                  Page URL: <span className="font-mono text-charcoal bg-warmwhite px-1.5 py-0.5 rounded border border-bordergray">/product/{product.slug}</span>
+                </p>
+              )}
+            </div>
+            <label className="flex items-center gap-2 shrink-0 pt-6 cursor-pointer select-none">
+              <input
+                type="checkbox"
+                name="isActive"
+                defaultChecked={product ? product.isActive !== false : true}
+                className="h-4 w-4 rounded border-bordergray text-fnc-green focus:ring-fnc-green accent-fnc-green"
+              />
+              <span className="font-body text-xs font-semibold text-charcoal">
+                Active
+                <span className="block font-normal text-[11px] text-slate">Visible on the live site</span>
+              </span>
+            </label>
           </div>
 
           <div className="grid sm:grid-cols-3 gap-4">

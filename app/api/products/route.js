@@ -34,7 +34,9 @@ export async function GET(request) {
 
   const { page, pageSize, category, tag, search } = parsed.data;
 
-  const where = {};
+  // Public API — never surface an admin-deactivated product here, same as
+  // every other public listing (see lib/data/products.js).
+  const where = { isActive: true };
   if (category) where.category = { slug: category };
   if (tag) where.tags = { has: tag };
   if (search) {
