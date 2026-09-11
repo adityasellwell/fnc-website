@@ -97,7 +97,7 @@ export default async function Footer() {
 
         <div className="mt-12 pt-8 border-t border-bordergray flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
           <p className="font-body text-sm font-bold text-charcoal">
-            © {new Date().getFullYear()} {BRAND.fullName}. All rights reserved.
+            © {new Date().getFullYear()} {BRAND.fullName}. ANC HOSPITALITY SERVICES LLP All rights reserved.
           </p>
           <div className="flex items-center gap-6">
             <a
