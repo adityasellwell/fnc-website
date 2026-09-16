@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { signInWithEmailAndPassword, signInWithPopup, GoogleAuthProvider, signOut, RecaptchaVerifier, signInWithPhoneNumber } from "firebase/auth";
+import { signInWithEmailAndPassword, signInWithPopup, GoogleAuthProvider, signOut, signInWithCustomToken } from "firebase/auth";
 import { auth } from "@/lib/firebase/client";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
@@ -21,7 +21,6 @@ export default function SignInForm() {
   const [phone, setPhone] = useState("");
   const [otp, setOtp] = useState("");
   const [otpSent, setOtpSent] = useState(false);
-  const [confirmationResult, setConfirmationResult] = useState(null);
   const [timer, setTimer] = useState(0);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
@@ -72,48 +71,39 @@ export default function SignInForm() {
     }
   };
 
-  const setupRecaptcha = () => {
-    if (window.recaptchaVerifier) return;
-    window.recaptchaVerifier = new RecaptchaVerifier(
-      auth,
-      "recaptcha-container",
-      {
-        size: "invisible",
-        callback: () => {},
-        "expired-callback": () => {},
-      }
-    );
-  };
-
+  // Sends the OTP through our own SMS gateway (never Firebase's phone
+  // auth — no reCAPTCHA badge, no Blaze billing, our own branded text).
   const handleSendOtp = async (e) => {
     e.preventDefault();
     setError("");
     setLoading(true);
 
     try {
-      setupRecaptcha();
-      const appVerifier = window.recaptchaVerifier;
       const cleanPhone = phone.replace(/\D/g, "");
       if (cleanPhone.length !== 10) {
         throw new Error("Please enter a valid 10-digit mobile number.");
       }
-      const formattedPhone = `+91${cleanPhone}`;
-      const confirmation = await signInWithPhoneNumber(auth, formattedPhone, appVerifier);
-      setConfirmationResult(confirmation);
+      const res = await fetch("/api/auth/phone-otp/send", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ phone: cleanPhone }),
+      });
+      const json = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(json.error || "Failed to send OTP. Please try again.");
+
       setOtpSent(true);
       setTimer(60);
     } catch (err) {
       console.error(err);
       setError(err.message || "Failed to send OTP. Please check the number and try again.");
-      if (window.recaptchaVerifier) {
-        window.recaptchaVerifier.clear();
-        window.recaptchaVerifier = null;
-      }
     } finally {
       setLoading(false);
     }
   };
 
+  // Verifies against our own stored code, then exchanges the resulting
+  // Firebase custom token for a real idToken — same session sync as
+  // every other sign-in method from here on.
   const handleVerifyOtp = async (e) => {
     e.preventDefault();
     setError("");
@@ -124,14 +114,21 @@ export default function SignInForm() {
       if (code.length !== 6) {
         throw new Error("Please enter a valid 6-digit OTP.");
       }
-      const result = await confirmationResult.confirm(code);
-      const user = result.user;
+      const cleanPhone = phone.replace(/\D/g, "");
+      const res = await fetch("/api/auth/phone-otp/verify", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ phone: cleanPhone, code }),
+      });
+      const json = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(json.error || "Invalid or expired OTP. Please try again.");
 
-      const idToken = await user.getIdToken();
+      const userCredential = await signInWithCustomToken(auth, json.customToken);
+      const idToken = await userCredential.user.getIdToken();
       await syncSession(idToken);
     } catch (err) {
       console.error(err);
-      setError("Invalid or expired OTP. Please try again.");
+      setError(err.message || "Invalid or expired OTP. Please try again.");
     } finally {
       setLoading(false);
     }
@@ -199,9 +196,6 @@ export default function SignInForm() {
         Sign in to your F&amp;C account to track orders and save addresses.
       </p>
 
-      {/* Tabs — phone auth is disabled for now (no Firebase Blaze billing set
-          up for SMS yet), so this only renders the switcher once there's
-          actually more than one tab to switch between. */}
       {PHONE_AUTH_ENABLED && (
         <div className="flex border-b border-bordergray mb-6">
           <button
@@ -230,8 +224,6 @@ export default function SignInForm() {
           {error}
         </div>
       )}
-
-      <div id="recaptcha-container"></div>
 
       {!PHONE_AUTH_ENABLED || activeTab === "email" ? (
         <form onSubmit={handleEmailSignIn} className="flex flex-col gap-4">

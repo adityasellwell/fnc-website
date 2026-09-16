@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { createUserWithEmailAndPassword, signOut, updateProfile, RecaptchaVerifier, signInWithPhoneNumber } from "firebase/auth";
+import { createUserWithEmailAndPassword, signOut, updateProfile, signInWithCustomToken } from "firebase/auth";
 import { auth } from "@/lib/firebase/client";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
@@ -21,7 +21,6 @@ export default function SignUpForm() {
 
   const [otp, setOtp] = useState("");
   const [otpSent, setOtpSent] = useState(false);
-  const [confirmationResult, setConfirmationResult] = useState(null);
   const [timer, setTimer] = useState(0);
 
   const [loading, setLoading] = useState(false);
@@ -93,43 +92,31 @@ export default function SignUpForm() {
     }
   };
 
-  const setupRecaptcha = () => {
-    if (window.recaptchaVerifier) return;
-    window.recaptchaVerifier = new RecaptchaVerifier(
-      auth,
-      "recaptcha-container",
-      {
-        size: "invisible",
-        callback: () => {},
-        "expired-callback": () => {},
-      }
-    );
-  };
-
+  // Sends the OTP through our own SMS gateway (never Firebase's phone
+  // auth — no reCAPTCHA badge, no Blaze billing, our own branded text).
   const handleSendOtp = async (e) => {
     e.preventDefault();
     setError("");
     setLoading(true);
 
     try {
-      setupRecaptcha();
-      const appVerifier = window.recaptchaVerifier;
       const cleanPhone = phone.replace(/\D/g, "");
       if (cleanPhone.length !== 10) {
         throw new Error("Please enter a valid 10-digit mobile number.");
       }
-      const formattedPhone = `+91${cleanPhone}`;
-      const confirmation = await signInWithPhoneNumber(auth, formattedPhone, appVerifier);
-      setConfirmationResult(confirmation);
+      const res = await fetch("/api/auth/phone-otp/send", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ phone: cleanPhone }),
+      });
+      const json = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(json.error || "Failed to send OTP. Please try again.");
+
       setOtpSent(true);
       setTimer(60);
     } catch (err) {
       console.error(err);
       setError(err.message || "Failed to send OTP. Please check the number and try again.");
-      if (window.recaptchaVerifier) {
-        window.recaptchaVerifier.clear();
-        window.recaptchaVerifier = null;
-      }
     } finally {
       setLoading(false);
     }
@@ -145,30 +132,26 @@ export default function SignUpForm() {
       if (code.length !== 6) {
         throw new Error("Please enter a valid 6-digit OTP.");
       }
-      const result = await confirmationResult.confirm(code);
-      const user = result.user;
+      const cleanPhone = phone.replace(/\D/g, "");
+      const verifyRes = await fetch("/api/auth/phone-otp/verify", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ phone: cleanPhone, code }),
+      });
+      const verifyJson = await verifyRes.json().catch(() => ({}));
+      if (!verifyRes.ok) throw new Error(verifyJson.error || "Invalid or expired OTP. Please try again.");
 
-      // Update name profile in Firebase
+      const userCredential = await signInWithCustomToken(auth, verifyJson.customToken);
+      const user = userCredential.user;
+
+      // Name has nowhere else to land for a phone-only account — set it
+      // directly on the Firebase profile so getOrCreateCustomerForFirebaseUser
+      // picks it up from the ID token's `name` claim.
       if (name.trim()) {
         await updateProfile(user, { displayName: name });
       }
 
-      // Sync customer record
-      const cleanPhone = phone.replace(/\D/g, "");
-      const formattedPhone = `+91${cleanPhone}`;
-      const idToken = await user.getIdToken();
-      
-      const registerRes = await fetch("/api/auth/register-profile", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ idToken, phone: formattedPhone, name: name || "F&C Customer" }),
-      });
-
-      if (!registerRes.ok) {
-        throw new Error("Failed to register customer profile.");
-      }
-
-      // Sync session with backend
+      const idToken = await user.getIdToken(true); // force refresh so the new displayName is in the claims
       const sessionRes = await fetch("/api/auth/session", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -247,9 +230,6 @@ export default function SignUpForm() {
         Register to save addresses and track your fresh protein orders.
       </p>
 
-      {/* Tabs — phone auth is disabled for now (no Firebase Blaze billing set
-          up for SMS yet), so this only renders the switcher once there's
-          actually more than one tab to switch between. */}
       {PHONE_AUTH_ENABLED && (
         <div className="flex border-b border-bordergray mb-6">
           <button
@@ -278,8 +258,6 @@ export default function SignUpForm() {
           {error}
         </div>
       )}
-
-      <div id="recaptcha-container"></div>
 
       {!PHONE_AUTH_ENABLED || activeTab === "email" ? (
         <form onSubmit={handleEmailSignUp} className="flex flex-col gap-4">

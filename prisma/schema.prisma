@@ -337,6 +337,21 @@ model Customer {
   updatedAt DateTime @updatedAt
 }
 
+// Short-lived login OTP for phone-number sign-in — sent via our own SMS
+// gateway (lib/sms.js), never Firebase's. A row is deleted the moment it's
+// successfully verified; expired/abandoned rows are harmless clutter (not
+// worth a cleanup job for login-volume data like this).
+model PhoneOtp {
+  id        String   @id @default(cuid())
+  phone     String // bare 10-digit Indian mobile number
+  code      String // 6-digit numeric OTP
+  attempts  Int      @default(0)
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  @@index([phone])
+}
+
 model Address {
   id         String   @id @default(cuid())
   customer   Customer @relation(fields: [customerId], references: [id])
