@@ -1,6 +1,12 @@
 import { db } from "@/lib/db";
 import { initiateRazorpayRefund } from "@/services/payment";
 import { sendReviewRequestEmail, sendOrderStatusUpdateEmail } from "@/lib/email";
+import { sendSms } from "@/lib/sms";
+import { BRAND } from "@/lib/constants";
+
+function appUrl() {
+  return process.env.NEXT_PUBLIC_APP_URL || "https://fncmumbai.com";
+}
 
 const PAGE_SIZE = 10;
 
@@ -80,6 +86,25 @@ export async function updateOrderStatus(orderId, status, changedById) {
       sendOrderStatusUpdateEmail(order.customer, { ...order, status }, status);
     }
   }
+  if (isNewStatus && order?.customer?.phone) {
+    const phone = order.customer.phone;
+    if (status === "PREPARING") {
+      sendSms("ORDER_PACKED", phone, { orderId }).catch(() => {});
+    } else if (status === "OUT_FOR_DELIVERY") {
+      sendSms("OUT_FOR_DELIVERY", phone, {
+        orderId,
+        riderName: order.riderName || "our delivery partner",
+        otp: order.deliveryOtp || "----",
+      }).catch(() => {});
+    } else if (status === "DELIVERED") {
+      sendSms("DELIVERED", phone, {
+        orderId,
+        url: `${appUrl()}/account/orders/${orderId}`,
+      }).catch(() => {});
+    } else if (status === "CANCELLED") {
+      sendSms("ORDER_CANCELLED", phone, { orderId, contact: BRAND.phone }).catch(() => {});
+    }
+  }
 
   return result;
 }
@@ -153,6 +178,7 @@ export async function cancelOrder(orderId, customerId) {
       total: true,
       razorpayPaymentId: true,
       storeId: true,
+      customer: { select: { phone: true } },
     },
   });
 
@@ -176,7 +202,7 @@ export async function cancelOrder(orderId, customerId) {
   }
 
   // DB update only after Razorpay succeeds (or if no payment was made)
-  return db.$transaction(async (tx) => {
+  const result = await db.$transaction(async (tx) => {
     const updated = await tx.order.update({
       where: { id: orderId },
       data: {
@@ -217,6 +243,16 @@ export async function cancelOrder(orderId, customerId) {
     }
     return { ...updated, razorpayRefundId };
   });
+
+  // Fire-and-forget, outside the transaction.
+  if (order.customer?.phone) {
+    sendSms("ORDER_CANCELLED", order.customer.phone, { orderId, contact: BRAND.phone }).catch(() => {});
+    if (razorpayRefundId) {
+      sendSms("REFUND_INITIATED", order.customer.phone, { amount: order.total, orderId }).catch(() => {});
+    }
+  }
+
+  return result;
 }
 
 /**

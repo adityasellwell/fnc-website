@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { verifyWebhookSignature, createPaymentAuditLog } from "@/services/payment";
 import { sendOrderConfirmedEmail } from "@/lib/email";
+import { sendSms } from "@/lib/sms";
 
 export async function POST(request) {
   const rawBody = await request.text();
@@ -110,6 +111,14 @@ export async function POST(request) {
       console.log(`[Razorpay Webhook] Order ${order.id} marked as PAID & CONFIRMED`);
       if (order.customer?.email) {
         sendOrderConfirmedEmail(order.customer, order);
+      }
+      if (order.customer?.phone) {
+        sendSms("ORDER_CONFIRMED", order.customer.phone, {
+          name: order.customer.name || "there",
+          orderId: order.id,
+          amount: order.total,
+          url: `${process.env.NEXT_PUBLIC_APP_URL || "https://fncmumbai.com"}/account/orders/${order.id}`,
+        }).catch(() => {});
       }
       return NextResponse.json({ message: "Payment processed successfully" }, { status: 200 });
     }

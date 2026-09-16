@@ -1,5 +1,6 @@
 import { db } from "@/lib/db";
 import { initiateRazorpayRefund } from "@/services/payment";
+import { sendSms } from "@/lib/sms";
 
 /** Statuses where a refund request is allowed (kitchen has started or order delivered) */
 const REFUNDABLE_ORDER_STATUSES = [
@@ -137,6 +138,7 @@ export async function processRefundRequest(refundId, decision, adminNotes, admin
           razorpayPaymentId: true,
           storeId: true,
           paymentStatus: true,
+          customer: { select: { phone: true } },
         },
       },
     },
@@ -198,8 +200,8 @@ export async function processRefundRequest(refundId, decision, adminNotes, admin
   }
 
   // Razorpay succeeded — now atomically update DB
-  return db.$transaction(async (tx) => {
-    const updated = await tx.refundRequest.update({
+  const updated = await db.$transaction(async (tx) => {
+    const result = await tx.refundRequest.update({
       where: { id: refundId },
       data: {
         status: "REFUNDED",
@@ -229,6 +231,17 @@ export async function processRefundRequest(refundId, decision, adminNotes, admin
       },
     });
 
-    return updated;
+    return result;
   });
+
+  // Fire-and-forget, outside the transaction — an SMS failure must never
+  // roll back a refund that's already been processed with Razorpay.
+  if (refund.order.customer?.phone) {
+    sendSms("REFUND_INITIATED", refund.order.customer.phone, {
+      amount: amountToRefund,
+      orderId: refund.orderId,
+    }).catch(() => {});
+  }
+
+  return updated;
 }
