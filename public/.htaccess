@@ -1,0 +1,15 @@
+# F&C — Hostinger Apache / LiteSpeed reverse proxy to the Node.js app.
+#
+# Unconditionally proxies every request to the standalone Next.js server —
+# including static assets (CSS/JS/images). A previous version of this file
+# tried to have Apache serve static files directly if they "exist" on disk
+# (RewriteCond ... -f/-d), which never matched: public/ and .next/static/
+# live nested inside .next/standalone/, not at this directory's own path,
+# so every static request 500'd. The Node server itself already serves
+# public/ and .next/static/ correctly (verified directly) — Apache's only
+# job here is to hand every request to it, nothing more.
+<IfModule mod_rewrite.c>
+  RewriteEngine On
+  RewriteBase /
+  RewriteRule ^(.*)$ http://127.0.0.1:3000/$1 [P,L]
+</IfModule>

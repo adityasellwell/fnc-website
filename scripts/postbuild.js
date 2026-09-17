@@ -4,6 +4,7 @@ const path = require("path");
 
 const rootDir = path.resolve(__dirname, "..");
 const nextDir = path.join(rootDir, ".next");
+const publicHtaccess = path.join(rootDir, "public", ".htaccess");
 const rootHtaccess = path.join(rootDir, ".htaccess");
 
 console.log("> Running postbuild output directory verification...");
@@ -33,25 +34,17 @@ if (fs.existsSync(standaloneDir)) {
   console.warn("> .next/standalone/ not found — skipping standalone static asset copy (not using standalone output?).");
 }
 
-// A previous deploy added a root .htaccess with an Apache/LiteSpeed
-// reverse-proxy rewrite rule, meant to route static assets to the Node
-// process. It backfired: Hostinger's own hcdn layer already proxies
-// every request (dynamic AND static) straight to the standalone server
-// with zero config needed — confirmed by dynamic pages never touching
-// LiteSpeed at all (no X-Turbo-Charged-By header) while static asset
-// requests got intercepted by LiteSpeed's own static-file handler
-// because of this file, which 500'd on every one of them (the rewrite's
-// -f/-d file-exists check never matches real paths on disk, since
-// public/ and .next/static/ are nested inside .next/standalone/, not at
-// the project root). Actively removing any copy left over from that
-// build so a stale one doesn't linger on the server between deploys.
-if (fs.existsSync(rootHtaccess)) {
-  try {
-    fs.unlinkSync(rootHtaccess);
-    console.log("> Removed stale root .htaccess (was breaking static asset routing).");
-  } catch (err) {
-    console.warn("> Could not remove root .htaccess:", err.message);
-  }
+// Hostinger's Node.js App hosting DOES need a root .htaccess to proxy
+// requests to the standalone server on this particular setup — removing
+// it entirely (tried once) took the whole domain down with a 403 instead
+// of just fixing static assets. public/.htaccess now proxies EVERYTHING
+// unconditionally (no more "serve static files directly" shortcut, which
+// is what was actually broken — see the comment in that file).
+if (fs.existsSync(publicHtaccess)) {
+  fs.copyFileSync(publicHtaccess, rootHtaccess);
+  console.log("> Copied public/.htaccess to root (proxies all requests, including static, to the Node process).");
+} else {
+  console.warn("> public/.htaccess not found — skipping.");
 }
 
 // Hostinger's git deployment runner autodetected 'Create React App' framework and checks for a 'build' directory.
@@ -69,4 +62,4 @@ targetDirs.forEach((dir) => {
   }
 });
 
-console.log("> Postbuild check complete: .next, build, out directories verified, standalone static assets copied, stale .htaccess removed.");
+console.log("> Postbuild check complete: .next, build, out directories verified, standalone static assets copied, .htaccess in place.");
