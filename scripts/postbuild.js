@@ -1,4 +1,4 @@
-// scripts/postbuild.js — ensures output directories exist for Hostinger / deployment runners
+// scripts/postbuild.js — verifies .next build output directory exists
 const fs = require("fs");
 const path = require("path");
 
@@ -15,19 +15,15 @@ if (!fs.existsSync(nextDir)) {
   process.exit(1);
 }
 
-// Hostinger hbuilds or other host platforms might be configured to expect 'out', 'dist', or 'build'.
-// We ensure fallback directories exist so deployment runners never fail with "No output directory found after build".
-const dirsToEnsure = [outDir, distDir, buildDir];
-
-dirsToEnsure.forEach((dir) => {
-  if (!fs.existsSync(dir)) {
-    fs.mkdirSync(dir, { recursive: true });
-    // Place a placeholder marker or copy index if needed
-    fs.writeFileSync(
-      path.join(dir, "index.html"),
-      "<!DOCTYPE html><html><head><title>F&C App</title></head><body>Server App Ready</body></html>"
-    );
+// Clean up any static placeholder index.html files so Nginx/Apache reverse proxies
+// pass requests through to Next.js server.js instead of serving a static html file.
+[outDir, distDir, buildDir].forEach((dir) => {
+  const htmlFile = path.join(dir, "index.html");
+  if (fs.existsSync(htmlFile)) {
+    try {
+      fs.unlinkSync(htmlFile);
+    } catch (_) {}
   }
 });
 
-console.log("> Postbuild check complete: .next, out, dist, and build directories are verified.");
+console.log("> Postbuild check complete: .next build directory verified successfully.");
