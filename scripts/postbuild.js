@@ -14,6 +14,26 @@ if (!fs.existsSync(nextDir)) {
   process.exit(1);
 }
 
+// next.config.mjs sets output: "standalone" — that mode produces a
+// minimal server in .next/standalone/ that does NOT include static
+// assets by default (this is documented, required Next.js behavior, not
+// a Hostinger quirk). Without this copy, the standalone server has no
+// public/ or .next/static/ on disk at all, so EVERY CSS/JS/image request
+// 500s even though page HTML still renders fine — exactly the "site
+// loads but completely unstyled, no images" symptom this was causing.
+const standaloneDir = path.join(nextDir, "standalone");
+if (fs.existsSync(standaloneDir)) {
+  fs.cpSync(path.join(rootDir, "public"), path.join(standaloneDir, "public"), {
+    recursive: true,
+  });
+  fs.cpSync(path.join(nextDir, "static"), path.join(standaloneDir, ".next", "static"), {
+    recursive: true,
+  });
+  console.log("> Copied public/ and .next/static/ into .next/standalone/ (required for output: \"standalone\").");
+} else {
+  console.warn("> .next/standalone/ not found — skipping standalone static asset copy (not using standalone output?).");
+}
+
 // Copy public/.htaccess to root if not present for Apache/LiteSpeed routing
 if (fs.existsSync(publicHtaccess) && !fs.existsSync(rootHtaccess)) {
   try {
