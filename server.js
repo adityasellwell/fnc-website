@@ -15,6 +15,12 @@ const port = parseInt(process.env.PORT || "3000", 10);
 // migrations were never applied. Logged loudly but non-fatal: if this
 // fails, the site still boots and serves mock data rather than crashing.
 if (!dev) {
+  if (process.platform !== "win32") {
+    try {
+      execSync("chmod -R +x node_modules/@prisma/engines node_modules/.bin 2>/dev/null || true", { stdio: "ignore" });
+    } catch (_) {}
+  }
+
   try {
     console.log("> Applying Prisma migrations...");
     execSync("npx prisma migrate deploy", { stdio: "inherit" });

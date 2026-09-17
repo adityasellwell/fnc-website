@@ -1,13 +1,15 @@
-// scripts/predeploy.js — applies pending Prisma migrations and seeds the DB
-// before the Next.js build, when a database happens to be reachable (e.g.
-// Hostinger's build environment). Every step is non-fatal: if the DB is
-// unreachable (e.g. local dev, no MySQL running), this logs a warning and
-// exits 0 so `next build` still runs and falls back to the mock data
-// already built into lib/data/*.js. Written in plain Node (no shell `&&`/
-// `||`/parens) so it behaves identically under cmd.exe (Windows/local) and
-// bash/sh (Hostinger/Linux) — mixing shell operators across those two was
-// the previous approach and broke on Windows.
+// scripts/predeploy.js — applies pending Prisma migrations before Next.js build
 const { execSync } = require("child_process");
+
+// Fix executable permissions on Linux/macOS build servers (Hostinger hbuilds)
+// to prevent EACCES errors when Prisma engines run.
+if (process.platform !== "win32") {
+  try {
+    execSync("chmod -R +x node_modules/@prisma/engines node_modules/.bin 2>/dev/null || true", { stdio: "ignore" });
+  } catch (_) {
+    // Ignore permission errors if chmod isn't permitted
+  }
+}
 
 function run(command, label) {
   try {
