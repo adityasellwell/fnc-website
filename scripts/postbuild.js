@@ -34,21 +34,14 @@ if (fs.existsSync(standaloneDir)) {
   console.warn("> .next/standalone/ not found — skipping standalone static asset copy (not using standalone output?).");
 }
 
-// Hostinger's Node.js App hosting DOES need a root .htaccess to proxy
-// requests to the standalone server on this particular setup — removing
-// it entirely (tried once) took the whole domain down with a 403 instead
-// of just fixing static assets. public/.htaccess now proxies EVERYTHING
-// unconditionally (no more "serve static files directly" shortcut, which
-// is what was actually broken — see the comment in that file).
-if (fs.existsSync(publicHtaccess)) {
-  fs.copyFileSync(publicHtaccess, rootHtaccess);
-  console.log("> Copied public/.htaccess to root (proxies all requests, including static, to the Node process).");
-} else {
-  console.warn("> public/.htaccess not found — skipping.");
-}
-
-// Hostinger's git deployment runner autodetected 'Create React App' framework and checks for a 'build' directory.
-// We ensure 'build' and 'out' directories exist and contain build artifacts so Hostinger's output check passes cleanly.
+// Hostinger's git deployment runner autodetected 'Create React App' framework
+// and checks for a 'build' directory — and critically, Hostinger's actual
+// public_html for this domain is MAPPED TO one of these folders (confirmed:
+// public_html contained only the .build-ok marker this creates, nothing
+// from the real app). Every earlier .htaccess placed at the repo root
+// never had any effect live for exactly this reason — it wasn't in the
+// directory actually being served. .htaccess now goes in both, alongside
+// the marker, since that's the one place proven to reach the live site.
 const targetDirs = [path.join(rootDir, "build"), path.join(rootDir, "out")];
 
 targetDirs.forEach((dir) => {
@@ -60,6 +53,18 @@ targetDirs.forEach((dir) => {
   if (!fs.existsSync(buildMarker)) {
     fs.writeFileSync(buildMarker, `Build verified at ${new Date().toISOString()}`);
   }
+  if (fs.existsSync(publicHtaccess)) {
+    fs.copyFileSync(publicHtaccess, path.join(dir, ".htaccess"));
+  }
 });
+
+// Also keep a copy at the repo root in case Hostinger's mapping changes
+// or differs from what we've observed — harmless either way.
+if (fs.existsSync(publicHtaccess)) {
+  fs.copyFileSync(publicHtaccess, rootHtaccess);
+  console.log("> Copied public/.htaccess into build/, out/, and repo root.");
+} else {
+  console.warn("> public/.htaccess not found — skipping.");
+}
 
 console.log("> Postbuild check complete: .next, build, out directories verified, standalone static assets copied, .htaccess in place.");
