@@ -326,6 +326,11 @@ model Customer {
   email   String?  @unique
   phone   String?
 
+  // Set by the win-back cron job (app/api/cron/marketing-sms) after
+  // texting an inactive customer — throttles resends to at most once per
+  // run cycle rather than every time the job fires.
+  lastWinBackSmsAt DateTime?
+
   // §7's "addresses[]" resolved into a proper relation — checkout needs
   // structured fields (street/city/pincode/default-flag), not a raw array.
   addresses Address[]
@@ -455,6 +460,11 @@ model Order {
   // in their portal to confirm handoff — generated once a partner is
   // assigned, cleared once delivered.
   deliveryOtp       String?
+
+  // Set once the abandoned-checkout cron job (app/api/cron/marketing-sms)
+  // has texted this order's customer — stops it from re-sending the same
+  // reminder every time the job runs.
+  cartReminderSentAt DateTime?
 
   statusHistory OrderStatusHistory[]
 
