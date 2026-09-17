@@ -1,12 +1,11 @@
-// scripts/postbuild.js — verifies .next build output directory exists
+// scripts/postbuild.js — verifies .next build output directory and htaccess routing
 const fs = require("fs");
 const path = require("path");
 
 const rootDir = path.resolve(__dirname, "..");
 const nextDir = path.join(rootDir, ".next");
-const outDir = path.join(rootDir, "out");
-const distDir = path.join(rootDir, "dist");
-const buildDir = path.join(rootDir, "build");
+const publicHtaccess = path.join(rootDir, "public", ".htaccess");
+const rootHtaccess = path.join(rootDir, ".htaccess");
 
 console.log("> Running postbuild output directory verification...");
 
@@ -15,15 +14,15 @@ if (!fs.existsSync(nextDir)) {
   process.exit(1);
 }
 
-// Clean up any static placeholder index.html files so Nginx/Apache reverse proxies
-// pass requests through to Next.js server.js instead of serving a static html file.
-[outDir, distDir, buildDir].forEach((dir) => {
-  const htmlFile = path.join(dir, "index.html");
-  if (fs.existsSync(htmlFile)) {
-    try {
-      fs.unlinkSync(htmlFile);
-    } catch (_) {}
+// Copy public/.htaccess to root if not present, to ensure Hostinger's Apache/LiteSpeed web server
+// routes incoming requests correctly without throwing 404/500/htaccess errors.
+if (fs.existsSync(publicHtaccess) && !fs.existsSync(rootHtaccess)) {
+  try {
+    fs.copyFileSync(publicHtaccess, rootHtaccess);
+    console.log("> Copied public/.htaccess to root for Hostinger web server compatibility.");
+  } catch (err) {
+    console.warn("> Could not copy .htaccess to root:", err.message);
   }
-});
+}
 
-console.log("> Postbuild check complete: .next build directory verified successfully.");
+console.log("> Postbuild check complete: .next build directory and .htaccess verified successfully.");
