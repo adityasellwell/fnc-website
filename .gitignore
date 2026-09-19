@@ -52,3 +52,6 @@ AGENTS.md
 Project-Instructions.md
 README.md
 .claude/skills/
+
+# Local DB backups contain customer data — never commit
+db_backup_*/

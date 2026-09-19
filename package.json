@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "build": "prisma generate && node scripts/predeploy.js && next build && node scripts/postbuild.js",
+    "build": "prisma generate && node scripts/predeploy.js && next build",
     "start": "next start",
     "lint": "eslint"
   },
@@ -38,8 +38,7 @@
     "eslint": "^9",
     "eslint-config-next": "16.2.11"
   },
-  "overrides": {
-    "uuid": "^11.1.0",
-    "glob": "^11.0.0"
+  "prisma": {
+    "seed": "node prisma/seed.js"
   }
 }
