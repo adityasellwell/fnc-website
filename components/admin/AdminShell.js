@@ -66,7 +66,7 @@ export default function AdminShell({ user, nav, children }) {
     };
 
     fetchCounts();
-    const interval = setInterval(fetchCounts, 15000);
+    const interval = setInterval(fetchCounts, 45000);
     return () => {
       isMounted = false;
       clearInterval(interval);
