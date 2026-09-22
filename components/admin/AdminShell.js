@@ -51,6 +51,34 @@ const ICONS = {
 export default function AdminShell({ user, nav, children }) {
   const pathname = usePathname();
   const [collapsed, setCollapsed] = useState(false);
+  const [counts, setCounts] = useState({ orders: 0, refunds: 0, inquiries: 0 });
+
+  useEffect(() => {
+    let isMounted = true;
+    const fetchCounts = async () => {
+      try {
+        const res = await fetch("/api/admin/notifications/counts");
+        if (res.ok) {
+          const data = await res.json();
+          if (isMounted) setCounts(data);
+        }
+      } catch (err) {}
+    };
+
+    fetchCounts();
+    const interval = setInterval(fetchCounts, 15000);
+    return () => {
+      isMounted = false;
+      clearInterval(interval);
+    };
+  }, []);
+
+  const getBadge = (href) => {
+    if (href === "/admin/orders" && counts.orders > 0) return counts.orders;
+    if (href === "/admin/refunds" && counts.refunds > 0) return counts.refunds;
+    if (href === "/admin/inquiries" && counts.inquiries > 0) return counts.inquiries;
+    return null;
+  };
 
   return (
     <div className="h-screen overflow-hidden flex bg-warmwhite">
@@ -71,17 +99,27 @@ export default function AdminShell({ user, nav, children }) {
           {nav.map(({ href, label, icon }) => {
             const Icon = ICONS[icon];
             const active = href === "/admin" ? pathname === "/admin" : (pathname === href || pathname.startsWith(`${href}/`));
+            const badgeCount = getBadge(href);
             return (
               <Link
                 key={href}
                 href={href}
-                title={collapsed ? label : undefined}
-                className={`flex items-center gap-3 px-3.5 py-2.5 rounded-xl font-body text-sm font-medium transition-colors ${
+                title={collapsed ? `${label} ${badgeCount ? `(${badgeCount})` : ""}` : undefined}
+                className={`flex items-center gap-3 px-3.5 py-2.5 rounded-xl font-body text-sm font-medium transition-colors relative ${
                   active ? "bg-fnc-red text-white" : "text-white/80 hover:bg-white/10 hover:text-white"
                 }`}
               >
                 <Icon className="h-4.5 w-4.5 shrink-0" />
-                {!collapsed && <span className="truncate">{label}</span>}
+                {!collapsed && <span className="truncate flex-1">{label}</span>}
+                {badgeCount !== null && (
+                  <span
+                    className={`h-5 min-w-[20px] px-1.5 rounded-full text-xs font-bold flex items-center justify-center ${
+                      active ? "bg-white text-fnc-red" : "bg-fnc-red text-white"
+                    }`}
+                  >
+                    {badgeCount}
+                  </span>
+                )}
               </Link>
             );
           })}
@@ -126,6 +164,7 @@ export default function AdminShell({ user, nav, children }) {
           {nav.map(({ href, label, icon }) => {
             const Icon = ICONS[icon];
             const active = pathname === href || pathname.startsWith(`${href}/`);
+            const badgeCount = getBadge(href);
             return (
               <Link
                 key={href}
@@ -136,6 +175,11 @@ export default function AdminShell({ user, nav, children }) {
               >
                 <Icon className="h-3.5 w-3.5" />
                 {label}
+                {badgeCount !== null && (
+                  <span className="ml-1 px-1.5 py-0.5 rounded-full text-[10px] font-extrabold bg-fnc-red text-white">
+                    {badgeCount}
+                  </span>
+                )}
               </Link>
             );
           })}

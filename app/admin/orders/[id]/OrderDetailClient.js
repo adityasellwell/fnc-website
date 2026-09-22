@@ -35,29 +35,38 @@ export default function OrderDetailClient({ order, currentUser, availablePartner
   const [refundAmount, setRefundAmount] = useState(order.total || "");
   const [refundReason, setRefundReason] = useState("");
   const [showRefundForm, setShowRefundForm] = useState(false);
+  const [toast, setToast] = useState(null); // { message, type }
+
+  const showToast = (message, type = "success") => {
+    setToast({ message, type });
+    setTimeout(() => setToast(null), 4000);
+  };
 
   const nextStatus = getNextStatus(order.status, order.fulfillmentType);
-  // Order only stores the final `total` — subtotal/delivery-fee/discount
-  // breakdowns were never persisted per-line, so subtotal is recomputed
-  // from items (the one piece we do have) rather than reading fields that
-  // don't exist on the Order model.
   const itemsSubtotal = order.items.reduce((sum, item) => sum + Number(item.unitPrice) * item.quantity, 0);
   const gstBreakdown = splitOrderGst(order.items);
 
   const handleAdvanceStatus = () => {
     if (!nextStatus) return;
     if (order.fulfillmentType === "DELIVERY" && nextStatus === "OUT_FOR_DELIVERY" && !order.deliveryPartnerId) {
-      alert("Please assign a delivery rider below before marking this order as Out for Delivery.");
+      showToast("Please assign a delivery rider below before marking this order as Out for Delivery.", "error");
       return;
     }
-    if (confirm(`Advance order status to "${getStatusLabel(nextStatus)}"?`)) {
-      startTransition(() => advanceOrderStatusAction(order.id, order.status, order.fulfillmentType));
+    const label = getStatusLabel(nextStatus);
+    if (confirm(`Advance order status to "${label}"?`)) {
+      startTransition(async () => {
+        await advanceOrderStatusAction(order.id, order.status, order.fulfillmentType);
+        showToast(`Order status updated to "${label}"!`, "success");
+      });
     }
   };
 
   const handleCancelOrder = () => {
     if (confirm("Are you sure you want to cancel this order?")) {
-      startTransition(() => cancelOrderAction(order.id));
+      startTransition(async () => {
+        await cancelOrderAction(order.id);
+        showToast("Order has been cancelled.", "error");
+      });
     }
   };
 
@@ -65,7 +74,7 @@ export default function OrderDetailClient({ order, currentUser, availablePartner
     e.preventDefault();
     startTransition(async () => {
       await updatePackingNotesAction(order.id, packingNotes);
-      alert("Packing notes saved!");
+      showToast("Store packing & pickup notes saved successfully!", "success");
     });
   };
 
@@ -74,7 +83,7 @@ export default function OrderDetailClient({ order, currentUser, availablePartner
     if (!selectedPartnerId) return;
     startTransition(async () => {
       await assignDeliveryPartnerAction(order.id, selectedPartnerId);
-      alert("Delivery partner assigned — a handoff OTP has been generated for the customer.");
+      showToast("Delivery rider assigned — Handoff OTP generated!", "success");
     });
   };
 
@@ -82,7 +91,7 @@ export default function OrderDetailClient({ order, currentUser, availablePartner
     e.preventDefault();
     startTransition(async () => {
       await createRefundAction(order.id, refundAmount, refundReason);
-      alert("Refund request created!");
+      showToast("Refund request created successfully!", "success");
       setShowRefundForm(false);
     });
   };
@@ -127,6 +136,20 @@ export default function OrderDetailClient({ order, currentUser, availablePartner
           }
         }
       `}</style>
+
+      {/* Toast Notification Banner */}
+      {toast && (
+        <div
+          className={`fixed top-6 right-6 z-50 px-5 py-3.5 rounded-2xl shadow-xl font-body text-sm font-semibold flex items-center gap-3 animate-in fade-in slide-in-from-top-4 duration-300 ${
+            toast.type === "error"
+              ? "bg-fnc-red text-white"
+              : "bg-charcoal text-white border border-white/10"
+          }`}
+        >
+          {toast.type === "error" ? <AlertCircle className="h-5 w-5 shrink-0" /> : <CheckCircle className="h-5 w-5 text-fnc-green shrink-0" />}
+          <span>{toast.message}</span>
+        </div>
+      )}
 
       {/* Breadcrumb / Top bar */}
       <div className="flex flex-wrap items-center justify-between gap-4 print:hidden">
@@ -210,17 +233,28 @@ export default function OrderDetailClient({ order, currentUser, availablePartner
             </div>
           </div>
 
-          {/* Packing Notes & Instructions */}
+          {/* Packing Notes & Pickup Instructions */}
           <div className="bg-white border border-bordergray rounded-3xl p-6">
-            <h2 className="font-display text-base font-bold text-charcoal mb-4 flex items-center gap-2">
+            <h2 className="font-display text-base font-bold text-charcoal mb-1 flex items-center gap-2">
               <Clock className="h-5 w-5 text-fnc-red" />
-              Store Packing Notes
+              {order.fulfillmentType === "PICKUP"
+                ? "Store Pickup & Collection Notes"
+                : "Store Packing Notes"}
             </h2>
+            <p className="font-body text-xs text-slate mb-4">
+              {order.fulfillmentType === "PICKUP"
+                ? "Add counter location or collection instructions for the customer (e.g. 'Ready at Store Counter #2, Thane West')."
+                : "Add special instructions, substitute details, or packaging status notes for store staff."}
+            </p>
             <form onSubmit={handleSavePackingNotes} className="flex flex-col gap-3">
               <textarea
                 value={packingNotes}
                 onChange={(e) => setPackingNotes(e.target.value)}
-                placeholder="Add special instructions, substitute details, or packaging status notes for the store staff..."
+                placeholder={
+                  order.fulfillmentType === "PICKUP"
+                    ? "Enter store pickup notes or collection counter details..."
+                    : "Add special instructions, substitute details, or packaging status notes..."
+                }
                 disabled={pending}
                 className="w-full min-h-[100px] p-3.5 rounded-xl border border-bordergray bg-white font-body text-sm text-charcoal focus:border-fnc-red focus:outline-none transition-colors resize-y disabled:opacity-60"
               />

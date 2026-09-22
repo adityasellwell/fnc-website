@@ -149,6 +149,14 @@ export async function assignDeliveryPartner(orderId, partnerId, userId) {
       deliveryOtp,
     },
   });
+
+  // Update rider status to BUSY
+  try {
+    await db.deliveryPartner.update({
+      where: { id: partnerId },
+      data: { status: "BUSY" },
+    });
+  } catch (err) {}
   await db.auditLog.create({
     data: {
       userId,
@@ -337,5 +345,23 @@ export async function markOrderDelivered(orderId, partnerId, otp) {
     throw new Error("Incorrect OTP");
   }
   await db.order.update({ where: { id: orderId }, data: { deliveryOtp: null } });
-  return updateOrderStatus(orderId, "DELIVERED", null);
+  const result = await updateOrderStatus(orderId, "DELIVERED", null);
+
+  // Check if rider has remaining active orders; if none, return status to AVAILABLE
+  try {
+    const activeCount = await db.order.count({
+      where: {
+        deliveryPartnerId: partnerId,
+        status: { in: ["PREPARING", "OUT_FOR_DELIVERY"] },
+      },
+    });
+    if (activeCount === 0) {
+      await db.deliveryPartner.update({
+        where: { id: partnerId },
+        data: { status: "AVAILABLE" },
+      });
+    }
+  } catch (err) {}
+
+  return result;
 }
