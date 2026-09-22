@@ -18,23 +18,41 @@ const statusLabels = {
   REFUNDED: "Refunded",
 };
 
-export default function OrderRowActions({ orderId, status, fulfillmentType }) {
+import Link from "next/link";
+import { UserPlus } from "lucide-react";
+
+export default function OrderRowActions({ orderId, status, fulfillmentType, deliveryPartnerId }) {
   const [pending, startTransition] = useTransition();
   const next = getNextStatus(status, fulfillmentType);
   const isTerminal = status === "CANCELLED" || status === "REFUNDED" || status === "DELIVERED" || status === "COLLECTED";
 
+  const needsRiderBeforeDispatch =
+    fulfillmentType === "DELIVERY" &&
+    next === "OUT_FOR_DELIVERY" &&
+    !deliveryPartnerId;
+
   return (
     <div className="flex items-center gap-2 justify-end">
       {next && (
-        <button
-          type="button"
-          disabled={pending}
-          onClick={() => startTransition(() => advanceOrderStatusAction(orderId, status, fulfillmentType))}
-          className="h-8 px-3 rounded-full bg-fnc-red text-white font-body text-xs font-semibold hover:bg-fnc-red/90 transition-colors disabled:opacity-60 flex items-center gap-1"
-        >
-          {pending ? <Loader2 className="h-3 w-3 animate-spin" /> : <ChevronRight className="h-3 w-3" />}
-          {statusLabels[next]}
-        </button>
+        needsRiderBeforeDispatch ? (
+          <Link
+            href={`/admin/orders/${orderId}`}
+            className="h-8 px-3 rounded-full bg-fnc-blue text-white font-body text-xs font-semibold hover:bg-fnc-blue/90 transition-colors flex items-center gap-1"
+          >
+            <UserPlus className="h-3.5 w-3.5" />
+            Assign Rider
+          </Link>
+        ) : (
+          <button
+            type="button"
+            disabled={pending}
+            onClick={() => startTransition(() => advanceOrderStatusAction(orderId, status, fulfillmentType))}
+            className="h-8 px-3 rounded-full bg-fnc-red text-white font-body text-xs font-semibold hover:bg-fnc-red/90 transition-colors disabled:opacity-60 flex items-center gap-1"
+          >
+            {pending ? <Loader2 className="h-3 w-3 animate-spin" /> : <ChevronRight className="h-3 w-3" />}
+            {statusLabels[next]}
+          </button>
+        )
       )}
       {!isTerminal && (
         <ConfirmDialog

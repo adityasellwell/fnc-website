@@ -46,6 +46,10 @@ export default function OrderDetailClient({ order, currentUser, availablePartner
 
   const handleAdvanceStatus = () => {
     if (!nextStatus) return;
+    if (order.fulfillmentType === "DELIVERY" && nextStatus === "OUT_FOR_DELIVERY" && !order.deliveryPartnerId) {
+      alert("Please assign a delivery rider below before marking this order as Out for Delivery.");
+      return;
+    }
     if (confirm(`Advance order status to "${getStatusLabel(nextStatus)}"?`)) {
       startTransition(() => advanceOrderStatusAction(order.id, order.status, order.fulfillmentType));
     }

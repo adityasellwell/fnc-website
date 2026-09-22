@@ -74,7 +74,12 @@ export default async function AdminOrdersPage({ searchParams }) {
             header: "",
             className: "text-right",
             accessor: (o) => (
-              <OrderRowActions orderId={o.id} status={o.status} fulfillmentType={o.fulfillmentType} />
+              <OrderRowActions
+                orderId={o.id}
+                status={o.status}
+                fulfillmentType={o.fulfillmentType}
+                deliveryPartnerId={o.deliveryPartnerId}
+              />
             ),
           },
         ]}
