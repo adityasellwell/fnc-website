@@ -4,6 +4,8 @@ import Section from "@/components/layout/Section";
 import SignInForm from "@/components/auth/SignInForm";
 import { Suspense } from "react";
 
+export const dynamic = "force-dynamic";
+
 export const metadata = {
   title: "Sign In — F&C Fresh Proteins & More",
   description: "Sign in to your F&C account to track orders and manage addresses.",

@@ -18,12 +18,21 @@ export function proxy(request) {
     }
   }
 
-  return NextResponse.next();
+  const response = NextResponse.next();
+
+  // Prevent web host reverse proxies (Hostinger/Apache/Nginx) from caching
+  // React Server Component (RSC) flight payloads and serving raw text to browsers.
+  response.headers.set("Vary", "RSC, Next-Router-State-Tree, Next-Url, Accept");
+
+  if (pathname.startsWith("/sign-in") || pathname.startsWith("/sign-up") || pathname.startsWith("/account")) {
+    response.headers.set("Cache-Control", "no-store, no-cache, must-revalidate, proxy-revalidate");
+  }
+
+  return response;
 }
 
 export const config = {
   matcher: [
-    "/((?!_next|[^?]*\\.(?:html?|css|js|jpe?g|webp|png|gif|svg|ttf|woff2?|ico|csv|docx?|xlsx?|zip|webmanifest)).*)",
-    "/(api|trpc)(.*)",
+    "/((?!_next/static|_next/image|favicon.ico|images/|.*\\.(?:svg|png|jpg|jpeg|gif|webp|woff2?)).*)",
   ],
 };

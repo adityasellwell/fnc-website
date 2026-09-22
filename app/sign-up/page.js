@@ -3,6 +3,8 @@ import Footer from "@/components/layout/Footer";
 import Section from "@/components/layout/Section";
 import SignUpForm from "@/components/auth/SignUpForm";
 
+export const dynamic = "force-dynamic";
+
 export const metadata = {
   title: "Create Account — F&C Fresh Proteins & More",
   description: "Create an F&C account to track orders and save addresses.",

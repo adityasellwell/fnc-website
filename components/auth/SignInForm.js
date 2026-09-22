@@ -10,10 +10,13 @@ import Button from "@/components/ui/Button";
 import PasswordInput from "@/components/ui/PasswordInput";
 import { BRAND, PHONE_AUTH_ENABLED } from "@/lib/constants";
 
+import { useAuth } from "@/components/auth/AuthProvider";
+
 export default function SignInForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const redirect = searchParams.get("redirect") || "/account";
+  const { user, loading: authLoading } = useAuth();
 
   const [activeTab, setActiveTab] = useState("email"); // "email" | "phone"
   const [email, setEmail] = useState("");
@@ -25,6 +28,19 @@ export default function SignInForm() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [verificationSent, setVerificationSent] = useState(false);
+
+  // If user is already logged in via Firebase on client, auto sync session and redirect
+  useEffect(() => {
+    if (!authLoading && user) {
+      user.getIdToken().then(async (idToken) => {
+        try {
+          await syncSession(idToken);
+        } catch (err) {
+          console.error("[SignInForm] Auto sync failed:", err);
+        }
+      }).catch(console.error);
+    }
+  }, [user, authLoading]);
 
   useEffect(() => {
     if (timer <= 0) return;

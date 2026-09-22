@@ -16,9 +16,20 @@ export function FirebaseAuthProvider({ children }) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (firebaseUser) => {
+    const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
       if (firebaseUser) {
         setUser(firebaseUser);
+        // Automatically keep server session cookie synced with active Firebase user
+        try {
+          const idToken = await firebaseUser.getIdToken();
+          await fetch("/api/auth/session", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ idToken }),
+          });
+        } catch (err) {
+          console.error("[AuthProvider] Auto session sync failed:", err);
+        }
       } else {
         setUser(null);
       }
