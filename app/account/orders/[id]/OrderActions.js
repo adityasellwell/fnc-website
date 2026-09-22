@@ -463,8 +463,8 @@ export default function OrderActions({ order }) {
             </>
           )}
 
-          {/* Customer can withdraw a REQUESTED refund */}
-          {refund.status === "REQUESTED" && (
+          {/* Customer can withdraw a REQUESTED or UNDER_REVIEW refund */}
+          {["REQUESTED", "UNDER_REVIEW"].includes(refund.status) && (
             <button
               onClick={handleCancelRefund}
               disabled={pending}

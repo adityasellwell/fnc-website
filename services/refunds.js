@@ -108,8 +108,8 @@ export async function cancelRefundRequest(refundRequestId, customerId) {
 
   if (!refund) throw new Error("Refund request not found");
   if (refund.order.customerId !== customerId) throw new Error("Access denied");
-  if (refund.status !== "REQUESTED") {
-    throw new Error("Only REQUESTED refund requests can be cancelled");
+  if (!["REQUESTED", "UNDER_REVIEW"].includes(refund.status)) {
+    throw new Error("Only pending or under-review refund requests can be withdrawn");
   }
 
   return db.refundRequest.update({
