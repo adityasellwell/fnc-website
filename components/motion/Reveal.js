@@ -23,7 +23,7 @@ export default function Reveal({
     <MotionTag
       initial={shouldReduceMotion ? false : { opacity: 0, y }}
       whileInView={{ opacity: 1, y: 0 }}
-      viewport={{ once, margin: "-80px" }}
+      viewport={{ once, margin: "0px", amount: 0.05 }}
       transition={{ duration, delay, ease: [0.16, 1, 0.3, 1] }}
       className={className}
       {...props}

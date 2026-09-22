@@ -23,7 +23,13 @@ export default function SmoothScrollProvider({ children }) {
     if (pathname?.startsWith("/admin")) return;
 
     const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-    if (reduce) return;
+    const isTouchDevice =
+      window.matchMedia("(pointer: coarse)").matches ||
+      "ontouchstart" in window ||
+      navigator.maxTouchPoints > 0 ||
+      window.innerWidth < 768;
+
+    if (reduce || isTouchDevice) return;
 
     const lenis = new Lenis({
       duration: 1.1,
