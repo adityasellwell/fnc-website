@@ -109,8 +109,8 @@ const categoriesData = [
   },
   {
     id: "cat-fresh-protiens-more",
-    slug: "fresh-protiens-more",
-    name: "Fresh Protiens & more",
+    slug: "fresh-proteins-more",
+    name: "Fresh Proteins & More",
     description: "Premium assortments and signature combos of fresh cut proteins.",
     image: "/images/categories/fresh-proteins-more.jpg",
     order: 12,

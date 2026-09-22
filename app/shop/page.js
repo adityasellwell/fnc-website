@@ -22,10 +22,10 @@ export const metadata = {
 
 function pillClasses(active) {
   return cn(
-    "shrink-0 rounded-full px-4 py-2 font-body text-sm font-semibold border transition-colors",
+    "shrink-0 rounded-full px-4 py-2 font-body text-sm font-semibold border transition-all whitespace-nowrap inline-flex items-center justify-center",
     active
-      ? "bg-fnc-red text-white border-fnc-red"
-      : "bg-white text-charcoal border-bordergray hover:border-charcoal"
+      ? "bg-fnc-red text-white border-fnc-red shadow-sm"
+      : "bg-white text-charcoal border-bordergray hover:border-charcoal hover:bg-warmwhite"
   );
 }
 
@@ -134,9 +134,8 @@ export default async function ShopPage({ searchParams }) {
         </div>
 
         <Section background="offwhite" spacing="sm">
-          {/* Category filter row — top-level only, subcategories get their
-              own pill row below */}
-          <div className="flex gap-2 sm:gap-3 mb-4 overflow-x-auto scrollbar-none -mx-5 px-5 sm:mx-0 sm:px-0 sm:flex-wrap">
+          {/* Category filter row — top-level only, subcategories get their own pill row below */}
+          <div className="flex gap-2 sm:gap-3 mb-4 overflow-x-auto scrollbar-none -mx-5 px-5 sm:mx-0 sm:px-0 flex-nowrap items-center py-1">
             <Link href={buildHref(null, 1, searchQuery)} className={pillClasses(!activeCategory)}>
               All
             </Link>
@@ -152,7 +151,7 @@ export default async function ShopPage({ searchParams }) {
           </div>
 
           {childSlugs.length > 0 && (
-            <div className="flex gap-2 sm:gap-3 mb-8 overflow-x-auto scrollbar-none -mx-5 px-5 sm:mx-0 sm:px-0 sm:flex-wrap">
+            <div className="flex gap-2 sm:gap-3 mb-8 overflow-x-auto scrollbar-none -mx-5 px-5 sm:mx-0 sm:px-0 flex-nowrap items-center py-1">
               {categories.filter((c) => c.parentCategoryId === activeCategoryObj.id).map((c) => {
                 const isActive = activeCategory === c.slug;
                 return (
@@ -160,9 +159,9 @@ export default async function ShopPage({ searchParams }) {
                     key={c.id}
                     href={buildHref(c.slug, 1, searchQuery)}
                     className={cn(
-                      "shrink-0 rounded-full px-4 py-2 font-body text-sm font-semibold border transition-colors",
+                      "shrink-0 rounded-full px-4 py-2 font-body text-sm font-semibold border transition-all whitespace-nowrap inline-flex items-center justify-center",
                       isActive
-                        ? "bg-fnc-red text-white border-fnc-red"
+                        ? "bg-fnc-red text-white border-fnc-red shadow-sm"
                         : "bg-fnc-red/5 text-fnc-red border-fnc-red/30 hover:bg-fnc-red/10"
                     )}
                   >
