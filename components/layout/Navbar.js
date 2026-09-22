@@ -531,10 +531,10 @@ export default function Navbar() {
               <div className="mt-3 rounded-xl border border-bordergray bg-warmwhite px-4 py-3">
                 <p className="font-body text-xs font-semibold text-slate uppercase mb-1">Your Location</p>
                 <p className="font-body text-sm text-charcoal">{fullAddress}</p>
-                <p className={`font-body text-xs font-semibold mt-1.5 ${serviceable ? "text-fnc-green" : "text-fnc-blue"}`}>
+                <p className={`font-body text-xs font-semibold mt-1.5 ${serviceable ? "text-fnc-green" : "text-fnc-red"}`}>
                   {serviceable
                     ? `✓ Ordering from ${resolvedStore?.name || "your nearest F&C store"}`
-                    : "Delivery is coming soon to your area — orders can still be placed via WhatsApp"}
+                    : "✕ Delivery is not available in your area. You can still select Store Pickup at checkout."}
                 </p>
               </div>
             )}
