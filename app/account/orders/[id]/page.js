@@ -336,6 +336,87 @@ export default async function TrackOrderPage({ params }) {
           </div>
         </Section>
       </main>
+
+      {/* Hidden layout specifically structured for standard invoice printing */}
+      <div id="printable-invoice" className="hidden flex-col gap-5 bg-white text-black p-8 font-body max-w-3xl mx-auto border border-black">
+        <div className="flex justify-between items-start border-b-2 border-black pb-4">
+          <div className="flex items-center gap-3">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src="/images/logo.png" alt="F&C Logo" className="h-16 w-16 object-contain shrink-0" />
+            <div>
+              <h1 className="font-display text-xl font-black tracking-tight text-black">
+                F&amp;C FRESH PROTEINS &amp; MORE
+              </h1>
+              <p className="text-xs text-gray-700 font-medium">Gourmet Seafood &amp; Meat Delivery</p>
+              <p className="text-xs text-gray-700">{order.store?.name || "F&C Store"}</p>
+              <p className="text-[11px] text-gray-500 max-w-xs">{order.store?.address || ""}</p>
+            </div>
+          </div>
+          <div className="text-right">
+            <h2 className="text-xl font-bold text-black uppercase">TAX INVOICE</h2>
+            <p className="text-xs text-gray-700 mt-1">Invoice #: {order.id.slice(-8).toUpperCase()}</p>
+            <p className="text-xs text-gray-700">Date: {new Date(order.createdAt).toLocaleDateString("en-IN")}</p>
+            <p className="text-xs text-gray-700">Fulfillment: {order.fulfillmentType}</p>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-2 gap-6 pb-4 border-b border-gray-300">
+          <div>
+            <p className="text-xs font-bold text-gray-700 uppercase">Customer Information</p>
+            <p className="text-sm font-bold mt-1">{order.customer.name}</p>
+            <p className="text-xs text-gray-700 mt-0.5">Phone: {order.customer.phone || "N/A"}</p>
+            <p className="text-xs text-gray-700">Email: {order.customer.email || "N/A"}</p>
+          </div>
+          {order.fulfillmentType === "DELIVERY" && deliveryAddress && (
+            <div>
+              <p className="text-xs font-bold text-gray-700 uppercase">Delivery Address</p>
+              <p className="text-sm font-bold mt-1">{deliveryAddress.line1}</p>
+              {deliveryAddress.line2 && <p className="text-xs text-gray-700">{deliveryAddress.line2}</p>}
+              <p className="text-xs text-gray-700">
+                {deliveryAddress.city}, {deliveryAddress.state} — {deliveryAddress.pincode}
+              </p>
+            </div>
+          )}
+        </div>
+
+        <table className="w-full text-left text-xs border-collapse">
+          <thead>
+            <tr className="border-b border-gray-400 bg-gray-100 font-bold">
+              <th className="py-2 px-1">Product Description</th>
+              <th className="py-2 px-1 text-right">Unit Price</th>
+              <th className="py-2 px-1 text-right">Qty</th>
+              <th className="py-2 px-1 text-right">Total</th>
+            </tr>
+          </thead>
+          <tbody>
+            {order.items.map((item) => (
+              <tr key={item.id} className="border-b border-gray-200">
+                <td className="py-2 px-1 font-semibold">{item.product?.name}{item.variantLabel ? ` — ${item.variantLabel}` : ""}</td>
+                <td className="py-2 px-1 text-right">₹{Number(item.unitPrice).toFixed(2)}</td>
+                <td className="py-2 px-1 text-right">{item.quantity}</td>
+                <td className="py-2 px-1 text-right">₹{(Number(item.unitPrice) * item.quantity).toFixed(2)}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+
+        <div className="flex justify-end mt-4">
+          <div className="w-64 flex flex-col gap-1.5 text-xs text-gray-800">
+            <div className="flex justify-between font-bold text-black text-sm pt-2 border-t-2 border-black">
+              <span>Grand Total</span>
+              <span>₹{Number(order.total).toFixed(2)}</span>
+            </div>
+          </div>
+        </div>
+
+        <div className="text-center mt-10 border-t border-gray-300 pt-4">
+          <p className="text-xs font-bold text-black">Thank you for shopping with F&amp;C!</p>
+          <p className="text-[10px] text-gray-500 mt-1">
+            For support, contact us at +91 70392 22266 or visit fncmumbai.com
+          </p>
+        </div>
+      </div>
+
       <Footer />
     </>
   );

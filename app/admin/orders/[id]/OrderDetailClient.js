@@ -576,13 +576,17 @@ export default function OrderDetailClient({ order, currentUser, availablePartner
       <div id="printable-invoice" className="hidden flex-col gap-5 bg-white text-black p-8 font-body max-w-3xl mx-auto border border-black">
         {/* Branding header */}
         <div className="flex justify-between items-start border-b-2 border-black pb-4">
-          <div>
-            <h1 className="font-display text-2xl font-black tracking-tight text-black">
-              F&amp;C FRESH &amp; CLEAN
-            </h1>
-            <p className="text-xs text-gray-700 mt-1">Gourmet Seafood &amp; Meat Delivery</p>
-            <p className="text-xs text-gray-700">{order.store.name} Store</p>
-            <p className="text-xs text-gray-500">{order.store.address}</p>
+          <div className="flex items-center gap-3">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src="/images/logo.png" alt="F&C Logo" className="h-16 w-16 object-contain shrink-0" />
+            <div>
+              <h1 className="font-display text-xl font-black tracking-tight text-black">
+                F&amp;C FRESH PROTEINS &amp; MORE
+              </h1>
+              <p className="text-xs text-gray-700 font-medium">Gourmet Seafood &amp; Meat Delivery</p>
+              <p className="text-xs text-gray-700">{order.store.name}</p>
+              <p className="text-[11px] text-gray-500 max-w-xs">{order.store.address}</p>
+            </div>
           </div>
           <div className="text-right">
             <h2 className="text-xl font-bold text-black uppercase">TAX INVOICE</h2>

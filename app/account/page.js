@@ -37,13 +37,25 @@ const statusTone = {
 export default async function AccountPage() {
   const customer = await getCurrentCustomer();
 
+  const customerPhoneClean = customer?.phone ? customer.phone.replace(/\D/g, "").slice(-10) : null;
+
   const [orders, addresses] = customer
     ? await Promise.all([
       db.order.findMany({
-        where: { customerId: customer.id },
+        where: {
+          OR: [
+            { customerId: customer.id },
+            ...(customerPhoneClean
+              ? [
+                  { customer: { phone: { contains: customerPhoneClean } } },
+                ]
+              : []),
+            ...(customer.email ? [{ customer: { email: customer.email } }] : []),
+          ],
+        },
         include: { items: { include: { product: true } } },
         orderBy: { createdAt: "desc" },
-        take: 10,
+        take: 20,
       }),
       db.address.findMany({ where: { customerId: customer.id }, orderBy: { isDefault: "desc" } }),
     ])
