@@ -3,20 +3,14 @@ import { db } from "@/lib/db";
 import { sendSms } from "@/lib/sms";
 import { checkPhoneLoginRateLimit, getClientIp, rateLimitResponse } from "@/lib/rate-limit";
 
-const OTP_TTL_MS = 10 * 60 * 1000;
+const OTP_TTL_MS = 15 * 60 * 1000; // 15 minutes TTL for generous expiration window
+const REUSE_WINDOW_MS = 3 * 60 * 1000; // 3 minutes reuse window so re-sends use the same code
 
 function normalizePhone(raw) {
   const digits = String(raw || "").replace(/\D/g, "");
   return digits.length === 10 ? digits : null;
 }
 
-/**
- * Sends a login OTP via our own SMS gateway — never Firebase's phone auth,
- * which requires their paid Blaze plan and shows its own reCAPTCHA badge.
- * The verify step (see ../verify/route.js) bridges a successful code check
- * into a real Firebase session via a custom token, so every downstream
- * piece (getCurrentCustomer, /api/auth/session) stays unchanged.
- */
 export async function POST(request) {
   const ip = getClientIp(request);
 
@@ -28,20 +22,31 @@ export async function POST(request) {
     }
 
     const limitRes = await checkPhoneLoginRateLimit({ phone, ip });
-    if (!limitRes.success) return rateLimitResponse("Too many OTP requests. Please try again later.");
+    if (!limitRes.success) return rateLimitResponse("Too many OTP requests. Please try again in a few minutes.");
 
-    const code = String(Math.floor(100000 + Math.random() * 900000));
-
-    // One live OTP per phone at a time — stops a stale earlier code from
-    // also being valid alongside the fresh one.
-    await db.phoneOtp.deleteMany({ where: { phone } });
-    await db.phoneOtp.create({
-      data: { phone, code, expiresAt: new Date(Date.now() + OTP_TTL_MS) },
+    // Check if there is an active OTP for this phone created in the last 3 minutes
+    const existingOtp = await db.phoneOtp.findFirst({
+      where: { phone, expiresAt: { gt: new Date() } },
+      orderBy: { createdAt: "desc" },
     });
+
+    let code;
+    const now = Date.now();
+    if (existingOtp && (now - new Date(existingOtp.createdAt).getTime()) < REUSE_WINDOW_MS) {
+      // Reuse existing active code so late-delivered SMS still matches!
+      code = existingOtp.code;
+    } else {
+      // Generate a fresh 6-digit code
+      code = String(Math.floor(100000 + Math.random() * 900000));
+      await db.phoneOtp.deleteMany({ where: { phone } });
+      await db.phoneOtp.create({
+        data: { phone, code, expiresAt: new Date(Date.now() + OTP_TTL_MS) },
+      });
+    }
 
     const result = await sendSms("OTP_VERIFICATION", phone, { otp: code });
     if (!result.success) {
-      return NextResponse.json({ error: "Failed to send OTP. Please try again." }, { status: 502 });
+      return NextResponse.json({ error: "Failed to send OTP via SMS. Please check your network and try again." }, { status: 502 });
     }
 
     return NextResponse.json({ success: true });

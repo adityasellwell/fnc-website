@@ -113,7 +113,7 @@ export default function SignUpForm() {
       if (!res.ok) throw new Error(json.error || "Failed to send OTP. Please try again.");
 
       setOtpSent(true);
-      setTimer(60);
+      setTimer(90);
     } catch (err) {
       console.error(err);
       setError(err.message || "Failed to send OTP. Please check the number and try again.");
@@ -374,20 +374,23 @@ export default function SignUpForm() {
                 onChange={(e) => setOtp(e.target.value)}
                 className="w-full h-12 px-4 rounded-xl border border-bordergray font-body text-sm text-charcoal text-center tracking-widest focus:border-fnc-red focus:outline-none transition-colors"
               />
-              <p className="font-body text-xs text-slate mt-2 text-right">
-                {timer > 0 ? (
-                  `Resend in ${timer}s`
-                ) : (
-                  <button
-                    type="button"
-                    onClick={handleSendOtp}
-                    disabled={loading}
-                    className="text-fnc-red font-bold hover:underline"
-                  >
-                    Resend OTP
-                  </button>
-                )}
-              </p>
+              <div className="flex items-center justify-between mt-2">
+                <span className="font-body text-[11px] text-slate">OTP is valid for 15 minutes</span>
+                <p className="font-body text-xs text-slate">
+                  {timer > 0 ? (
+                    `Resend in ${timer}s`
+                  ) : (
+                    <button
+                      type="button"
+                      onClick={handleSendOtp}
+                      disabled={loading}
+                      className="text-fnc-red font-bold hover:underline"
+                    >
+                      Resend OTP
+                    </button>
+                  )}
+                </p>
+              </div>
             </div>
           )}
 
