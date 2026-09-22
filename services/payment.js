@@ -53,6 +53,12 @@ export async function createPaymentAuditLog({
  * @returns {{ id: string, status: string }}
  */
 export async function initiateRazorpayRefund(razorpayPaymentId, amountPaise, notes = "") {
+  if (!razorpayPaymentId || razorpayPaymentId.startsWith("mock_")) {
+    throw new Error(
+      "Cannot issue online refund: This order does not have a valid Razorpay Payment ID (e.g. Cash on Delivery or unpaid order)."
+    );
+  }
+
   const keyId = process.env.RAZORPAY_KEY_ID;
   const keySecret = process.env.RAZORPAY_KEY_SECRET;
 
@@ -66,6 +72,13 @@ export async function initiateRazorpayRefund(razorpayPaymentId, amountPaise, not
 
   const auth = Buffer.from(`${keyId}:${keySecret}`).toString("base64");
 
+  const bodyPayload = {
+    amount: amountPaise,
+  };
+  if (notes) {
+    bodyPayload.notes = { reason: String(notes).slice(0, 250) };
+  }
+
   const response = await fetch(
     `https://api.razorpay.com/v1/payments/${razorpayPaymentId}/refund`,
     {
@@ -74,18 +87,19 @@ export async function initiateRazorpayRefund(razorpayPaymentId, amountPaise, not
         Authorization: `Basic ${auth}`,
         "Content-Type": "application/json",
       },
-      body: JSON.stringify({
-        amount: amountPaise,
-        speed: "normal",
-        notes: { reason: notes },
-      }),
+      body: JSON.stringify(bodyPayload),
     }
   );
 
   if (!response.ok) {
     const errorBody = await response.text();
     console.error(`[Razorpay Refund] API error ${response.status}: ${errorBody}`);
-    throw new Error(`Razorpay refund API failed (${response.status}): ${errorBody}`);
+    let errorMessage = errorBody;
+    try {
+      const parsed = JSON.parse(errorBody);
+      errorMessage = parsed.error?.description || parsed.error?.code || errorBody;
+    } catch (e) {}
+    throw new Error(`Razorpay refund API failed (${response.status}): ${errorMessage}`);
   }
 
   const data = await response.json();
