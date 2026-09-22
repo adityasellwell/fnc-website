@@ -90,6 +90,12 @@ export async function updateOrderStatus(orderId, status, changedById) {
     const phone = order.customer.phone;
     if (status === "PREPARING") {
       sendSms("ORDER_PACKED", phone, { orderId }).catch(() => {});
+    } else if (status === "READY_FOR_PICKUP") {
+      if (order.fulfillmentType === "PICKUP") {
+        sendSms("RIDER_HANDOFF_OTP", phone, { otp: order.deliveryOtp || "----", orderId }).catch(() => {});
+      } else {
+        sendSms("ORDER_PACKED", phone, { orderId }).catch(() => {});
+      }
     } else if (status === "OUT_FOR_DELIVERY") {
       sendSms("OUT_FOR_DELIVERY", phone, {
         orderId,
