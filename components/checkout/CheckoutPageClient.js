@@ -528,14 +528,116 @@ export default function CheckoutPageClient({ stores = [], settings = {}, savedPr
     );
   }
 
+  const orderSummaryContent = (
+    <div className="bg-white border border-bordergray rounded-2xl sm:rounded-3xl p-4 sm:p-6 flex flex-col gap-3.5 sm:gap-4">
+      <h2 className="font-display text-base sm:text-lg font-bold text-charcoal">Order Summary</h2>
+      <div className="flex flex-col gap-2.5 sm:gap-3 max-h-60 sm:max-h-80 overflow-y-auto" data-lenis-prevent>
+        {items.map((item) => (
+          <div key={`${item.productId}:${item.variantLabel ?? ""}`} className="flex items-center gap-2.5 sm:gap-3 font-body text-xs sm:text-sm">
+            <div className="relative h-10 w-10 rounded-xl overflow-hidden border border-bordergray bg-warmwhite shrink-0">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={item.image || item.images?.[0] || "/images/logo.png"}
+                alt={item.name || "Product"}
+                className="h-full w-full object-cover"
+              />
+            </div>
+            <span className="text-charcoal truncate flex-1 min-w-0">
+              <span className="font-semibold">{item.name}</span>
+              {item.variantLabel ? <span className="text-slate font-normal"> ({item.variantLabel})</span> : null}
+              {" "}
+              <span className="text-slate font-medium">x{item.qty}</span>
+            </span>
+            <span className="font-semibold text-charcoal shrink-0">₹{item.price * item.qty}</span>
+          </div>
+        ))}
+      </div>
+      <div className="flex items-center justify-between font-body text-xs sm:text-sm text-slate pt-3 border-t border-bordergray">
+        <span>Subtotal ({items.reduce((s, i) => s + i.qty, 0)} items)</span>
+        <span className="font-semibold text-charcoal">₹{subtotal}</span>
+      </div>
+      {fulfillmentType === "DELIVERY" && (
+        <div className="flex items-center justify-between font-body text-xs sm:text-sm text-slate">
+          <span>Delivery Fee</span>
+          <span className="font-semibold text-charcoal">
+            {deliveryDistance === null ? (
+              <span className="text-xs text-slate font-normal italic">Pending verification</span>
+            ) : deliveryFee === 0 ? (
+              "Free"
+            ) : (
+              `₹${deliveryFee}`
+            )}
+          </span>
+        </div>
+      )}
+
+      {/* Promo code */}
+      <div className="border-t border-bordergray pt-3">
+        {appliedPromo ? (
+          <div className="flex items-center justify-between font-body text-xs sm:text-sm">
+            <span className="flex items-center gap-1.5 text-fnc-green font-semibold">
+              <Tag className="h-3.5 w-3.5" />
+              {appliedPromo.code} applied
+            </span>
+            <button type="button" onClick={handleRemovePromo} className="text-xs text-slate hover:text-fnc-red transition-colors">
+              Remove
+            </button>
+          </div>
+        ) : (
+          <div className="flex flex-col gap-1.5">
+            <div className="flex gap-2">
+              <input
+                type="text"
+                value={promoInput}
+                onChange={(e) => setPromoInput(e.target.value)}
+                placeholder="Promo code"
+                className="flex-1 h-10 px-3 rounded-xl border border-bordergray bg-white font-body text-xs sm:text-sm text-charcoal placeholder:text-slate focus:border-fnc-red focus:outline-none transition-colors uppercase min-w-0"
+              />
+              <button
+                type="button"
+                onClick={handleApplyPromo}
+                disabled={checkingPromo || !promoInput.trim()}
+                className="h-10 px-3.5 sm:px-4 rounded-xl border border-charcoal text-charcoal font-body text-xs font-semibold hover:bg-warmwhite transition-colors disabled:opacity-50 shrink-0"
+              >
+                {checkingPromo ? <Loader2 className="h-4 w-4 animate-spin" /> : "Apply"}
+              </button>
+            </div>
+            {promoError && <p className="font-body text-xs text-fnc-red">{promoError}</p>}
+          </div>
+        )}
+      </div>
+
+      {appliedPromo && (
+        <div className="flex items-center justify-between font-body text-xs sm:text-sm text-fnc-green font-semibold">
+          <span>Discount</span>
+          <span>-₹{appliedPromo.discount.toFixed(2)}</span>
+        </div>
+      )}
+
+      <div className="flex items-center justify-between font-display text-sm sm:text-base font-bold text-charcoal pt-3 border-t border-bordergray">
+        <span>Order Total</span>
+        <span className="text-base sm:text-lg font-black text-fnc-red">
+          ₹{Math.max(0, subtotal + (fulfillmentType === "DELIVERY" ? deliveryFee : 0) - (appliedPromo?.discount ?? 0)).toFixed(2)}
+        </span>
+      </div>
+      <Link href="/cart" className="font-body text-xs text-slate hover:text-fnc-red transition-colors text-center">
+        Edit cart
+      </Link>
+
+      <div className="pt-3.5 border-t border-bordergray">
+        <DeliveryPartnerSelect />
+      </div>
+    </div>
+  );
+
   return (
     <Section background="offwhite" spacing="md" className="px-3 sm:px-6">
       <h1 className="font-display text-2xl sm:text-section-heading font-bold text-charcoal mb-4 sm:mb-8">
         Checkout
       </h1>
 
-      <div className="grid lg:grid-cols-3 gap-6 lg:gap-8 items-start">
-        <form onSubmit={handleSubmit} noValidate className="lg:col-span-2 flex flex-col gap-5 sm:gap-6">
+      <div className="grid lg:grid-cols-3 gap-5 sm:gap-6 lg:gap-8 items-start">
+        <form onSubmit={handleSubmit} noValidate className="lg:col-span-2 flex flex-col gap-4 sm:gap-6">
           {/* Fulfillment type */}
           <div className="bg-white border border-bordergray rounded-2xl sm:rounded-3xl p-4 sm:p-6">
             <h2 className="font-display text-base sm:text-lg font-bold text-charcoal mb-3 sm:mb-4">
@@ -653,7 +755,7 @@ export default function CheckoutPageClient({ stores = [], settings = {}, savedPr
                     <div className="flex flex-col gap-0.5">
                       <span className="text-[10px] font-bold text-slate uppercase tracking-wider">Ordered From (Store)</span>
                       <span className="font-display font-bold text-charcoal text-xs sm:text-sm">{store.name}</span>
-                      <span className="text-[11px] text-slate truncate">{store.address}</span>
+                      <span className="text-[11px] text-slate break-words leading-tight">{store.address}</span>
                     </div>
 
                     {/* Right node */}
@@ -662,7 +764,7 @@ export default function CheckoutPageClient({ stores = [], settings = {}, savedPr
                       <span className="font-display font-bold text-charcoal text-xs sm:text-sm">
                         {values.line1 ? values.line1 : "Detecting Address..."}
                       </span>
-                      <span className="text-[11px] text-slate truncate">
+                      <span className="text-[11px] text-slate break-words leading-tight">
                         {values.city ? `${values.city}, ${values.pincode}` : "Awaiting location verification"}
                       </span>
                     </div>
@@ -741,6 +843,9 @@ export default function CheckoutPageClient({ stores = [], settings = {}, savedPr
             </div>
           )}
 
+          {/* Mobile Order Summary (renders above Place Order CTA on mobile screens) */}
+          <div className="lg:hidden">{orderSummaryContent}</div>
+
           {status === "error" && (
             <p className="font-body text-xs sm:text-sm text-fnc-red flex items-center gap-2">
               <XCircle className="h-4 w-4 shrink-0" />
@@ -774,106 +879,8 @@ export default function CheckoutPageClient({ stores = [], settings = {}, savedPr
           </p>
         </form>
 
-        {/* Order summary */}
-        <div className="bg-white border border-bordergray rounded-3xl p-6 flex flex-col gap-4 lg:sticky lg:top-28">
-          <h2 className="font-display text-lg font-bold text-charcoal">Order Summary</h2>
-          <div className="flex flex-col gap-3 max-h-80 overflow-y-auto" data-lenis-prevent>
-            {items.map((item) => (
-              <div key={`${item.productId}:${item.variantLabel ?? ""}`} className="flex items-center gap-3 font-body text-sm">
-                <div className="relative h-10 w-10 rounded-xl overflow-hidden border border-bordergray bg-warmwhite shrink-0">
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img
-                    src={item.image || item.images?.[0] || "/images/logo.png"}
-                    alt={item.name || "Product"}
-                    className="h-full w-full object-cover"
-                  />
-                </div>
-                <span className="text-charcoal truncate flex-1 min-w-0">
-                  <span className="font-semibold">{item.name}</span>
-                  {item.variantLabel ? <span className="text-slate"> ({item.variantLabel})</span> : null}
-                  {" "}
-                  <span className="text-slate font-medium">x{item.qty}</span>
-                </span>
-                <span className="font-semibold text-charcoal shrink-0">₹{item.price * item.qty}</span>
-              </div>
-            ))}
-          </div>
-          <div className="flex items-center justify-between font-body text-sm text-slate pt-3 border-t border-bordergray">
-            <span>Subtotal ({items.reduce((s, i) => s + i.qty, 0)} items)</span>
-            <span className="font-semibold text-charcoal">₹{subtotal}</span>
-          </div>
-          {fulfillmentType === "DELIVERY" && (
-            <div className="flex items-center justify-between font-body text-sm text-slate">
-              <span>Delivery Fee</span>
-              <span className="font-semibold text-charcoal">
-                {deliveryDistance === null ? (
-                  <span className="text-xs text-slate font-normal italic">Pending verification</span>
-                ) : deliveryFee === 0 ? (
-                  "Free"
-                ) : (
-                  `₹${deliveryFee}`
-                )}
-              </span>
-            </div>
-          )}
-
-          {/* Promo code */}
-          <div className="border-t border-bordergray pt-3">
-            {appliedPromo ? (
-              <div className="flex items-center justify-between font-body text-sm">
-                <span className="flex items-center gap-1.5 text-fnc-green font-semibold">
-                  <Tag className="h-3.5 w-3.5" />
-                  {appliedPromo.code} applied
-                </span>
-                <button type="button" onClick={handleRemovePromo} className="text-xs text-slate hover:text-fnc-red transition-colors">
-                  Remove
-                </button>
-              </div>
-            ) : (
-              <div className="flex flex-col gap-1.5">
-                <div className="flex gap-2">
-                  <input
-                    type="text"
-                    value={promoInput}
-                    onChange={(e) => setPromoInput(e.target.value)}
-                    placeholder="Promo code"
-                    className="flex-1 h-10 px-3 rounded-lg border border-bordergray bg-white font-body text-sm text-charcoal placeholder:text-slate focus:border-fnc-red focus:outline-none transition-colors uppercase"
-                  />
-                  <button
-                    type="button"
-                    onClick={handleApplyPromo}
-                    disabled={checkingPromo || !promoInput.trim()}
-                    className="h-10 px-4 rounded-lg border border-charcoal text-charcoal font-body text-xs font-semibold hover:bg-warmwhite transition-colors disabled:opacity-50"
-                  >
-                    {checkingPromo ? <Loader2 className="h-4 w-4 animate-spin" /> : "Apply"}
-                  </button>
-                </div>
-                {promoError && <p className="font-body text-xs text-fnc-red">{promoError}</p>}
-              </div>
-            )}
-          </div>
-
-          {appliedPromo && (
-            <div className="flex items-center justify-between font-body text-sm text-fnc-green font-semibold">
-              <span>Discount</span>
-              <span>-₹{appliedPromo.discount.toFixed(2)}</span>
-            </div>
-          )}
-
-          <div className="flex items-center justify-between font-display text-base font-bold text-charcoal pt-3 border-t border-bordergray">
-            <span>Order Total</span>
-            <span>
-              ₹{Math.max(0, subtotal + (fulfillmentType === "DELIVERY" ? deliveryFee : 0) - (appliedPromo?.discount ?? 0)).toFixed(2)}
-            </span>
-          </div>
-          <Link href="/cart" className="font-body text-xs text-slate hover:text-fnc-red transition-colors text-center">
-            Edit cart
-          </Link>
-
-          <div className="pt-4 border-t border-bordergray">
-            <DeliveryPartnerSelect />
-          </div>
-        </div>
+        {/* Desktop Order summary sidebar */}
+        <div className="hidden lg:block lg:sticky lg:top-28">{orderSummaryContent}</div>
       </div>
     </Section>
   );
