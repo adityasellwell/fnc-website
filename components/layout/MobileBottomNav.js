@@ -23,6 +23,9 @@ const BASE_TABS = [
 export default function MobileBottomNav() {
   const pathname = usePathname();
   const [mounted, setMounted] = useState(false);
+  const { isSignedIn } = useAuth();
+  const cartCount = useCartStore((s) => s.items.reduce((sum, i) => sum + i.qty, 0));
+  const wishlistCount = useWishlistStore((s) => s.items.length);
 
   useEffect(() => {
     setMounted(true);
@@ -31,9 +34,7 @@ export default function MobileBottomNav() {
   if (!mounted || !pathname || pathname.startsWith("/admin") || pathname.startsWith("/delivery-partner")) {
     return null;
   }
-  const { isSignedIn } = useAuth();
-  const cartCount = useCartStore((s) => s.items.reduce((sum, i) => sum + i.qty, 0));
-  const wishlistCount = useWishlistStore((s) => s.items.length);
+
   const badges = { cart: cartCount, wishlist: wishlistCount };
 
   const TABS = [
