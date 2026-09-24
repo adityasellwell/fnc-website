@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { signInWithEmailAndPassword, signInWithPopup, GoogleAuthProvider, signOut, signInWithCustomToken } from "firebase/auth";
 import { auth } from "@/lib/firebase/client";
 import { useRouter, useSearchParams } from "next/navigation";
@@ -17,6 +17,7 @@ export default function SignInForm() {
   const searchParams = useSearchParams();
   const redirect = searchParams.get("redirect") || "/account";
   const { user, loading: authLoading } = useAuth();
+  const isSyncingRef = useRef(false);
 
   const [activeTab, setActiveTab] = useState("email"); // "email" | "phone"
   const [email, setEmail] = useState("");
@@ -31,7 +32,7 @@ export default function SignInForm() {
 
   // If user is already logged in via Firebase on client, auto sync session and redirect
   useEffect(() => {
-    if (!authLoading && user) {
+    if (!authLoading && user && !isSyncingRef.current) {
       user.getIdToken().then(async (idToken) => {
         try {
           await syncSession(idToken);
@@ -172,6 +173,9 @@ export default function SignInForm() {
   };
 
   const syncSession = async (idToken) => {
+    if (isSyncingRef.current) return;
+    isSyncingRef.current = true;
+
     try {
       const res = await fetch("/api/auth/session", {
         method: "POST",
@@ -189,7 +193,7 @@ export default function SignInForm() {
     } catch (err) {
       console.error("[syncSession] failed:", err);
       setError(`Session sync failed: ${err.message || "please try again."}`);
-      await signOut(auth);
+      isSyncingRef.current = false;
     }
   };
 

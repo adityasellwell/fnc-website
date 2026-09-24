@@ -529,30 +529,31 @@ export default function CheckoutPageClient({ stores = [], settings = {}, savedPr
   }
 
   return (
-    <Section background="offwhite" spacing="md">
-      <h1 className="font-display text-section-heading font-bold text-charcoal mb-8">
+  return (
+    <Section background="offwhite" spacing="md" className="px-3 sm:px-6">
+      <h1 className="font-display text-2xl sm:text-section-heading font-bold text-charcoal mb-4 sm:mb-8">
         Checkout
       </h1>
 
-      <div className="grid lg:grid-cols-3 gap-8 items-start">
-        <form onSubmit={handleSubmit} noValidate className="lg:col-span-2 flex flex-col gap-6">
+      <div className="grid lg:grid-cols-3 gap-6 lg:gap-8 items-start">
+        <form onSubmit={handleSubmit} noValidate className="lg:col-span-2 flex flex-col gap-5 sm:gap-6">
           {/* Fulfillment type */}
-          <div className="bg-white border border-bordergray rounded-3xl p-6">
-            <h2 className="font-display text-lg font-bold text-charcoal mb-4">
+          <div className="bg-white border border-bordergray rounded-2xl sm:rounded-3xl p-4 sm:p-6">
+            <h2 className="font-display text-base sm:text-lg font-bold text-charcoal mb-3 sm:mb-4">
               How would you like your order?
             </h2>
-            <div className="grid sm:grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <button
                 type="button"
                 onClick={() => handleFulfillmentChange("DELIVERY")}
-                className={`flex items-center gap-3 rounded-2xl border-2 p-4 text-left transition-colors ${fulfillmentType === "DELIVERY"
+                className={`flex items-center gap-3 rounded-2xl border-2 p-3.5 sm:p-4 text-left transition-colors ${fulfillmentType === "DELIVERY"
                     ? "border-fnc-red bg-fnc-red/5"
                     : "border-bordergray hover:border-charcoal/30"
                   }`}
               >
                 <Truck className="h-5 w-5 text-fnc-red shrink-0" />
                 <div>
-                  <p className="font-display font-semibold text-charcoal">Delivery</p>
+                  <p className="font-display font-semibold text-charcoal text-sm sm:text-base">Delivery</p>
                   <p className="font-body text-xs text-slate">Delivered to your address</p>
                 </div>
               </button>
@@ -560,15 +561,15 @@ export default function CheckoutPageClient({ stores = [], settings = {}, savedPr
                 type="button"
                 onClick={() => handleFulfillmentChange("PICKUP")}
                 disabled={stores.length === 0}
-                className={`flex items-center gap-3 rounded-2xl border-2 p-4 text-left transition-colors disabled:opacity-40 disabled:cursor-not-allowed ${fulfillmentType === "PICKUP"
+                className={`flex items-center gap-3 rounded-2xl border-2 p-3.5 sm:p-4 text-left transition-colors disabled:opacity-40 disabled:cursor-not-allowed ${fulfillmentType === "PICKUP"
                     ? "border-fnc-red bg-fnc-red/5"
                     : "border-bordergray hover:border-charcoal/30"
                   }`}
               >
                 <StoreIcon className="h-5 w-5 text-fnc-red shrink-0" />
                 <div>
-                  <p className="font-display font-semibold text-charcoal">Store Pickup</p>
-                  <p className="font-body text-xs text-slate">
+                  <p className="font-display font-semibold text-charcoal text-sm sm:text-base">Store Pickup</p>
+                  <p className="font-body text-xs text-slate truncate max-w-[180px]">
                     {store ? store.name : "No store available"}
                   </p>
                 </div>
@@ -576,15 +577,15 @@ export default function CheckoutPageClient({ stores = [], settings = {}, savedPr
             </div>
 
             {fulfillmentType === "PICKUP" && stores.length > 1 && (
-              <div className="mt-5 pt-5 border-t border-bordergray flex flex-col gap-3">
+              <div className="mt-4 sm:mt-5 pt-4 sm:pt-5 border-t border-bordergray flex flex-col gap-3">
                 <p className="font-display text-sm font-bold text-charcoal">Select pickup location:</p>
-                <div className="grid sm:grid-cols-2 gap-3">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   {stores.map((s) => (
                     <button
                       key={s.id}
                       type="button"
                       onClick={() => setSelectedStore(s)}
-                      className={`flex flex-col gap-1.5 rounded-2xl border-2 p-4 text-left transition-colors ${selectedStore?.id === s.id
+                      className={`flex flex-col gap-1 rounded-2xl border-2 p-3.5 sm:p-4 text-left transition-colors ${selectedStore?.id === s.id
                           ? "border-fnc-red bg-fnc-red/5"
                           : "border-bordergray hover:border-charcoal/30"
                         }`}
@@ -599,18 +600,18 @@ export default function CheckoutPageClient({ stores = [], settings = {}, savedPr
           </div>
 
           {/* Contact details */}
-          <div className="bg-white border border-bordergray rounded-3xl p-6 flex flex-col gap-5">
-            <h2 className="font-display text-lg font-bold text-charcoal">Your Details</h2>
+          <div className="bg-white border border-bordergray rounded-2xl sm:rounded-3xl p-4 sm:p-6 flex flex-col gap-4 sm:gap-5">
+            <h2 className="font-display text-base sm:text-lg font-bold text-charcoal">Your Details</h2>
 
-            <div className="flex items-center gap-3 rounded-2xl bg-warmwhite px-4 py-3">
+            <div className="flex items-center gap-3 rounded-2xl bg-warmwhite px-3.5 py-3">
               <UserCircle2 className="h-5 w-5 text-fnc-red shrink-0" />
-              <p className="font-body text-sm text-charcoal">
+              <p className="font-body text-xs sm:text-sm text-charcoal truncate">
                 Ordering as <span className="font-semibold">{values.name}</span> ({values.email})
               </p>
             </div>
 
             <div className="flex flex-col gap-1.5">
-              <label htmlFor="phone" className="font-body text-sm font-semibold text-charcoal">
+              <label htmlFor="phone" className="font-body text-xs sm:text-sm font-semibold text-charcoal">
                 Phone number
               </label>
               <input id="phone" type="tel" value={values.phone} onChange={handleChange("phone")} placeholder="+91 70392 22266" className={inputClasses} />
@@ -620,14 +621,14 @@ export default function CheckoutPageClient({ stores = [], settings = {}, savedPr
 
           {/* Delivery address */}
           {fulfillmentType === "DELIVERY" && (
-            <div className="bg-white border border-bordergray rounded-3xl p-6 flex flex-col gap-5">
-              <div className="flex items-center justify-between gap-4 flex-wrap">
-                <h2 className="font-display text-lg font-bold text-charcoal">Delivery Address</h2>
+            <div className="bg-white border border-bordergray rounded-2xl sm:rounded-3xl p-4 sm:p-6 flex flex-col gap-4 sm:gap-5">
+              <div className="flex items-center justify-between gap-3 flex-wrap">
+                <h2 className="font-display text-base sm:text-lg font-bold text-charcoal">Delivery Address</h2>
                 <button
                   type="button"
                   onClick={handleUseCurrentLocation}
                   disabled={locating}
-                  className="flex items-center gap-1.5 h-9 px-3.5 rounded-full border border-fnc-red text-fnc-red font-body text-xs font-semibold hover:bg-fnc-red/5 transition-colors disabled:opacity-60"
+                  className="flex items-center justify-center gap-1.5 h-9 px-3.5 rounded-full border border-fnc-red text-fnc-red font-body text-xs font-semibold hover:bg-fnc-red/5 transition-colors disabled:opacity-60 w-full sm:w-auto"
                 >
                   {locating ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Navigation className="h-3.5 w-3.5" />}
                   {locating ? "Detecting..." : "Use My Current Location"}
@@ -642,35 +643,35 @@ export default function CheckoutPageClient({ stores = [], settings = {}, savedPr
               )}
 
               {store && (
-                <div className="bg-warmwhite/50 border border-bordergray/60 rounded-2xl p-4 flex flex-col gap-4 font-body text-sm mt-1 shadow-inner w-full">
-                  <div className="flex items-center gap-3">
+                <div className="bg-warmwhite/50 border border-bordergray/60 rounded-2xl p-3.5 sm:p-4 flex flex-col gap-3 font-body text-sm shadow-inner w-full">
+                  <div className="flex items-center gap-2">
                     <div className="h-2 w-2 rounded-full bg-fnc-red animate-pulse shrink-0"></div>
                     <p className="text-[10px] font-bold text-fnc-red uppercase tracking-wider">Active Route Routing</p>
                   </div>
 
-                  <div className="grid md:grid-cols-2 gap-4 relative">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 relative">
                     {/* Left node */}
-                    <div className="flex flex-col gap-1">
+                    <div className="flex flex-col gap-0.5">
                       <span className="text-[10px] font-bold text-slate uppercase tracking-wider">Ordered From (Store)</span>
-                      <span className="font-display font-bold text-charcoal">{store.name}</span>
-                      <span className="text-xs text-slate truncate">{store.address}</span>
+                      <span className="font-display font-bold text-charcoal text-xs sm:text-sm">{store.name}</span>
+                      <span className="text-[11px] text-slate truncate">{store.address}</span>
                     </div>
 
                     {/* Right node */}
-                    <div className="flex flex-col gap-1">
+                    <div className="flex flex-col gap-0.5">
                       <span className="text-[10px] font-bold text-slate uppercase tracking-wider">Deliver To (Your Address)</span>
-                      <span className="font-display font-bold text-charcoal">
+                      <span className="font-display font-bold text-charcoal text-xs sm:text-sm">
                         {values.line1 ? values.line1 : "Detecting Address..."}
                       </span>
-                      <span className="text-xs text-slate truncate">
+                      <span className="text-[11px] text-slate truncate">
                         {values.city ? `${values.city}, ${values.pincode}` : "Awaiting location verification"}
                       </span>
                     </div>
                   </div>
 
                   {deliveryDistance !== null && (
-                    <div className="pt-3 border-t border-dashed border-bordergray/80 flex items-center justify-between text-xs">
-                      <span className="text-slate font-medium">Estimated Delivery Distance:</span>
+                    <div className="pt-2 border-t border-dashed border-bordergray/80 flex items-center justify-between text-xs">
+                      <span className="text-slate font-medium">Estimated Distance:</span>
                       <span className="font-bold text-charcoal">{deliveryDistance.toFixed(1)} km</span>
                     </div>
                   )}
@@ -678,35 +679,35 @@ export default function CheckoutPageClient({ stores = [], settings = {}, savedPr
               )}
 
               <div className="flex flex-col gap-1.5">
-                <label htmlFor="line1" className="font-body text-sm font-semibold text-charcoal">
+                <label htmlFor="line1" className="font-body text-xs sm:text-sm font-semibold text-charcoal">
                   Address line 1
                 </label>
                 <input id="line1" type="text" value={values.line1} onChange={handleChange("line1")} onBlur={handleAddressBlur} placeholder="House/flat no., street" className={inputClasses} />
                 {errors.line1 && <p className="font-body text-xs text-fnc-red">{errors.line1}</p>}
               </div>
               <div className="flex flex-col gap-1.5">
-                <label htmlFor="line2" className="font-body text-sm font-semibold text-charcoal">
+                <label htmlFor="line2" className="font-body text-xs sm:text-sm font-semibold text-charcoal">
                   Address line 2 (optional)
                 </label>
                 <input id="line2" type="text" value={values.line2} onChange={handleChange("line2")} onBlur={handleAddressBlur} placeholder="Landmark, apartment, etc." className={inputClasses} />
               </div>
-              <div className="grid sm:grid-cols-3 gap-5">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-5">
                 <div className="flex flex-col gap-1.5">
-                  <label htmlFor="city" className="font-body text-sm font-semibold text-charcoal">
+                  <label htmlFor="city" className="font-body text-xs sm:text-sm font-semibold text-charcoal">
                     City
                   </label>
                   <input id="city" type="text" value={values.city} onChange={handleChange("city")} onBlur={handleAddressBlur} placeholder="City" className={inputClasses} />
                   {errors.city && <p className="font-body text-xs text-fnc-red">{errors.city}</p>}
                 </div>
                 <div className="flex flex-col gap-1.5">
-                  <label htmlFor="state" className="font-body text-sm font-semibold text-charcoal">
+                  <label htmlFor="state" className="font-body text-xs sm:text-sm font-semibold text-charcoal">
                     State
                   </label>
                   <input id="state" type="text" value={values.state} onChange={handleChange("state")} onBlur={handleAddressBlur} placeholder="State" className={inputClasses} />
                   {errors.state && <p className="font-body text-xs text-fnc-red">{errors.state}</p>}
                 </div>
                 <div className="flex flex-col gap-1.5">
-                  <label htmlFor="pincode" className="font-body text-sm font-semibold text-charcoal">
+                  <label htmlFor="pincode" className="font-body text-xs sm:text-sm font-semibold text-charcoal">
                     Pincode
                   </label>
                   <input id="pincode" type="text" value={values.pincode} onChange={handleChange("pincode")} onBlur={handleAddressBlur} placeholder="400607" className={inputClasses} />
@@ -716,23 +717,23 @@ export default function CheckoutPageClient({ stores = [], settings = {}, savedPr
 
               {/* Address Serviceability / Geocoding Status */}
               {(checkingDelivery || deliveryError || (deliveryDistance !== null && !deliveryError)) && (
-                <div className="pt-4 border-t border-bordergray flex flex-col gap-1.5 font-body text-sm">
+                <div className="pt-3 border-t border-bordergray flex flex-col gap-1.5 font-body text-xs sm:text-sm">
                   {checkingDelivery && (
                     <span className="text-slate flex items-center gap-1.5">
-                      <Loader2 className="h-4.5 w-4.5 animate-spin" />
+                      <Loader2 className="h-4 w-4 animate-spin" />
                       Verifying delivery address serviceability...
                     </span>
                   )}
                   {deliveryError && (
                     <span className="text-fnc-red flex items-center gap-1.5">
-                      <XCircle className="h-4.5 w-4.5 shrink-0" />
+                      <XCircle className="h-4 w-4 shrink-0" />
                       {deliveryError}
                     </span>
                   )}
                   {deliveryDistance !== null && !deliveryError && (
                     <span className="text-fnc-green flex items-center gap-1.5">
-                      <CheckCircle2 className="h-4.5 w-4.5 shrink-0" />
-                      Address verified! Distance to store: {deliveryDistance.toFixed(1)} km.
+                      <CheckCircle2 className="h-4 w-4 shrink-0" />
+                      Address verified! Distance: {deliveryDistance.toFixed(1)} km.
                       {deliveryFee === 0 ? " (Free Delivery)" : ` (Delivery Fee: ₹${deliveryFee})`}
                     </span>
                   )}
@@ -742,13 +743,13 @@ export default function CheckoutPageClient({ stores = [], settings = {}, savedPr
           )}
 
           {status === "error" && (
-            <p className="font-body text-sm text-fnc-red flex items-center gap-2">
+            <p className="font-body text-xs sm:text-sm text-fnc-red flex items-center gap-2">
               <XCircle className="h-4 w-4 shrink-0" />
               {serverError}
             </p>
           )}
 
-          <Button type="submit" size="lg" disabled={status === "submitting" || status === "paying" || status === "verifying" || !isLoaded} className="w-full sm:w-fit">
+          <Button type="submit" size="lg" disabled={status === "submitting" || status === "paying" || status === "verifying" || !isLoaded} className="w-full h-12 sm:h-14 font-bold text-base shadow-lg shadow-fnc-red/20">
             {status === "submitting" && (
               <>
                 <Loader2 className="h-5 w-5 animate-spin" />
@@ -769,8 +770,8 @@ export default function CheckoutPageClient({ stores = [], settings = {}, savedPr
             )}
             {status !== "submitting" && status !== "paying" && status !== "verifying" && "Place Order & Pay"}
           </Button>
-          <p className="font-body text-xs text-slate">
-            Secure payment powered by Razorpay. Cards, UPI, Netbanking, and Wallets are accepted.
+          <p className="font-body text-[11px] sm:text-xs text-slate text-center sm:text-left">
+            Secure payment powered by Razorpay. Cards, UPI, Netbanking, and Wallets accepted.
           </p>
         </form>
 

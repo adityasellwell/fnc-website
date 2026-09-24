@@ -21,6 +21,9 @@ const BASE_TABS = [
  */
 export default function MobileBottomNav() {
   const pathname = usePathname();
+  if (pathname.startsWith("/admin") || pathname.startsWith("/delivery-partner")) {
+    return null;
+  }
   const { isSignedIn } = useAuth();
   const cartCount = useCartStore((s) => s.items.reduce((sum, i) => sum + i.qty, 0));
   const wishlistCount = useWishlistStore((s) => s.items.length);
