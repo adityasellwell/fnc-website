@@ -423,16 +423,24 @@ export default function OrderDetailClient({ order, currentUser, availablePartner
             <div className="flex flex-col gap-4">
               {order.items.map((item) => (
                 <div key={item.id} className="flex items-center gap-4 py-3 border-b border-bordergray last:border-0">
-                  <div className="flex-1">
-                    <p className="font-display text-sm font-bold text-charcoal">
-                      {item.product.name}
-                      {item.variantLabel && <span className="text-fnc-red"> — {item.variantLabel}</span>}
+                  <div className="relative h-12 w-12 rounded-xl overflow-hidden border border-bordergray bg-warmwhite shrink-0">
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img
+                      src={item.product?.images?.[0] || "/images/logo.png"}
+                      alt={item.product?.name || "Product"}
+                      className="h-full w-full object-cover"
+                    />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="font-display text-sm font-bold text-charcoal truncate">
+                      {item.product?.name || "Product"}
+                      {item.variantLabel && <span className="text-fnc-red font-semibold"> — {item.variantLabel}</span>}
                     </p>
                     <p className="font-body text-xs text-slate mt-0.5">
                       ₹{Number(item.unitPrice).toFixed(2)} × {item.quantity}
                     </p>
                   </div>
-                  <div className="text-right">
+                  <div className="text-right shrink-0">
                     <p className="font-display text-sm font-bold text-charcoal">
                       ₹{(Number(item.unitPrice) * item.quantity).toFixed(2)}
                     </p>

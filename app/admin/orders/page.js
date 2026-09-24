@@ -54,7 +54,37 @@ export default async function AdminOrdersPage({ searchParams }) {
             ),
           },
           { header: "Customer", accessor: (o) => o.customer?.name ?? "—" },
-          { header: "Items", accessor: (o) => o.items.length },
+          {
+            header: "Items Ordered",
+            accessor: (o) => (
+              <div className="flex flex-col gap-2 min-w-[220px] max-w-[300px] py-1">
+                {o.items.map((item) => {
+                  const image = item.product?.images?.[0] || "/images/logo.png";
+                  return (
+                    <div key={item.id} className="flex items-center gap-2.5">
+                      <div className="relative h-10 w-10 rounded-xl overflow-hidden border border-bordergray bg-warmwhite shrink-0">
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img
+                          src={image}
+                          alt={item.product?.name || "Product"}
+                          className="h-full w-full object-cover"
+                        />
+                      </div>
+                      <div className="flex flex-col leading-tight min-w-0">
+                        <span className="font-body text-xs font-bold text-charcoal truncate">
+                          {item.product?.name || "Product"}
+                          {item.variantLabel ? <span className="text-slate font-normal"> ({item.variantLabel})</span> : null}
+                        </span>
+                        <span className="font-body text-[11px] text-slate font-medium mt-0.5">
+                          Qty: <span className="font-bold text-fnc-red">{item.quantity}</span> × ₹{Number(item.unitPrice).toFixed(0)}
+                        </span>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            ),
+          },
           { header: "Total", accessor: (o) => `₹${Number(o.total).toFixed(0)}` },
           { header: "Fulfillment", accessor: (o) => (o.fulfillmentType === "DELIVERY" ? "Delivery" : "Pickup") },
           {

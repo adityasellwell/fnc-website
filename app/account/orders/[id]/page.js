@@ -207,8 +207,16 @@ export default async function TrackOrderPage({ params }) {
                 </h2>
                 <div className="flex flex-col divide-y divide-bordergray">
                   {order.items.map((item) => (
-                    <div key={item.id} className="py-3 flex items-center justify-between gap-3 text-sm">
-                      <div className="min-w-0">
+                    <div key={item.id} className="py-3 flex items-center gap-3 text-sm">
+                      <div className="relative h-12 w-12 rounded-xl overflow-hidden border border-bordergray bg-warmwhite shrink-0">
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img
+                          src={item.product?.images?.[0] || "/images/logo.png"}
+                          alt={item.product?.name || "Product"}
+                          className="h-full w-full object-cover"
+                        />
+                      </div>
+                      <div className="min-w-0 flex-1">
                         <p className="font-display font-semibold text-charcoal truncate">
                           {item.product?.name}
                         </p>

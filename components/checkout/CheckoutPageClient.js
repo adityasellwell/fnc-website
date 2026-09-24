@@ -780,12 +780,20 @@ export default function CheckoutPageClient({ stores = [], settings = {}, savedPr
           <h2 className="font-display text-lg font-bold text-charcoal">Order Summary</h2>
           <div className="flex flex-col gap-3 max-h-80 overflow-y-auto" data-lenis-prevent>
             {items.map((item) => (
-              <div key={`${item.productId}:${item.variantLabel ?? ""}`} className="flex items-center justify-between gap-3 font-body text-sm">
-                <span className="text-charcoal truncate">
-                  {item.name}
+              <div key={`${item.productId}:${item.variantLabel ?? ""}`} className="flex items-center gap-3 font-body text-sm">
+                <div className="relative h-10 w-10 rounded-xl overflow-hidden border border-bordergray bg-warmwhite shrink-0">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src={item.image || item.images?.[0] || "/images/logo.png"}
+                    alt={item.name || "Product"}
+                    className="h-full w-full object-cover"
+                  />
+                </div>
+                <span className="text-charcoal truncate flex-1 min-w-0">
+                  <span className="font-semibold">{item.name}</span>
                   {item.variantLabel ? <span className="text-slate"> ({item.variantLabel})</span> : null}
                   {" "}
-                  <span className="text-slate">x{item.qty}</span>
+                  <span className="text-slate font-medium">x{item.qty}</span>
                 </span>
                 <span className="font-semibold text-charcoal shrink-0">₹{item.price * item.qty}</span>
               </div>
