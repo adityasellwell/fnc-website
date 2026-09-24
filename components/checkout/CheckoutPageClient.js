@@ -529,7 +529,6 @@ export default function CheckoutPageClient({ stores = [], settings = {}, savedPr
   }
 
   return (
-  return (
     <Section background="offwhite" spacing="md" className="px-3 sm:px-6">
       <h1 className="font-display text-2xl sm:text-section-heading font-bold text-charcoal mb-4 sm:mb-8">
         Checkout
