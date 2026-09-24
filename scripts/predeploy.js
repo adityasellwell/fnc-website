@@ -17,4 +17,11 @@ function run(command, label) {
   }
 }
 
+if (process.platform !== "win32") {
+  try {
+    execSync("chmod -R +x node_modules/@prisma/engines/ 2>/dev/null || true");
+  } catch (err) {}
+}
+
 run("npx prisma migrate deploy", "prisma migrate deploy");
+
