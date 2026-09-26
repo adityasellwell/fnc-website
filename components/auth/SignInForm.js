@@ -188,8 +188,7 @@ export default function SignInForm() {
         throw new Error(json.detail || json.code || "Failed to create server session");
       }
 
-      router.push(redirect);
-      router.refresh();
+      window.location.href = redirect;
     } catch (err) {
       console.error("[syncSession] failed:", err);
       setError(`Session sync failed: ${err.message || "please try again."}`);
