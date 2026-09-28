@@ -28,6 +28,9 @@ export async function updateSettingsAction(formData) {
       whatsapp: formData.get("businessWhatsapp")?.toString().trim() || "",
       email: formData.get("businessEmail")?.toString().trim() || "",
     },
+    socialLinks: {
+      instagram: formData.get("socialInstagram")?.toString().trim() || "https://www.instagram.com/fishchickencrab/",
+    },
     whyChooseCardImages,
     franchiseHeroImage: formData.get("franchiseHeroImage")?.toString().trim() || null,
   };

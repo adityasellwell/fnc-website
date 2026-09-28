@@ -5,6 +5,7 @@ import Section from "@/components/layout/Section";
 import Container from "@/components/layout/Container";
 import Reveal from "@/components/motion/Reveal";
 import ContactForm from "@/components/contact/ContactForm";
+import SocialIcon from "@/components/ui/SocialIcon";
 import { BRAND, CURRENT_LOCATION } from "@/lib/constants";
 import { getSettings } from "@/services/settings";
 
@@ -26,6 +27,7 @@ export default async function ContactPage() {
   const phone = settings?.businessInfo?.phone || BRAND.phone;
   const whatsapp = settings?.businessInfo?.whatsapp || BRAND.whatsapp;
   const email = settings?.businessInfo?.email || BRAND.email;
+  const instagram = settings?.socialLinks?.instagram || BRAND.instagram;
 
   const contactMethods = [
     {
@@ -39,6 +41,12 @@ export default async function ContactPage() {
       label: "WhatsApp",
       value: whatsapp,
       href: whatsAppLink(whatsapp, "Hi! I have a question about F&C."),
+    },
+    {
+      icon: ({ className }) => <SocialIcon name="Instagram" className={className} />,
+      label: "Instagram",
+      value: "@fishchickencrab",
+      href: instagram,
     },
     {
       icon: Mail,

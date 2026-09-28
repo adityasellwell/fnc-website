@@ -34,7 +34,7 @@ const initialValues = {
 };
 
 const inputClasses =
-  "w-full h-12 px-4 rounded-xl border border-bordergray bg-white font-body text-base text-charcoal placeholder:text-slate focus:border-fnc-red focus:outline-none transition-colors";
+  "w-full h-12 px-4 rounded-xl border border-bordergray bg-white font-body text-base text-charcoal placeholder:text-slate focus:border-fnc-red focus:outline-none transition-colors max-w-full box-border min-w-0";
 
 function calculateDistance(lat1, lon1, lat2, lon2) {
   const R = 6371; // km
@@ -631,7 +631,7 @@ export default function CheckoutPageClient({ stores = [], settings = {}, savedPr
   );
 
   return (
-    <Section background="offwhite" spacing="md" className="px-3 sm:px-6">
+    <Section background="offwhite" spacing="md" className="px-3 sm:px-6 pb-36 sm:pb-16 max-w-full overflow-x-hidden">
       <h1 className="font-display text-2xl sm:text-section-heading font-bold text-charcoal mb-4 sm:mb-8">
         Checkout
       </h1>

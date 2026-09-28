@@ -83,9 +83,15 @@ export default async function AdminSettingsPage() {
             <input name="businessWhatsapp" defaultValue={settings.businessInfo?.whatsapp || ""} placeholder="+91 70392 22266" className={inputClasses} />
           </div>
         </div>
-        <div className="flex flex-col gap-1.5">
-          <label className="font-body text-xs font-semibold text-charcoal">Email</label>
-          <input name="businessEmail" type="email" defaultValue={settings.businessInfo?.email || ""} placeholder="hello@fncmumbai.com" className={inputClasses} />
+        <div className="grid sm:grid-cols-2 gap-5">
+          <div className="flex flex-col gap-1.5">
+            <label className="font-body text-xs font-semibold text-charcoal">Email</label>
+            <input name="businessEmail" type="email" defaultValue={settings.businessInfo?.email || ""} placeholder="anchospitalityllp@gmail.com" className={inputClasses} />
+          </div>
+          <div className="flex flex-col gap-1.5">
+            <label className="font-body text-xs font-semibold text-charcoal">Instagram URL</label>
+            <input name="socialInstagram" defaultValue={settings.socialLinks?.instagram || "https://www.instagram.com/fishchickencrab/"} placeholder="https://www.instagram.com/fishchickencrab/" className={inputClasses} />
+          </div>
         </div>
 
         <h2 className="font-display text-lg font-bold text-charcoal border-b border-bordergray pb-3 mt-4">Homepage &amp; Franchise Images</h2>

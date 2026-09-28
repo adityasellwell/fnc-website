@@ -77,14 +77,19 @@ export default async function Footer() {
             )}
 
             <div className="flex items-center gap-4 mt-6">
-              {["Instagram", "Facebook"].map((label) => (
+              {[
+                { label: "Instagram", href: settings?.socialLinks?.instagram || BRAND.instagram },
+                { label: "Facebook", href: settings?.socialLinks?.facebook || "https://facebook.com" },
+              ].map(({ label, href }) => (
                 <a
                   key={label}
-                  href={`https://${label.toLowerCase()}.com`}
+                  href={href}
+                  target="_blank"
+                  rel="noopener noreferrer"
                   aria-label={label}
-                  className="h-11 w-11 flex items-center justify-center rounded-full border-2 border-bordergray text-charcoal hover:border-fnc-red hover:text-fnc-red transition-colors bg-white shadow-xs"
+                  className="h-11 w-11 flex items-center justify-center rounded-full border-2 border-bordergray text-charcoal hover:border-[#E1306C] hover:text-[#E1306C] transition-all duration-200 bg-white shadow-xs group"
                 >
-                  <SocialIcon name={label} className="h-5 w-5" />
+                  <SocialIcon name={label} className="h-5 w-5 group-hover:scale-110 transition-transform" />
                 </a>
               ))}
             </div>

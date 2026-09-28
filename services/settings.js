@@ -8,7 +8,7 @@ const DEFAULT_SETTINGS = {
   freeDeliveryThreshold: 500.00,
   zomatoUrl: "",
   swiggyUrl: "",
-  socialLinks: { facebook: "", instagram: "", whatsapp: "" },
+  socialLinks: { facebook: "", instagram: "https://www.instagram.com/fishchickencrab/", whatsapp: "+91 70392 22266" },
   businessInfo: {
     name: "F&C — Fresh Proteins & More",
     email: "anchospitalityllp@gmail.com",
