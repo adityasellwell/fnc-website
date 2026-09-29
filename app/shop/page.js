@@ -58,8 +58,15 @@ export default async function ShopPage({ searchParams }) {
     : [];
   const activeSlugs = activeCategory ? [activeCategory, ...childSlugs] : [];
 
+  // categorySlugs covers a product's primary category plus any additional
+  // ones it's been listed under; falls back to the single categoryId slug
+  // for the mock-data path, which predates it.
   let filtered = activeCategory
-    ? allProducts.filter((product) => activeSlugs.includes(product.categoryId.replace(/^cat-/, "")))
+    ? allProducts.filter((product) =>
+        (product.categorySlugs ?? [product.categoryId?.replace(/^cat-/, "")]).some((s) =>
+          activeSlugs.includes(s)
+        )
+      )
     : allProducts;
 
   if (searchQuery) {

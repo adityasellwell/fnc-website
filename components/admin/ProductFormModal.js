@@ -30,6 +30,14 @@ export default function ProductFormModal({ trigger, categories, product, action,
     Array.isArray(product?.customAttributes) ? product.customAttributes : []
   );
   const [variantRows, setVariantRows] = useState(() => initialVariantRows(product));
+  const [primaryCategoryId, setPrimaryCategoryId] = useState(
+    product?.categoryId ?? categories[0]?.id ?? ""
+  );
+  const [additionalCategoryIds, setAdditionalCategoryIds] = useState(() =>
+    Array.isArray(product?.additionalCategories)
+      ? product.additionalCategories.map((c) => c.id)
+      : []
+  );
   const [localVariantOptions, setLocalVariantOptions] = useState(variantOptions);
   const [showNewValueForm, setShowNewValueForm] = useState(false);
   const [newValueType, setNewValueType] = useState("Weight");
@@ -164,7 +172,13 @@ export default function ProductFormModal({ trigger, categories, product, action,
           <div className="grid sm:grid-cols-3 gap-4">
             <div className="flex flex-col gap-1.5">
               <label className="font-body text-xs font-semibold text-charcoal">Category <span className="text-fnc-red">*</span></label>
-              <select name="categoryId" defaultValue={product?.categoryId} required className={inputClasses}>
+              <select
+                name="categoryId"
+                value={primaryCategoryId}
+                onChange={(e) => setPrimaryCategoryId(e.target.value)}
+                required
+                className={inputClasses}
+              >
                 {categories.map((c) => (
                   <option key={c.id} value={c.id}>
                     {c.name}
@@ -179,6 +193,46 @@ export default function ProductFormModal({ trigger, categories, product, action,
             <div className="flex flex-col gap-1.5">
               <label className="font-body text-xs font-semibold text-charcoal">Unit <span className="text-fnc-red">*</span></label>
               <input name="unit" defaultValue={product?.unit} placeholder="500 g" required className={inputClasses} />
+            </div>
+          </div>
+
+          <div className="flex flex-col gap-1.5">
+            <label className="font-body text-xs font-semibold text-charcoal">
+              Additional Categories
+              <span className="block font-normal text-[11px] text-slate">
+                Also show this product on these category pages, on top of its Category above (e.g. a snack that should also appear under Ready to Eat).
+              </span>
+            </label>
+            <div className="flex flex-wrap gap-2 p-3 rounded-xl border border-bordergray bg-warmwhite max-h-40 overflow-y-auto">
+              {categories
+                .filter((c) => c.id !== primaryCategoryId)
+                .map((c) => {
+                  const checked = additionalCategoryIds.includes(c.id);
+                  return (
+                    <label
+                      key={c.id}
+                      className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-full border cursor-pointer font-body text-xs font-semibold transition-colors ${
+                        checked
+                          ? "bg-fnc-red/10 border-fnc-red text-fnc-red"
+                          : "bg-white border-bordergray text-charcoal hover:border-charcoal/40"
+                      }`}
+                    >
+                      <input
+                        type="checkbox"
+                        name="additionalCategoryIds"
+                        value={c.id}
+                        checked={checked}
+                        onChange={(e) =>
+                          setAdditionalCategoryIds((prev) =>
+                            e.target.checked ? [...prev, c.id] : prev.filter((id) => id !== c.id)
+                          )
+                        }
+                        className="sr-only"
+                      />
+                      {c.name}
+                    </label>
+                  );
+                })}
             </div>
           </div>
 

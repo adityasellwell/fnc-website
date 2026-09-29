@@ -36,6 +36,9 @@ model Category {
   subcategories    Category[] @relation("CategoryToSubcategory")
 
   products Product[]
+  // Products that list this as an EXTRA browse category, on top of their
+  // required primary `category` above — see Product.additionalCategories.
+  productsAsAdditional Product[] @relation("ProductAdditionalCategories")
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -101,6 +104,13 @@ model Product {
 
   category   Category @relation(fields: [categoryId], references: [id])
   categoryId String
+
+  // Lets a product browse under MORE than one category page (e.g. a
+  // chicken snack that should also show under Ready to Eat) on top of its
+  // required primary category above. Purely additive — every existing
+  // single-category query keeps working on `category`/`categoryId` alone;
+  // only category-browsing queries were updated to also check this.
+  additionalCategories Category[] @relation("ProductAdditionalCategories")
 
   // §7's "availableAtStores[]" — implicit many-to-many with Store.
   availableAtStores Store[] @relation("StoreProducts")

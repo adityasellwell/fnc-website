@@ -21,7 +21,12 @@ function resolveImages(product) {
 export async function listProducts({ search, categoryId, page = 1 } = {}) {
   const where = {
     ...(search ? { name: { contains: search } } : {}),
-    ...(categoryId ? { categoryId } : {}),
+    // Admin's category filter matches either the primary category or an
+    // additional one — a product filed under Snacks as an extra category
+    // should still show up when filtering the admin list by Snacks.
+    ...(categoryId
+      ? { OR: [{ categoryId }, { additionalCategories: { some: { id: categoryId } } }] }
+      : {}),
   };
 
   const [products, totalCount] = await Promise.all([
@@ -29,6 +34,7 @@ export async function listProducts({ search, categoryId, page = 1 } = {}) {
       where,
       include: {
         category: true,
+        additionalCategories: true,
         media: { orderBy: { displayOrder: "asc" } },
         storeInventory: true,
         variants: { include: { variantOption: true }, orderBy: { order: "asc" } },
@@ -52,6 +58,7 @@ export async function getProductById(id) {
     where: { id },
     include: {
       category: true,
+      additionalCategories: true,
       media: { orderBy: { displayOrder: "asc" } },
       storeInventory: true,
       variants: { include: { variantOption: true }, orderBy: { order: "asc" } },
@@ -64,7 +71,7 @@ export async function getProductById(id) {
 }
 
 export async function createProduct(data) {
-  const { images, videoUrl, variants, ...rest } = data;
+  const { images, videoUrl, variants, additionalCategoryIds, ...rest } = data;
   return db.$transaction(async (tx) => {
     const activeStores = await tx.store.findMany({ where: { status: "ACTIVE" }, select: { id: true } });
 
@@ -72,6 +79,9 @@ export async function createProduct(data) {
       data: {
         ...rest,
         images: images || [],
+        additionalCategories: additionalCategoryIds?.length
+          ? { connect: additionalCategoryIds.map((id) => ({ id })) }
+          : undefined,
         // New products default to available at every active store, with
         // zero stock until a Store Admin adjusts it — without this a new
         // product would have no StoreInventory rows anywhere and would
@@ -128,13 +138,20 @@ export async function createProduct(data) {
 }
 
 export async function updateProduct(id, data) {
-  const { images, videoUrl, variants, ...rest } = data;
+  const { images, videoUrl, variants, additionalCategoryIds, ...rest } = data;
   return db.$transaction(async (tx) => {
     const product = await tx.product.update({
       where: { id },
       data: {
         ...rest,
         images: images || [],
+        // `set: []` first, then connect — replaces the whole set rather
+        // than only ever adding, so unchecking one in the admin form
+        // actually removes it.
+        additionalCategories: {
+          set: [],
+          connect: (additionalCategoryIds ?? []).map((cid) => ({ id: cid })),
+        },
       },
     });
 

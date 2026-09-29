@@ -78,6 +78,15 @@ function parseProductForm(formData) {
   // moment a second product is also left without a SKU.
   const sku = formData.get("sku")?.toString().trim() || null;
 
+  const categoryId = formData.get("categoryId").toString();
+  // A category picked as both primary and additional would try to connect
+  // the same Category twice in the many-to-many relation and error —
+  // excluding the primary here keeps the two lists mutually exclusive.
+  const additionalCategoryIds = formData
+    .getAll("additionalCategoryIds")
+    .map((v) => v.toString())
+    .filter((id) => id && id !== categoryId);
+
   return {
     name: formData.get("name").toString().trim(),
     description: formData.get("description").toString().trim(),
@@ -90,7 +99,8 @@ function parseProductForm(formData) {
     cookingInstructions: formData.get("cookingInstructions")?.toString().trim() ?? "",
     storageInstructions: formData.get("storageInstructions")?.toString().trim() ?? "",
     tags: tags ? tags.split(",").map((t) => t.trim()).filter(Boolean) : [],
-    categoryId: formData.get("categoryId").toString(),
+    categoryId,
+    additionalCategoryIds,
     // Checkbox: present in the form data (any value) when checked, absent
     // entirely when unchecked — never sends "false" itself.
     isActive: formData.get("isActive") != null,

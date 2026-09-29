@@ -93,17 +93,21 @@ export default function RecommendationsSection({ products = [], initialCategorie
         // A subcategory pill was picked underneath the parent circle —
         // narrows to ONLY that subcategory's products, not the parent's
         // full rollup anymore (e.g. Fish + Snacks selected = Snacks only).
-        list = list.filter((p) => p.categoryId === `cat-${selectedSubcategory}`);
+        // p.categorySlugs covers both the primary category and any extra
+        // ones a product has been listed under (falls back to the single
+        // categoryId slug for the mock-data path, which predates it).
+        list = list.filter((p) =>
+          (p.categorySlugs ?? [p.categoryId?.replace(/^cat-/, "")]).includes(selectedSubcategory)
+        );
       } else {
-        // p.categoryId is the synthetic "cat-<slug>" string lib/data/products.js
-        // emits (see its header comment) — not the real Category.id cuid, so it
-        // must be compared against the slug directly, not a categoriesList lookup.
         // Selecting a top-level category alone pulls in its subcategories'
         // products (e.g. "Fish" includes "Raw" and "Snacks"), matching
         // /shop/[category]'s rollup behavior.
         const childSlugs = subcategories.map((c) => c.slug);
-        const activeSlugs = [`cat-${selectedCategory}`, ...childSlugs.map((s) => `cat-${s}`)];
-        list = list.filter((p) => activeSlugs.includes(p.categoryId));
+        const activeSlugs = [selectedCategory, ...childSlugs];
+        list = list.filter((p) =>
+          (p.categorySlugs ?? [p.categoryId?.replace(/^cat-/, "")]).some((s) => activeSlugs.includes(s))
+        );
       }
     } else {
       list = list.filter(

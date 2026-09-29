@@ -37,17 +37,30 @@ export async function GET(request) {
   // Public API — never surface an admin-deactivated product here, same as
   // every other public listing (see lib/data/products.js).
   const where = { isActive: true };
-  if (category) where.category = { slug: category };
+  // Matches either the primary category or an additional one — a product
+  // filed under a second category (see Product.additionalCategories)
+  // should still show up in that category's results here.
+  if (category) {
+    where.OR = [
+      { category: { slug: category } },
+      { additionalCategories: { some: { slug: category } } },
+    ];
+  }
   if (tag) where.tags = { has: tag };
   if (search) {
     // No `mode: "insensitive"` — that's a Postgres/Mongo-only Prisma option
     // and throws on this project's MySQL provider. MySQL's default
     // collation (utf8mb4_unicode_ci, set in the initial migration) is
     // already case-insensitive, so plain `contains` is correct here.
-    where.OR = [
-      { name: { contains: search } },
-      { description: { contains: search } },
-    ];
+    // Nested under its own AND branch (not another `where.OR`) since the
+    // category filter above already uses `where.OR` — reassigning it here
+    // would silently drop the category condition entirely.
+    where.AND = [{
+      OR: [
+        { name: { contains: search } },
+        { description: { contains: search } },
+      ],
+    }];
   }
 
   try {
