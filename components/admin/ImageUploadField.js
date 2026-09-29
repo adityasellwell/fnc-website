@@ -2,6 +2,7 @@
 
 import { useRef, useState } from "react";
 import { ImagePlus, Loader2, X } from "lucide-react";
+import { resizeImageForUpload } from "@/lib/utils/resizeImage";
 
 /**
  * Real file upload (Firebase Storage via /api/admin/upload) instead of
@@ -24,12 +25,17 @@ export default function ImageUploadField({ name, label, defaultValue, folder = "
     setError("");
 
     try {
+      const resized = await resizeImageForUpload(file);
       const formData = new FormData();
-      formData.append("file", file);
+      formData.append("file", resized);
       formData.append("folder", folder);
 
       const res = await fetch("/api/admin/upload", { method: "POST", body: formData });
-      const json = await res.json();
+      // A proxy/server error (e.g. request too large) can return a plain
+      // HTML page instead of JSON — parsing that as JSON throws a cryptic
+      // browser error, not the actual problem, so handle it explicitly.
+      const json = await res.json().catch(() => null);
+      if (!json) throw new Error(`Upload failed (server returned an unexpected response, status ${res.status}). Please try again.`);
 
       if (!res.ok) throw new Error(json.error || "Upload failed");
       setUrl(json.url);

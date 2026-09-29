@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { getAdminUser } from "@/lib/admin-auth";
 import { uploadToCloudinary } from "@/lib/cloudinary";
 
-const MAX_SIZE_BYTES = 5 * 1024 * 1024; // 5MB
+const MAX_SIZE_BYTES = 8 * 1024 * 1024; // 8MB — client already downscales before upload (lib/utils/resizeImage.js), this is just a safety margin
 const ALLOWED_TYPES = ["image/jpeg", "image/png", "image/webp", "image/gif"];
 
 /**
@@ -19,6 +19,13 @@ export async function POST(request) {
     return NextResponse.json({ error: "Sign in as an admin to upload images." }, { status: 401 });
   }
 
+  if (!process.env.CLOUDINARY_CLOUD_NAME || !process.env.CLOUDINARY_API_KEY || !process.env.CLOUDINARY_API_SECRET) {
+    return NextResponse.json(
+      { error: "Cloudinary credentials (CLOUDINARY_CLOUD_NAME, CLOUDINARY_API_KEY, CLOUDINARY_API_SECRET) are missing from server environment variables." },
+      { status: 500 }
+    );
+  }
+
   const formData = await request.formData();
   const file = formData.get("file");
   const folder = formData.get("folder")?.toString().replace(/[^a-z0-9-]/gi, "") || "misc";
@@ -32,7 +39,7 @@ export async function POST(request) {
   }
 
   if (file.size > MAX_SIZE_BYTES) {
-    return NextResponse.json({ error: "Image must be under 5MB." }, { status: 400 });
+    return NextResponse.json({ error: "Image must be under 8MB." }, { status: 400 });
   }
 
   try {
