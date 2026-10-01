@@ -253,21 +253,26 @@ export default function RecommendationsSection({ products = [], initialCategorie
              just that subcategory; picking the same one again clears back
              to the parent's full rollup. ─────────────────────────────── */}
         {subcategories.length > 0 && (
-          <div className="flex flex-wrap gap-2 mb-6 -mt-1">
+          <div className="flex flex-wrap gap-3 mb-6 -mt-1">
             {subcategories.map((c) => {
               const isActive = selectedSubcategory === c.slug;
+              const selectedCategoryObj = initialCategories.find((cat) => cat.slug === selectedCategory);
+              const thumb = c.image || selectedCategoryObj?.image || "/images/categories/fish.jpg";
               return (
                 <button
                   key={c.id}
                   type="button"
                   onClick={() => setSelectedSubcategory(isActive ? null : c.slug)}
                   className={cn(
-                    "shrink-0 rounded-full px-4 py-2 font-body text-sm font-semibold border transition-colors",
+                    "shrink-0 rounded-full pl-2 pr-5 py-2 font-body text-sm font-semibold border transition-colors inline-flex items-center gap-2.5",
                     isActive
                       ? "bg-fnc-red text-white border-fnc-red"
                       : "bg-white text-charcoal border-bordergray hover:border-fnc-red"
                   )}
                 >
+                  <span className="relative h-9 w-9 shrink-0 rounded-full overflow-hidden border border-black/10">
+                    <Image src={thumb} alt="" fill sizes="36px" className="object-cover" />
+                  </span>
                   {c.name}
                 </button>
               );

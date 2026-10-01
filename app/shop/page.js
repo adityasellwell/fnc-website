@@ -158,20 +158,24 @@ export default async function ShopPage({ searchParams }) {
           </div>
 
           {childSlugs.length > 0 && (
-            <div className="flex gap-2 sm:gap-3 mb-8 overflow-x-auto scrollbar-none -mx-5 px-5 sm:mx-0 sm:px-0 flex-nowrap items-center py-1">
+            <div className="flex gap-3 sm:gap-4 mb-8 overflow-x-auto scrollbar-none -mx-5 px-5 sm:mx-0 sm:px-0 flex-nowrap items-center py-1">
               {categories.filter((c) => c.parentCategoryId === activeCategoryObj.id).map((c) => {
                 const isActive = activeCategory === c.slug;
+                const thumb = c.image || activeCategoryObj?.image || "/images/categories/fish.jpg";
                 return (
                   <Link
                     key={c.id}
                     href={buildHref(c.slug, 1, searchQuery)}
                     className={cn(
-                      "shrink-0 rounded-full px-4 py-2 font-body text-sm font-semibold border transition-all whitespace-nowrap inline-flex items-center justify-center",
+                      "shrink-0 rounded-full pl-2 pr-5 py-2 font-body text-sm font-semibold border transition-all whitespace-nowrap inline-flex items-center gap-2.5",
                       isActive
                         ? "bg-fnc-red text-white border-fnc-red shadow-sm"
-                        : "bg-fnc-red/5 text-fnc-red border-fnc-red/30 hover:bg-fnc-red/10"
+                        : "bg-white text-charcoal border-bordergray hover:border-fnc-red/50"
                     )}
                   >
+                    <span className="relative h-9 w-9 shrink-0 rounded-full overflow-hidden border border-black/10">
+                      <Image src={thumb} alt="" fill sizes="36px" className="object-cover" />
+                    </span>
                     {c.name}
                   </Link>
                 );
