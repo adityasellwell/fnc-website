@@ -58,14 +58,24 @@ export default async function ShopCategoryPage({ params, searchParams }) {
   // Only top-level categories roll their subcategories' products up —
   // a subcategory page (parentCategoryId set) just shows its own products,
   // no further nesting supported.
-  const [subcategories, allCategories] = await Promise.all([
+  const [rollupSubcategories, allCategories] = await Promise.all([
     category.parentCategoryId ? [] : getCategoryChildren(category.id),
     getCategories(),
   ]);
   const products = await getProductsByCategory(
     slug,
-    subcategories.map((c) => c.slug)
+    rollupSubcategories.map((c) => c.slug)
   );
+
+  // The sibling pill row (Raw/Snacks) should stay visible even once you've
+  // clicked into one of them — key it off the top-level species, not off
+  // whichever subcategory page is currently open (which has no children).
+  const topLevelCategory = category.parentCategoryId
+    ? allCategories.find((c) => c.id === category.parentCategoryId)
+    : category;
+  const siblingCategories = topLevelCategory
+    ? allCategories.filter((c) => c.parentCategoryId === topLevelCategory.id)
+    : [];
 
   const requestedPage = Math.max(1, parseInt(sp?.page ?? "1", 10) || 1);
   const totalPages = Math.max(1, Math.ceil(products.length / PAGE_SIZE));
@@ -160,18 +170,30 @@ export default async function ShopCategoryPage({ params, searchParams }) {
             ))}
           </div>
 
-          {/* Subcategory row — only shown on a parent category's own page */}
-          {subcategories.length > 0 && (
-            <div className="flex gap-2 mb-8 overflow-x-auto scrollbar-none -mx-5 px-5 sm:mx-0 sm:px-0 flex-nowrap items-center py-1">
-              {subcategories.map((c) => (
-                <Link
-                  key={c.id}
-                  href={`/shop/${c.slug}`}
-                  className="shrink-0 rounded-full px-4 py-2 font-body text-xs font-semibold border border-fnc-red/30 text-fnc-red bg-fnc-red/5 hover:bg-fnc-red/10 transition-colors whitespace-nowrap inline-flex items-center justify-center"
-                >
-                  {c.name}
-                </Link>
-              ))}
+          {/* Subcategory row — shown whenever the current species has any */}
+          {siblingCategories.length > 0 && (
+            <div className="flex gap-3 sm:gap-4 mb-8 overflow-x-auto scrollbar-none -mx-5 px-5 sm:mx-0 sm:px-0 flex-nowrap items-center py-1">
+              {siblingCategories.map((c) => {
+                const isActive = c.slug === category.slug;
+                const thumb = c.image || topLevelCategory?.image || "/images/categories/fish.jpg";
+                return (
+                  <Link
+                    key={c.id}
+                    href={`/shop/${c.slug}`}
+                    className={cn(
+                      "shrink-0 rounded-full pl-2 pr-5 py-2 font-body text-sm font-semibold border transition-colors whitespace-nowrap inline-flex items-center gap-2.5",
+                      isActive
+                        ? "bg-fnc-red text-white border-fnc-red shadow-sm"
+                        : "bg-white text-charcoal border-bordergray hover:border-fnc-red/50"
+                    )}
+                  >
+                    <span className="relative h-9 w-9 shrink-0 rounded-full overflow-hidden border border-black/10">
+                      <Image src={thumb} alt="" fill sizes="36px" className="object-cover" />
+                    </span>
+                    {c.name}
+                  </Link>
+                );
+              })}
             </div>
           )}
 

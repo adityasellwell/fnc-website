@@ -58,6 +58,19 @@ export default async function ShopPage({ searchParams }) {
     : [];
   const activeSlugs = activeCategory ? [activeCategory, ...childSlugs] : [];
 
+  // The sibling pill row (Raw/Snacks) needs to stay visible even once
+  // you've clicked into one of them — it should key off the top-level
+  // species (Chicken/Fish/...), not off whichever subcategory is
+  // currently selected, which has no children of its own.
+  const topLevelCategoryObj = activeCategoryObj
+    ? activeCategoryObj.parentCategoryId
+      ? categories.find((c) => c.id === activeCategoryObj.parentCategoryId)
+      : activeCategoryObj
+    : null;
+  const siblingCategories = topLevelCategoryObj
+    ? categories.filter((c) => c.parentCategoryId === topLevelCategoryObj.id)
+    : [];
+
   // categorySlugs covers a product's primary category plus any additional
   // ones it's been listed under; falls back to the single categoryId slug
   // for the mock-data path, which predates it.
@@ -157,11 +170,11 @@ export default async function ShopPage({ searchParams }) {
             ))}
           </div>
 
-          {childSlugs.length > 0 && (
+          {siblingCategories.length > 0 && (
             <div className="flex gap-3 sm:gap-4 mb-8 overflow-x-auto scrollbar-none -mx-5 px-5 sm:mx-0 sm:px-0 flex-nowrap items-center py-1">
-              {categories.filter((c) => c.parentCategoryId === activeCategoryObj.id).map((c) => {
+              {siblingCategories.map((c) => {
                 const isActive = activeCategory === c.slug;
-                const thumb = c.image || activeCategoryObj?.image || "/images/categories/fish.jpg";
+                const thumb = c.image || topLevelCategoryObj?.image || "/images/categories/fish.jpg";
                 return (
                   <Link
                     key={c.id}
