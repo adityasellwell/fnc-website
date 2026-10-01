@@ -110,11 +110,15 @@ export default function RecommendationsSection({ products = [], initialCategorie
         );
       }
     } else {
-      list = list.filter(
-        (p) =>
-          Array.isArray(p.tags) &&
-          (p.tags.includes("bestseller") || p.tags.includes("premium"))
-      );
+      // No category selected — show everything, with bestseller/premium
+      // tagged products (if any) surfaced first rather than hard-filtering
+      // to just those tags, which left the section empty whenever nothing
+      // had been tagged yet.
+      list = [...list].sort((a, b) => {
+        const score = (p) =>
+          Array.isArray(p.tags) && (p.tags.includes("bestseller") || p.tags.includes("premium")) ? 0 : 1;
+        return score(a) - score(b);
+      });
     }
 
     return list;
