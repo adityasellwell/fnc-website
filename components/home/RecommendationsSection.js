@@ -264,14 +264,14 @@ export default function RecommendationsSection({ products = [], initialCategorie
                   type="button"
                   onClick={() => setSelectedSubcategory(isActive ? null : c.slug)}
                   className={cn(
-                    "shrink-0 rounded-full pl-2 pr-5 py-2 font-body text-sm font-semibold border transition-colors inline-flex items-center gap-2.5",
+                    "shrink-0 rounded-full pl-2 pr-6 py-2.5 font-body text-base font-bold border-2 transition-colors inline-flex items-center gap-3",
                     isActive
-                      ? "bg-fnc-red text-white border-fnc-red"
-                      : "bg-white text-charcoal border-bordergray hover:border-fnc-red"
+                      ? "bg-fnc-red text-white border-fnc-red shadow-md"
+                      : "bg-fnc-red/10 text-fnc-red border-fnc-red/40 hover:bg-fnc-red/20"
                   )}
                 >
-                  <span className="relative h-9 w-9 shrink-0 rounded-full overflow-hidden border border-black/10">
-                    <Image src={thumb} alt="" fill sizes="36px" className="object-cover" />
+                  <span className="relative h-11 w-11 shrink-0 rounded-full overflow-hidden border-2 border-white shadow">
+                    <Image src={thumb} alt="" fill sizes="44px" className="object-cover" />
                   </span>
                   {c.name}
                 </button>

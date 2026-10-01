@@ -6,13 +6,10 @@ import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
 import Container from "@/components/layout/Container";
 import Section from "@/components/layout/Section";
-import Reveal from "@/components/motion/Reveal";
-import ProductCard from "@/components/product/ProductCard";
-import { getCategoryBySlug, getCategories, getCategoryChildren } from "@/lib/data/categories";
+import CategoryFilterGrid from "@/components/shop/CategoryFilterGrid";
+import { getCategoryBySlug, getCategories } from "@/lib/data/categories";
 import { getProductsByCategory } from "@/lib/data/products";
 import { cn } from "@/lib/utils";
-
-const PAGE_SIZE = 12;
 
 export async function generateMetadata({ params }) {
   const { category: slug } = await params;
@@ -46,44 +43,32 @@ function pillClasses(active) {
   );
 }
 
-export default async function ShopCategoryPage({ params, searchParams }) {
+export default async function ShopCategoryPage({ params }) {
   const { category: slug } = await params;
-  const sp = await searchParams;
 
   const category = await getCategoryBySlug(slug);
   if (!category) {
     notFound();
   }
 
-  // Only top-level categories roll their subcategories' products up —
-  // a subcategory page (parentCategoryId set) just shows its own products,
-  // no further nesting supported.
-  const [rollupSubcategories, allCategories] = await Promise.all([
-    category.parentCategoryId ? [] : getCategoryChildren(category.id),
-    getCategories(),
-  ]);
-  const products = await getProductsByCategory(
-    slug,
-    rollupSubcategories.map((c) => c.slug)
-  );
+  const allCategories = await getCategories();
 
-  // The sibling pill row (Raw/Snacks) should stay visible even once you've
-  // clicked into one of them — key it off the top-level species, not off
-  // whichever subcategory page is currently open (which has no children).
+  // The sibling pill row (Raw/Snacks) and the grid both key off the
+  // top-level species, not off whichever subcategory page is currently
+  // open — the full species rollup is fetched once here, and pill clicks
+  // just filter it client-side (CategoryFilterGrid) instead of navigating
+  // to a new page (new banner, new fetch, scroll reset).
   const topLevelCategory = category.parentCategoryId
     ? allCategories.find((c) => c.id === category.parentCategoryId)
     : category;
   const siblingCategories = topLevelCategory
     ? allCategories.filter((c) => c.parentCategoryId === topLevelCategory.id)
     : [];
-
-  const requestedPage = Math.max(1, parseInt(sp?.page ?? "1", 10) || 1);
-  const totalPages = Math.max(1, Math.ceil(products.length / PAGE_SIZE));
-  const currentPage = Math.min(requestedPage, totalPages);
-  const paginated = products.slice(
-    (currentPage - 1) * PAGE_SIZE,
-    currentPage * PAGE_SIZE
+  const products = await getProductsByCategory(
+    topLevelCategory?.slug ?? slug,
+    siblingCategories.map((c) => c.slug)
   );
+  const initialSubcategory = category.parentCategoryId ? category.slug : null;
 
   const jsonLdBreadcrumb = {
     "@context": "https://schema.org",
@@ -170,85 +155,12 @@ export default async function ShopCategoryPage({ params, searchParams }) {
             ))}
           </div>
 
-          {/* Subcategory row — shown whenever the current species has any */}
-          {siblingCategories.length > 0 && (
-            <div className="flex gap-3 sm:gap-4 mb-8 overflow-x-auto scrollbar-none -mx-5 px-5 sm:mx-0 sm:px-0 flex-nowrap items-center py-1">
-              {siblingCategories.map((c) => {
-                const isActive = c.slug === category.slug;
-                const thumb = c.image || topLevelCategory?.image || "/images/categories/fish.jpg";
-                return (
-                  <Link
-                    key={c.id}
-                    href={`/shop/${c.slug}`}
-                    className={cn(
-                      "shrink-0 rounded-full pl-2 pr-5 py-2 font-body text-sm font-semibold border transition-colors whitespace-nowrap inline-flex items-center gap-2.5",
-                      isActive
-                        ? "bg-fnc-red text-white border-fnc-red shadow-sm"
-                        : "bg-white text-charcoal border-bordergray hover:border-fnc-red/50"
-                    )}
-                  >
-                    <span className="relative h-9 w-9 shrink-0 rounded-full overflow-hidden border border-black/10">
-                      <Image src={thumb} alt="" fill sizes="36px" className="object-cover" />
-                    </span>
-                    {c.name}
-                  </Link>
-                );
-              })}
-            </div>
-          )}
-
-          <p className="font-body text-sm text-slate mb-6">
-            {products.length} product{products.length === 1 ? "" : "s"}
-          </p>
-
-          {paginated.length === 0 ? (
-            <div className="flex flex-col items-center justify-center py-16 text-center border border-dashed border-bordergray rounded-2xl bg-white/50 w-full">
-              <span className="text-4xl mb-3">🥩</span>
-              <h4 className="font-display text-lg font-bold text-charcoal">Fresh stock arriving soon</h4>
-              <p className="font-body text-sm text-slate mt-1 max-w-xs">
-                We are currently refilling our inventory. In the meantime, feel free to check our other categories above!
-              </p>
-            </div>
-          ) : (
-            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 sm:gap-5">
-              {paginated.map((product, i) => (
-                <Reveal key={product.id} delay={(i % 4) * 0.05}>
-                  <ProductCard product={product} variant="kinetic" />
-                </Reveal>
-              ))}
-            </div>
-          )}
-
-          {/* Pagination */}
-          {totalPages > 1 && (
-            <nav
-              aria-label="Pagination"
-              className="flex flex-wrap items-center justify-center gap-2 mt-10"
-            >
-              {Array.from({ length: totalPages }).map((_, i) => {
-                const page = i + 1;
-                const href =
-                  page === 1
-                    ? `/shop/${category.slug}`
-                    : `/shop/${category.slug}?page=${page}`;
-                return (
-                  <Link
-                    key={page}
-                    href={href}
-                    aria-current={page === currentPage ? "page" : undefined}
-                    className={cn(
-                      "h-10 w-10 flex items-center justify-center rounded-full font-body text-sm font-semibold border transition-colors",
-                      page === currentPage
-                        ? "bg-fnc-red text-white border-fnc-red"
-                        : "bg-white text-charcoal border-bordergray hover:border-charcoal"
-                    )}
-                  >
-                    {page}
-                  </Link>
-                );
-              })}
-            </nav>
-          )}
+          <CategoryFilterGrid
+            products={products}
+            siblingCategories={siblingCategories}
+            topLevelImage={topLevelCategory?.image}
+            initialSubcategory={initialSubcategory}
+          />
         </Section>
       </main>
       <Footer />

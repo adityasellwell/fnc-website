@@ -4,15 +4,12 @@ import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
 import Container from "@/components/layout/Container";
 import Section from "@/components/layout/Section";
-import Reveal from "@/components/motion/Reveal";
-import ProductCard from "@/components/product/ProductCard";
+import CategoryFilterGrid from "@/components/shop/CategoryFilterGrid";
 import { getProducts } from "@/lib/data/products";
 import { getCategories } from "@/lib/data/categories";
 import { logProductSearch } from "@/lib/utils/analytics";
 import { cn } from "@/lib/utils";
 import { resolveCategoryMeta } from "@/lib/constants";
-
-const PAGE_SIZE = 12;
 
 export const metadata = {
   title: "Shop All Products — F&C Fresh Proteins & More",
@@ -42,26 +39,18 @@ export default async function ShopPage({ searchParams }) {
   const sp = await searchParams;
   const activeCategory = sp?.category ?? null;
   const searchQuery = sp?.search?.trim() || null;
-  const requestedPage = Math.max(1, parseInt(sp?.page ?? "1", 10) || 1);
 
   const [allProducts, categories] = await Promise.all([
     getProducts(),
     getCategories(),
   ]);
 
-  // Viewing a top-level category rolls its subcategories' products up too
-  // (e.g. "Fish" shows "Raw" and "Snacks" together) — same behavior as
-  // /shop/[category].
+  // Viewing any species pill (top-level or one of its Raw/Snacks
+  // subcategories) always rolls up to the full top-level species here —
+  // CategoryFilterGrid narrows it down to a specific subcategory
+  // client-side, so clicking Raw/Snacks filters in place instead of
+  // navigating to a new page.
   const activeCategoryObj = activeCategory ? categories.find((c) => c.slug === activeCategory) : null;
-  const childSlugs = activeCategoryObj
-    ? categories.filter((c) => c.parentCategoryId === activeCategoryObj.id).map((c) => c.slug)
-    : [];
-  const activeSlugs = activeCategory ? [activeCategory, ...childSlugs] : [];
-
-  // The sibling pill row (Raw/Snacks) needs to stay visible even once
-  // you've clicked into one of them — it should key off the top-level
-  // species (Chicken/Fish/...), not off whichever subcategory is
-  // currently selected, which has no children of its own.
   const topLevelCategoryObj = activeCategoryObj
     ? activeCategoryObj.parentCategoryId
       ? categories.find((c) => c.id === activeCategoryObj.parentCategoryId)
@@ -70,6 +59,10 @@ export default async function ShopPage({ searchParams }) {
   const siblingCategories = topLevelCategoryObj
     ? categories.filter((c) => c.parentCategoryId === topLevelCategoryObj.id)
     : [];
+  const rollupSlugs = topLevelCategoryObj
+    ? [topLevelCategoryObj.slug, ...siblingCategories.map((c) => c.slug)]
+    : [];
+  const initialSubcategory = activeCategoryObj?.parentCategoryId ? activeCategoryObj.slug : null;
 
   // categorySlugs covers a product's primary category plus any additional
   // ones it's been listed under; falls back to the single categoryId slug
@@ -77,7 +70,7 @@ export default async function ShopPage({ searchParams }) {
   let filtered = activeCategory
     ? allProducts.filter((product) =>
         (product.categorySlugs ?? [product.categoryId?.replace(/^cat-/, "")]).some((s) =>
-          activeSlugs.includes(s)
+          rollupSlugs.includes(s)
         )
       )
     : allProducts;
@@ -91,13 +84,6 @@ export default async function ShopPage({ searchParams }) {
     // every real search (not just API callers) shows up in SearchLog.
     logProductSearch({ query: searchQuery, results: filtered.length });
   }
-
-  const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
-  const currentPage = Math.min(requestedPage, totalPages);
-  const paginated = filtered.slice(
-    (currentPage - 1) * PAGE_SIZE,
-    currentPage * PAGE_SIZE
-  );
 
   const categoryMeta = activeCategory && categories.find(c => c.slug === activeCategory);
   const bannerImage = categoryMeta?.image || resolveCategoryMeta(activeCategory, categoryMeta?.parentCategory?.slug).image || "/images/categories/fish.jpg";
@@ -170,95 +156,25 @@ export default async function ShopPage({ searchParams }) {
             ))}
           </div>
 
-          {siblingCategories.length > 0 && (
-            <div className="flex gap-3 sm:gap-4 mb-8 overflow-x-auto scrollbar-none -mx-5 px-5 sm:mx-0 sm:px-0 flex-nowrap items-center py-1">
-              {siblingCategories.map((c) => {
-                const isActive = activeCategory === c.slug;
-                const thumb = c.image || topLevelCategoryObj?.image || "/images/categories/fish.jpg";
-                return (
-                  <Link
-                    key={c.id}
-                    href={buildHref(c.slug, 1, searchQuery)}
-                    className={cn(
-                      "shrink-0 rounded-full pl-2 pr-5 py-2 font-body text-sm font-semibold border transition-all whitespace-nowrap inline-flex items-center gap-2.5",
-                      isActive
-                        ? "bg-fnc-red text-white border-fnc-red shadow-sm"
-                        : "bg-white text-charcoal border-bordergray hover:border-fnc-red/50"
-                    )}
-                  >
-                    <span className="relative h-9 w-9 shrink-0 rounded-full overflow-hidden border border-black/10">
-                      <Image src={thumb} alt="" fill sizes="36px" className="object-cover" />
-                    </span>
-                    {c.name}
-                  </Link>
-                );
-              })}
-            </div>
-          )}
-
-          <div className="flex items-center justify-between gap-4 mb-6 flex-wrap">
-            <p className="font-body text-sm text-slate">
-              {searchQuery ? (
-                <>
-                  {filtered.length} result{filtered.length === 1 ? "" : "s"} for &ldquo;{searchQuery}&rdquo;
-                </>
-              ) : (
-                <>
-                  {filtered.length} product{filtered.length === 1 ? "" : "s"}
-                </>
-              )}
-            </p>
+          <div className="flex items-center justify-between gap-4 mb-2 flex-wrap">
             {searchQuery && (
-              <Link href={buildHref(activeCategory, 1, null)} className="font-body text-xs font-semibold text-fnc-red hover:underline">
-                Clear search
-              </Link>
+              <>
+                <p className="font-body text-sm text-slate">
+                  {filtered.length} result{filtered.length === 1 ? "" : "s"} for &ldquo;{searchQuery}&rdquo;
+                </p>
+                <Link href={buildHref(activeCategory, 1, null)} className="font-body text-xs font-semibold text-fnc-red hover:underline">
+                  Clear search
+                </Link>
+              </>
             )}
           </div>
 
-          {paginated.length === 0 ? (
-            <div className="flex flex-col items-center justify-center py-16 text-center border border-dashed border-bordergray rounded-2xl bg-white/50 w-full">
-              <span className="text-4xl mb-3">🥩</span>
-              <h4 className="font-display text-lg font-bold text-charcoal">Fresh stock arriving soon</h4>
-              <p className="font-body text-sm text-slate mt-1 max-w-xs">
-                We are currently refilling our inventory. In the meantime, try a different search term or check other categories!
-              </p>
-            </div>
-          ) : (
-            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 sm:gap-5">
-              {paginated.map((product, i) => (
-                <Reveal key={product.id} delay={(i % 4) * 0.05}>
-                  <ProductCard product={product} variant="kinetic" />
-                </Reveal>
-              ))}
-            </div>
-          )}
-
-          {/* Pagination */}
-          {totalPages > 1 && (
-            <nav
-              aria-label="Pagination"
-              className="flex flex-wrap items-center justify-center gap-2 mt-10"
-            >
-              {Array.from({ length: totalPages }).map((_, i) => {
-                const page = i + 1;
-                return (
-                  <Link
-                    key={page}
-                    href={buildHref(activeCategory, page, searchQuery)}
-                    aria-current={page === currentPage ? "page" : undefined}
-                    className={cn(
-                      "h-10 w-10 flex items-center justify-center rounded-full font-body text-sm font-semibold border transition-colors",
-                      page === currentPage
-                        ? "bg-fnc-red text-white border-fnc-red"
-                        : "bg-white text-charcoal border-bordergray hover:border-charcoal"
-                    )}
-                  >
-                    {page}
-                  </Link>
-                );
-              })}
-            </nav>
-          )}
+          <CategoryFilterGrid
+            products={filtered}
+            siblingCategories={siblingCategories}
+            topLevelImage={topLevelCategoryObj?.image}
+            initialSubcategory={initialSubcategory}
+          />
         </Section>
       </main>
       <Footer />
