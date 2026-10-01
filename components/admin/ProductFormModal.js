@@ -181,7 +181,7 @@ export default function ProductFormModal({ trigger, categories, product, action,
               >
                 {categories.map((c) => (
                   <option key={c.id} value={c.id}>
-                    {c.name}
+                    {c.parentCategory ? `${c.parentCategory.name} — ${c.name}` : c.name}
                   </option>
                 ))}
               </select>
@@ -229,7 +229,7 @@ export default function ProductFormModal({ trigger, categories, product, action,
                         }
                         className="sr-only"
                       />
-                      {c.name}
+                      {c.parentCategory ? `${c.parentCategory.name} — ${c.name}` : c.name}
                     </label>
                   );
                 })}
