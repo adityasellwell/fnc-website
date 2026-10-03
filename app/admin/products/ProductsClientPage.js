@@ -74,7 +74,15 @@ export default function ProductsClientPage({
             },
           },
           { header: "Name", accessor: (p) => p.name },
-          { header: "Category", accessor: (p) => p.category?.name ?? "—" },
+          {
+            header: "Category",
+            accessor: (p) =>
+              p.category
+                ? p.category.parentCategory
+                  ? `${p.category.parentCategory.name} — ${p.category.name}`
+                  : p.category.name
+                : "—",
+          },
           { header: "Price", accessor: (p) => `₹${(Number(p.price) || 0).toFixed(0)}` },
           {
             header: "Inventory Stock",

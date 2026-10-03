@@ -33,7 +33,7 @@ export async function listProducts({ search, categoryId, page = 1 } = {}) {
     db.product.findMany({
       where,
       include: {
-        category: true,
+        category: { include: { parentCategory: true } },
         additionalCategories: true,
         media: { orderBy: { displayOrder: "asc" } },
         storeInventory: true,
