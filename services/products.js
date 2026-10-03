@@ -39,7 +39,12 @@ export async function listProducts({ search, categoryId, page = 1 } = {}) {
         storeInventory: true,
         variants: { include: { variantOption: true }, orderBy: { order: "asc" } },
       },
-      orderBy: { createdAt: "desc" },
+      // Most-recently-changed first, not most-recently-created — an
+      // existing product that just had its price/category fixed should
+      // surface at the top same as a brand new one, so admin can see
+      // "what changed" at a glance instead of hunting through creation
+      // order for an update made to an old row.
+      orderBy: { updatedAt: "desc" },
       skip: (page - 1) * PAGE_SIZE,
       take: PAGE_SIZE,
     }),

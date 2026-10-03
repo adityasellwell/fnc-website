@@ -51,7 +51,10 @@ export default function ProductsClientPage({
             key: "categoryId",
             label: "Category",
             type: "select",
-            options: categories.map((c) => ({ value: c.id, label: c.name })),
+            options: categories.map((c) => ({
+              value: c.id,
+              label: c.parentCategory ? `${c.parentCategory.name} — ${c.name}` : c.name,
+            })),
           },
         ]}
       />
