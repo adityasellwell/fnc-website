@@ -21,14 +21,17 @@ function slugify(str) {
 // Appends -2, -3, ... until the slug is free — two products named the same
 // thing ("F&C Chicken Nuggets 1000g" / "1500g" differ, but typos happen)
 // would otherwise collide on the unique slug column.
-async function uniqueSlug(base) {
+// excludeId lets an update keep its own current slug instead of treating
+// it as "taken" by itself when the name didn't actually change.
+async function uniqueSlug(base, excludeId) {
   let slug = base || "product";
   let n = 2;
-  while (await db.product.findUnique({ where: { slug }, select: { id: true } })) {
+  while (true) {
+    const existing = await db.product.findUnique({ where: { slug }, select: { id: true } });
+    if (!existing || existing.id === excludeId) return slug;
     slug = `${base}-${n}`;
     n += 1;
   }
-  return slug;
 }
 
 function parseProductForm(formData) {
@@ -148,6 +151,12 @@ export async function updateProductAction(id, formData) {
     if (!data.name) return { error: "Product name is required" };
     if (!data.categoryId) return { error: "Category is required" };
     if (isNaN(data.price) || data.price < 0) return { error: "Valid price is required" };
+
+    // Keep the slug in sync with the name — renaming a product in the
+    // admin panel previously left its URL stuck on the old name forever.
+    if (before && before.name !== data.name) {
+      data.slug = await uniqueSlug(slugify(data.name), id);
+    }
 
     const product = await updateProduct(id, data);
     revalidatePath("/admin/products");

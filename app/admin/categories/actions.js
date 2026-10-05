@@ -15,14 +15,17 @@ function slugify(str) {
     .replace(/^-+|-+$/g, "");
 }
 
-async function uniqueSlug(base) {
+// excludeId lets an update keep its own current slug instead of treating
+// it as "taken" by itself when the name didn't actually change.
+async function uniqueSlug(base, excludeId) {
   let slug = base || "category";
   let n = 2;
-  while (await db.category.findUnique({ where: { slug }, select: { id: true } })) {
+  while (true) {
+    const existing = await db.category.findUnique({ where: { slug }, select: { id: true } });
+    if (!existing || existing.id === excludeId) return slug;
     slug = `${base}-${n}`;
     n += 1;
   }
-  return slug;
 }
 
 function parseCategoryForm(formData) {
@@ -55,11 +58,23 @@ export async function createCategoryAction(formData) {
 export async function updateCategoryAction(id, formData) {
   try {
     await requireFullAdminUser();
+    const before = await getCategoryById(id);
     const data = parseCategoryForm(formData);
     if (!data.name) return { error: "Category name is required" };
+
+    // Keep the slug in sync with the name — renaming a category in the
+    // admin panel previously left its /shop/<slug> URL stuck on the old
+    // name forever.
+    if (before && before.name !== data.name) {
+      data.slug = await uniqueSlug(slugify(data.name), id);
+    }
+
     const category = await updateCategory(id, data);
     revalidatePath("/admin/categories");
     revalidatePath("/shop", "layout");
+    if (before && before.slug !== category.slug) {
+      revalidatePath(`/shop/${before.slug}`);
+    }
     revalidatePath("/");
     return { ok: true, category };
   } catch (err) {
