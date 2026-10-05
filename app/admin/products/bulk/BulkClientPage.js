@@ -77,9 +77,10 @@ export default function BulkClientPage({ categories }) {
 
       <h1 className="font-display text-2xl font-bold text-charcoal mb-2">Bulk Import / Export</h1>
       <p className="font-body text-sm text-slate mb-6 max-w-2xl">
-        Export the full catalog, edit prices/stock/active status in Excel, then re-upload the same file.
+        Export the full catalog — price, stock, active status, category, additional categories, description,
+        cooking/storage instructions, tags and image URLs — edit any of it in Excel, then re-upload the same file.
         Rows are matched by <strong>SKU</strong> — a known SKU updates that product, an unknown or blank SKU creates a new one.
-        Nothing is saved until you review the preview and confirm.
+        For Tags/Images/Additional Categories, separate multiple values with a comma. Nothing is saved until you review the preview and confirm.
       </p>
 
       <div className="flex flex-wrap gap-3 mb-8">

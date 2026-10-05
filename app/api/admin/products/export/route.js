@@ -16,7 +16,11 @@ export async function GET() {
   }
 
   const products = await db.product.findMany({
-    include: { category: true, storeInventory: { include: { store: true } } },
+    include: {
+      category: true,
+      additionalCategories: true,
+      storeInventory: { include: { store: true } },
+    },
     orderBy: { name: "asc" },
   });
 
@@ -30,6 +34,12 @@ export async function GET() {
     { header: "Unit", key: "unit", width: 12 },
     { header: "Stock", key: "stock", width: 10 },
     { header: "Active", key: "active", width: 10 },
+    { header: "Additional Categories", key: "additionalCategories", width: 30 },
+    { header: "Description", key: "description", width: 50 },
+    { header: "Cooking Instructions", key: "cookingInstructions", width: 50 },
+    { header: "Storage Instructions", key: "storageInstructions", width: 50 },
+    { header: "Tags", key: "tags", width: 30 },
+    { header: "Images", key: "images", width: 50 },
   ];
   sheet.getRow(1).font = { bold: true };
 
@@ -43,6 +53,12 @@ export async function GET() {
       unit: p.unit,
       stock,
       active: p.isActive ? "yes" : "no",
+      additionalCategories: (p.additionalCategories ?? []).map((c) => c.name).join(", "),
+      description: p.description || "",
+      cookingInstructions: p.cookingInstructions || "",
+      storageInstructions: p.storageInstructions || "",
+      tags: Array.isArray(p.tags) ? p.tags.join(", ") : "",
+      images: Array.isArray(p.images) ? p.images.join(", ") : "",
     });
   }
 

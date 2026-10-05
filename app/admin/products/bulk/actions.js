@@ -39,6 +39,16 @@ function cellText(cell) {
   return cell?.text != null ? String(cell.text).trim() : "";
 }
 
+function parseCommaList(raw) {
+  return raw ? raw.split(",").map((s) => s.trim()).filter(Boolean) : [];
+}
+
+function sameList(a, b) {
+  const x = [...a].sort();
+  const y = [...b].sort();
+  return x.length === y.length && x.every((v, i) => v === y[i]);
+}
+
 /**
  * Parses an uploaded spreadsheet and diffs every row against the current
  * database WITHOUT writing anything — the admin reviews this preview
@@ -69,7 +79,13 @@ export async function previewBulkImportAction(formData) {
 
   const [existingProducts, categories] = await Promise.all([
     db.product.findMany({
-      select: { id: true, sku: true, name: true, price: true, unit: true, isActive: true, categoryId: true, category: { select: { name: true } } },
+      select: {
+        id: true, sku: true, name: true, price: true, unit: true, isActive: true,
+        categoryId: true, category: { select: { name: true } },
+        description: true, cookingInstructions: true, storageInstructions: true,
+        tags: true, images: true,
+        additionalCategories: { select: { id: true, name: true } },
+      },
     }),
     db.category.findMany({ select: { id: true, name: true } }),
   ]);
@@ -87,6 +103,12 @@ export async function previewBulkImportAction(formData) {
     const unit = cellText(row.getCell(5));
     const stockRaw = cellText(row.getCell(6));
     const activeRaw = cellText(row.getCell(7));
+    const additionalCategoryNames = parseCommaList(cellText(row.getCell(8)));
+    const description = cellText(row.getCell(9));
+    const cookingInstructions = cellText(row.getCell(10));
+    const storageInstructions = cellText(row.getCell(11));
+    const tags = parseCommaList(cellText(row.getCell(12)));
+    const images = parseCommaList(cellText(row.getCell(13)));
 
     if (!name && !sku && !categoryName) return; // blank row, skip silently
 
@@ -97,7 +119,10 @@ export async function previewBulkImportAction(formData) {
 
     const out = {
       rowNumber, sku, name, category: categoryName, categoryId: category?.id ?? null,
-      price, unit, stock, active: isActive, status: "new", changes: [], similar: [], matchedProductId: null,
+      price, unit, stock, active: isActive,
+      description, cookingInstructions, storageInstructions, tags, images,
+      additionalCategoryNames, additionalCategoryIds: [],
+      status: "new", changes: [], similar: [], matchedProductId: null,
     };
 
     if (!name) { out.status = "error"; out.error = "Name is required"; rows.push(out); return; }
@@ -105,6 +130,19 @@ export async function previewBulkImportAction(formData) {
     if (isNaN(price) || price < 0) { out.status = "error"; out.error = "Price is missing or invalid"; rows.push(out); return; }
     if (!categoryName) { out.status = "error"; out.error = "Category is required"; rows.push(out); return; }
     if (!category) { out.status = "error"; out.error = `Category "${categoryName}" doesn't match any existing category`; rows.push(out); return; }
+
+    const unresolvedAdditional = [];
+    for (const n of additionalCategoryNames) {
+      const c = categoryByName.get(n.toLowerCase());
+      if (c) out.additionalCategoryIds.push(c.id);
+      else unresolvedAdditional.push(n);
+    }
+    if (unresolvedAdditional.length > 0) {
+      out.status = "error";
+      out.error = `Additional Categories don't match any existing category: ${unresolvedAdditional.join(", ")}`;
+      rows.push(out);
+      return;
+    }
 
     const matched = sku ? productBySku.get(sku.toLowerCase()) : null;
     if (matched) {
@@ -115,6 +153,15 @@ export async function previewBulkImportAction(formData) {
       if (matched.unit !== unit) changes.push(`unit: "${matched.unit}" -> "${unit}"`);
       if (matched.categoryId !== category.id) changes.push(`category: "${matched.category?.name}" -> "${categoryName}"`);
       if (matched.isActive !== isActive) changes.push(`active: ${matched.isActive} -> ${isActive}`);
+      if ((matched.description || "") !== description) changes.push("description changed");
+      if ((matched.cookingInstructions || "") !== cookingInstructions) changes.push("cooking instructions changed");
+      if ((matched.storageInstructions || "") !== storageInstructions) changes.push("storage instructions changed");
+      if (!sameList(matched.tags ?? [], tags)) changes.push(`tags: "${(matched.tags ?? []).join(", ")}" -> "${tags.join(", ")}"`);
+      if (!sameList(matched.images ?? [], images) && images.length > 0) changes.push("images changed");
+      const matchedAdditionalIds = (matched.additionalCategories ?? []).map((c) => c.id);
+      if (!sameList(matchedAdditionalIds, out.additionalCategoryIds)) {
+        changes.push(`additional categories: "${(matched.additionalCategories ?? []).map((c) => c.name).join(", ")}" -> "${additionalCategoryNames.join(", ")}"`);
+      }
       out.changes = changes;
       out.status = changes.length > 0 ? "update" : "unchanged";
     } else {
@@ -156,7 +203,13 @@ export async function applyBulkImportAction(rows) {
       if (row.matchedProductId) {
         await db.product.update({
           where: { id: row.matchedProductId },
-          data: { name: row.name, price: row.price, unit: row.unit, categoryId: row.categoryId, isActive: row.active },
+          data: {
+            name: row.name, price: row.price, unit: row.unit, categoryId: row.categoryId, isActive: row.active,
+            description: row.description, cookingInstructions: row.cookingInstructions,
+            storageInstructions: row.storageInstructions, tags: row.tags,
+            ...(row.images.length > 0 ? { images: row.images } : {}),
+            additionalCategories: { set: row.additionalCategoryIds.map((id) => ({ id })) },
+          },
         });
         for (const store of stores) {
           await db.storeInventory.upsert({
@@ -171,9 +224,11 @@ export async function applyBulkImportAction(rows) {
         const sku = row.sku || (await uniqueSku(`FNC-BULK-${slugify(row.name).slice(0, 6).toUpperCase()}`));
         const product = await db.product.create({
           data: {
-            slug, name: row.name, description: "", images: [], price: row.price, gstRate: 0,
-            unit: row.unit, sku, nutrition: {}, cookingInstructions: "", storageInstructions: "",
-            tags: [], stock: 0, isActive: row.active, categoryId: row.categoryId,
+            slug, name: row.name, description: row.description, images: row.images, price: row.price, gstRate: 0,
+            unit: row.unit, sku, nutrition: {}, cookingInstructions: row.cookingInstructions,
+            storageInstructions: row.storageInstructions, tags: row.tags, stock: 0, isActive: row.active,
+            categoryId: row.categoryId,
+            additionalCategories: { connect: row.additionalCategoryIds.map((id) => ({ id })) },
           },
         });
         if (stores.length > 0) {
