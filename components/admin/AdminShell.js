@@ -24,6 +24,7 @@ import {
   ShoppingBag,
   Bike,
   MessageSquare,
+  Activity,
   Menu,
   X,
   LogOut,
@@ -52,6 +53,7 @@ const ICONS = {
   ShoppingBag,
   Bike,
   MessageSquare,
+  Activity,
 };
 
 export default function AdminShell({ user, nav, children }) {

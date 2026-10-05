@@ -743,6 +743,23 @@ model PaymentAuditLog {
   @@index([timestamp])
 }
 
+model ApiLog {
+  id         String   @id @default(cuid())
+  route      String   // e.g. "/api/auth/phone-otp/send", "/api/orders"
+  method     String   // "GET", "POST", "PUT", "DELETE"
+  statusCode Int      // 200, 400, 500
+  durationMs Int      // execution duration in ms
+  ip         String?
+  userAgent  String?
+  error      String?  @db.Text
+  details    Json?
+  timestamp  DateTime @default(now())
+
+  @@index([route])
+  @@index([statusCode])
+  @@index([timestamp])
+}
+
 model Settings {
   id                    String   @id @default("singleton")
   deliveryRadiusKm      Float    @default(5.0)
