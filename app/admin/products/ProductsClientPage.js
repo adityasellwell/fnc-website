@@ -1,6 +1,7 @@
 "use client";
 
-import { Plus, Pencil, Trash2 } from "lucide-react";
+import Link from "next/link";
+import { Plus, Pencil, Trash2, Sheet } from "lucide-react";
 import Table from "@/components/admin/Table";
 import Pagination from "@/components/admin/Pagination";
 import Filters from "@/components/admin/Filters";
@@ -25,22 +26,31 @@ export default function ProductsClientPage({
       <div className="flex items-center justify-between gap-4 mb-6">
         <h1 className="font-display text-2xl font-bold text-charcoal">Products</h1>
         {currentUser?.role?.name === "admin" && (
-          <ProductFormModal
-            title="Add Product"
-            categories={categories}
-            variantOptions={variantOptions}
-            action={createProductAction}
-            trigger={({ onClick }) => (
-              <button
-                type="button"
-                onClick={onClick}
-                className="h-10 px-4 rounded-full bg-fnc-red text-white font-body text-sm font-semibold hover:bg-fnc-red/90 transition-colors flex items-center gap-1.5"
-              >
-                <Plus className="h-4 w-4" />
-                Add Product
-              </button>
-            )}
-          />
+          <div className="flex items-center gap-3">
+            <Link
+              href="/admin/products/bulk"
+              className="h-10 px-4 rounded-full border border-bordergray bg-white font-body text-sm font-semibold text-charcoal hover:border-charcoal transition-colors flex items-center gap-1.5"
+            >
+              <Sheet className="h-4 w-4" />
+              Bulk Import/Export
+            </Link>
+            <ProductFormModal
+              title="Add Product"
+              categories={categories}
+              variantOptions={variantOptions}
+              action={createProductAction}
+              trigger={({ onClick }) => (
+                <button
+                  type="button"
+                  onClick={onClick}
+                  className="h-10 px-4 rounded-full bg-fnc-red text-white font-body text-sm font-semibold hover:bg-fnc-red/90 transition-colors flex items-center gap-1.5"
+                >
+                  <Plus className="h-4 w-4" />
+                  Add Product
+                </button>
+              )}
+            />
+          </div>
         )}
       </div>
 
