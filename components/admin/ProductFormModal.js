@@ -1,11 +1,12 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { Loader2, AlertCircle, Plus, Trash2, X } from "lucide-react";
 import Modal from "./Modal";
 import ImageUploadField from "./ImageUploadField";
 import MultiImageUploadField from "./MultiImageUploadField";
 import { createVariantOptionAction } from "@/app/admin/variation-options/actions";
+import { checkSimilarProductNamesAction } from "@/app/admin/products/actions";
 
 const inputClasses =
   "w-full h-11 px-3.5 rounded-xl border border-bordergray bg-white font-body text-sm text-charcoal placeholder:text-slate focus:border-fnc-red focus:outline-none transition-colors";
@@ -44,6 +45,17 @@ export default function ProductFormModal({ trigger, categories, product, action,
   const [newValueLabel, setNewValueLabel] = useState("");
   const [newValueError, setNewValueError] = useState("");
   const [savingNewValue, setSavingNewValue] = useState(false);
+  const [similarNames, setSimilarNames] = useState([]);
+  const similarCheckTimer = useRef(null);
+
+  function handleNameChange(e) {
+    const value = e.target.value;
+    if (similarCheckTimer.current) clearTimeout(similarCheckTimer.current);
+    similarCheckTimer.current = setTimeout(async () => {
+      const res = await checkSimilarProductNamesAction(value, product?.id);
+      setSimilarNames(res?.similar ?? []);
+    }, 400);
+  }
 
   // "Weight"/"Pieces" always suggested as a starting point even before
   // anything's been added under them; any other category the admin has
@@ -148,11 +160,17 @@ export default function ProductFormModal({ trigger, categories, product, action,
           <div className="flex items-start justify-between gap-4">
             <div className="flex flex-col gap-1.5 flex-1">
               <label className="font-body text-xs font-semibold text-charcoal">Name <span className="text-fnc-red">*</span></label>
-              <input name="name" defaultValue={product?.name} required className={inputClasses} />
+              <input name="name" defaultValue={product?.name} onChange={handleNameChange} required className={inputClasses} />
               {product?.slug && (
                 <p className="font-body text-xs text-slate mt-0.5">
                   Page URL: <span className="font-mono text-charcoal bg-warmwhite px-1.5 py-0.5 rounded border border-bordergray">/product/{product.slug}</span>
                 </p>
+              )}
+              {similarNames.length > 0 && (
+                <div className="mt-1 p-2.5 rounded-lg border border-amber-300 bg-amber-50 text-xs font-body text-amber-800">
+                  <span className="font-semibold">Similar product{similarNames.length > 1 ? "s" : ""} already exist{similarNames.length > 1 ? "" : "s"}:</span>{" "}
+                  {similarNames.join(", ")} — double-check this isn&apos;t the same item before saving.
+                </div>
               )}
             </div>
             <label className="flex items-center gap-2 shrink-0 pt-6 cursor-pointer select-none">

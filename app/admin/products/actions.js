@@ -5,6 +5,7 @@ import { requireAdminUser } from "@/lib/admin-auth";
 import { createProduct, updateProduct, deleteProduct, getProductById } from "@/services/products";
 import { updateStoreStock } from "@/services/inventory";
 import { db } from "@/lib/db";
+import { findSimilarNames } from "@/lib/utils/similarity";
 
 // Guards against exactly what happened with "F&C Surimi Fish Finger" being
 // typed straight into the Slug field: the Slug input is gone from the admin
@@ -231,4 +232,17 @@ export async function updateStoreStockAction(productId, storeId, stock) {
   } catch (err) {
     return { error: err.message || "Failed to update stock" };
   }
+}
+
+// Catches near-duplicate names a SKU-uniqueness check can't ("Surmai Fish
+// Finger" vs "Surimi Fish Finger" — different SKU, same real item typed
+// slightly differently). Non-blocking: just surfaces a warning in the
+// form so the admin can confirm it's intentional before saving.
+export async function checkSimilarProductNamesAction(name, excludeId) {
+  if (!name || name.trim().length < 3) return { similar: [] };
+  const all = await db.product.findMany({
+    where: excludeId ? { id: { not: excludeId } } : undefined,
+    select: { name: true },
+  });
+  return { similar: findSimilarNames(name.trim(), all.map((p) => p.name)) };
 }
