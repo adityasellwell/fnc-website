@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import crypto from "crypto";
+import { decrementStoreInventoryForOrder } from "@/services/orders";
 
 export async function GET(request, { params }) {
   try {
@@ -78,6 +79,8 @@ export async function POST(request, { params }) {
           razorpaySignature: razorpay_signature,
         },
       });
+
+      await decrementStoreInventoryForOrder(tx, order);
 
       await tx.orderStatusHistory.create({
         data: {

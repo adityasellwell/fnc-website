@@ -3,6 +3,21 @@ import { initiateRazorpayRefund } from "@/services/payment";
 import { sendReviewRequestEmail, sendOrderStatusUpdateEmail } from "@/lib/email";
 import { sendSms } from "@/lib/sms";
 import { BRAND } from "@/lib/constants";
+import { formatOrderCode } from "@/lib/orderStatus";
+
+export async function decrementStoreInventoryForOrder(tx, order) {
+  if (!order || !order.storeId || !order.items || order.items.length === 0) return;
+  for (const item of order.items) {
+    try {
+      await tx.storeInventory.updateMany({
+        where: { storeId: order.storeId, productId: item.productId },
+        data: { stock: { decrement: item.quantity } },
+      });
+    } catch (e) {
+      console.error(`[Inventory Decrement Error] Item ${item.productId}:`, e);
+    }
+  }
+}
 
 function appUrl() {
   return process.env.NEXT_PUBLIC_APP_URL || "https://fncmumbai.com";
@@ -88,27 +103,29 @@ export async function updateOrderStatus(orderId, status, changedById) {
   }
   if (isNewStatus && order?.customer?.phone) {
     const phone = order.customer.phone;
+    const formattedCode = formatOrderCode(order);
+
     if (status === "PREPARING") {
-      sendSms("ORDER_PACKED", phone, { orderId }).catch(() => {});
+      sendSms("ORDER_PACKED", phone, { orderId: formattedCode }).catch(() => {});
     } else if (status === "READY_FOR_PICKUP") {
       if (order.fulfillmentType === "PICKUP") {
-        sendSms("RIDER_HANDOFF_OTP", phone, { otp: order.deliveryOtp || "----", orderId }).catch(() => {});
+        sendSms("RIDER_HANDOFF_OTP", phone, { otp: order.deliveryOtp || "----", orderId: formattedCode }).catch(() => {});
       } else {
-        sendSms("ORDER_PACKED", phone, { orderId }).catch(() => {});
+        sendSms("ORDER_PACKED", phone, { orderId: formattedCode }).catch(() => {});
       }
     } else if (status === "OUT_FOR_DELIVERY") {
       sendSms("OUT_FOR_DELIVERY", phone, {
-        orderId,
+        orderId: formattedCode,
         riderName: order.riderName || "our delivery partner",
         otp: order.deliveryOtp || "----",
       }).catch(() => {});
     } else if (status === "DELIVERED") {
       sendSms("DELIVERED", phone, {
-        orderId,
+        orderId: formattedCode,
         url: `${appUrl()}/account/orders/${orderId}`,
       }).catch(() => {});
     } else if (status === "CANCELLED") {
-      sendSms("ORDER_CANCELLED", phone, { orderId, contact: BRAND.phone }).catch(() => {});
+      sendSms("ORDER_CANCELLED", phone, { orderId: formattedCode, contact: BRAND.phone }).catch(() => {});
     }
   }
 
@@ -370,4 +387,23 @@ export async function markOrderDelivered(orderId, partnerId, otp) {
   } catch (err) {}
 
   return result;
+}
+
+export async function cleanExpiredPendingPaymentOrders() {
+  const thirtyMinsAgo = new Date(Date.now() - 30 * 60 * 1000);
+  try {
+    const res = await db.order.updateMany({
+      where: {
+        status: "PENDING_PAYMENT",
+        createdAt: { lt: thirtyMinsAgo },
+      },
+      data: {
+        status: "CANCELLED",
+      },
+    });
+    return res.count;
+  } catch (e) {
+    console.error("[cleanExpiredPendingPaymentOrders error]:", e);
+    return 0;
+  }
 }

@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { sendAbandonedCheckoutReminders, sendWinBackMessages } from "@/services/marketing";
+import { cleanExpiredPendingPaymentOrders } from "@/services/orders";
 
 /**
  * Hit on a schedule by Hostinger's Cron Jobs panel (hPanel → Advanced →
@@ -23,11 +24,12 @@ export async function GET(request) {
   }
 
   try {
-    const [cartReminders, winBack] = await Promise.all([
+    const [cartReminders, winBack, cleanedOrders] = await Promise.all([
       sendAbandonedCheckoutReminders(),
       sendWinBackMessages(),
+      cleanExpiredPendingPaymentOrders(),
     ]);
-    return NextResponse.json({ success: true, cartReminders, winBack });
+    return NextResponse.json({ success: true, cartReminders, winBack, cleanedOrders });
   } catch (err) {
     console.error("[GET /api/cron/marketing-sms] failed:", err);
     return NextResponse.json({ error: "Cron run failed" }, { status: 500 });
