@@ -134,6 +134,7 @@ export async function processRefundRequest(refundId, decision, adminNotes, admin
       order: {
         select: {
           id: true,
+          orderNumber: true,
           total: true,
           razorpayPaymentId: true,
           storeId: true,

@@ -3,6 +3,7 @@ import Pagination from "@/components/admin/Pagination";
 import Filters from "@/components/admin/Filters";
 import OrderRowActions from "@/components/admin/OrderRowActions";
 import { listOrders } from "@/services/orders";
+import { listDeliveryPartners } from "@/services/delivery-partners";
 import { requireAdminUser, getScopedStoreId } from "@/lib/admin-auth";
 import Link from "next/link";
 import { statusLabels, formatOrderCode } from "@/lib/orderStatus";
@@ -16,12 +17,17 @@ export default async function AdminOrdersPage({ searchParams }) {
   const storeId = getScopedStoreId(admin);
   const sp = await searchParams;
   const page = Number(sp.page) || 1;
-  const { orders, totalPages } = await listOrders({
-    status: sp.status || undefined,
-    fulfillmentType: sp.fulfillmentType || undefined,
-    page,
-    storeId: storeId || undefined,
-  });
+  const [{ orders, totalPages }, partners] = await Promise.all([
+    listOrders({
+      status: sp.status || undefined,
+      fulfillmentType: sp.fulfillmentType || undefined,
+      page,
+      storeId: storeId || undefined,
+    }),
+    listDeliveryPartners(storeId || undefined),
+  ]);
+
+  const availablePartners = JSON.parse(JSON.stringify(partners.filter((p) => p.isActive)));
 
   return (
     <div>
@@ -109,6 +115,8 @@ export default async function AdminOrdersPage({ searchParams }) {
                 status={o.status}
                 fulfillmentType={o.fulfillmentType}
                 deliveryPartnerId={o.deliveryPartnerId}
+                deliveryPartnerName={o.deliveryPartner?.name || o.riderName}
+                availablePartners={availablePartners}
               />
             ),
           },

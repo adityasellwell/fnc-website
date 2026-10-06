@@ -38,7 +38,7 @@ export async function POST(request) {
   try {
     const order = await db.order.findUnique({
       where: { razorpayOrderId },
-      include: { customer: true },
+      include: { customer: true, items: { include: { product: true } } },
     });
 
     if (!order) {

@@ -6,15 +6,40 @@ import { BRAND } from "@/lib/constants";
 import { formatOrderCode } from "@/lib/orderStatus";
 
 export async function decrementStoreInventoryForOrder(tx, order) {
-  if (!order || !order.storeId || !order.items || order.items.length === 0) return;
-  for (const item of order.items) {
+  if (!order || !order.storeId) return;
+  let items = order.items;
+  if (!items || items.length === 0) {
     try {
-      await tx.storeInventory.updateMany({
-        where: { storeId: order.storeId, productId: item.productId },
-        data: { stock: { decrement: item.quantity } },
-      });
+      items = await tx.orderItem.findMany({ where: { orderId: order.id } });
     } catch (e) {
-      console.error(`[Inventory Decrement Error] Item ${item.productId}:`, e);
+      console.error(`[Inventory Decrement Error] Failed to fetch items for order ${order.id}:`, e);
+      return;
+    }
+  }
+  if (!items || items.length === 0) return;
+
+  for (const item of items) {
+    try {
+      const existing = await tx.storeInventory.findFirst({
+        where: { storeId: order.storeId, productId: item.productId },
+      });
+
+      if (existing) {
+        await tx.storeInventory.update({
+          where: { id: existing.id },
+          data: { stock: { decrement: item.quantity } },
+        });
+      } else {
+        await tx.storeInventory.create({
+          data: {
+            storeId: order.storeId,
+            productId: item.productId,
+            stock: -item.quantity,
+          },
+        });
+      }
+    } catch (e) {
+      console.error(`[Inventory Decrement Error] Item ${item.productId} store ${order.storeId}:`, e);
     }
   }
 }
@@ -67,7 +92,7 @@ export async function listOrders({ status, fulfillmentType, page = 1, storeId } 
   const [orders, totalCount] = await Promise.all([
     db.order.findMany({
       where,
-      include: { customer: true, store: true, items: { include: { product: true } } },
+      include: { customer: true, store: true, items: { include: { product: true } }, deliveryPartner: true },
       orderBy: { createdAt: "desc" },
       skip: (page - 1) * PAGE_SIZE,
       take: PAGE_SIZE,
@@ -199,34 +224,35 @@ export async function assignDeliveryPartner(orderId, partnerId, userId) {
 
   const deliveryOtp = String(Math.floor(1000 + Math.random() * 9000));
 
-  const order = await db.order.update({
-    where: { id: orderId },
-    data: {
-      deliveryPartnerId: partnerId,
-      riderName: partner.name,
-      riderPhone: partner.phone,
-      deliveryOtp,
-    },
-  });
+  return db.$transaction(async (tx) => {
+    const order = await tx.order.update({
+      where: { id: orderId },
+      data: {
+        deliveryPartnerId: partnerId,
+        riderName: partner.name,
+        riderPhone: partner.phone,
+        deliveryOtp,
+      },
+    });
 
-  // Update rider status to BUSY
-  try {
-    await db.deliveryPartner.update({
+    await tx.deliveryPartner.update({
       where: { id: partnerId },
       data: { status: "BUSY" },
     });
-  } catch (err) {}
-  await db.auditLog.create({
-    data: {
-      userId,
-      action: "ASSIGN_DELIVERY_PARTNER",
-      entityType: "Order",
-      entityId: orderId,
-      storeId: order.storeId,
-      details: { partnerId, partnerName: partner.name },
-    },
+
+    await tx.auditLog.create({
+      data: {
+        userId,
+        action: "ASSIGN_DELIVERY_PARTNER",
+        entityType: "Order",
+        entityId: orderId,
+        storeId: order.storeId,
+        details: { partnerId, partnerName: partner.name },
+      },
+    });
+
+    return order;
   });
-  return order;
 }
 
 /**
