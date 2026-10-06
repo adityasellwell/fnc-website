@@ -5,7 +5,7 @@ import OrderRowActions from "@/components/admin/OrderRowActions";
 import { listOrders } from "@/services/orders";
 import { requireAdminUser, getScopedStoreId } from "@/lib/admin-auth";
 import Link from "next/link";
-import { statusLabels } from "@/lib/orderStatus";
+import { statusLabels, formatOrderCode } from "@/lib/orderStatus";
 
 export const metadata = { title: "Orders — Admin" };
 
@@ -49,7 +49,7 @@ export default async function AdminOrdersPage({ searchParams }) {
             header: "Order",
             accessor: (o) => (
               <Link href={`/admin/orders/${o.id}`} className="font-semibold text-fnc-red hover:underline">
-                #{o.id.slice(-8).toUpperCase()}
+                {formatOrderCode(o)}
               </Link>
             ),
           },

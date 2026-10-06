@@ -360,8 +360,15 @@ export async function POST(request) {
     }
 
     const order = await db.$transaction(async (tx) => {
+      const maxOrder = await tx.order.findFirst({
+        orderBy: { orderNumber: "desc" },
+        select: { orderNumber: true },
+      });
+      const nextOrderNumber = (maxOrder?.orderNumber || 1000) + 1;
+
       const created = await tx.order.create({
         data: {
+          orderNumber: nextOrderNumber,
           customerId,
           fulfillmentType,
           storeId: fulfillmentType === "PICKUP" ? storeId : deliveryStoreId,

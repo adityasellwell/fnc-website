@@ -426,8 +426,9 @@ enum PaymentStatus {
 }
 
 model Order {
-  id         String   @id @default(cuid())
-  customer   Customer @relation(fields: [customerId], references: [id])
+  id          String   @id @default(cuid())
+  orderNumber Int?     @unique
+  customer    Customer @relation(fields: [customerId], references: [id])
   customerId String
 
   items OrderItem[]

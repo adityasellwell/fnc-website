@@ -22,7 +22,7 @@ import {
   assignDeliveryPartnerAction,
   createRefundAction,
 } from "../actions";
-import { getNextStatus, getStatusLabel } from "@/lib/orderStatus";
+import { getNextStatus, getStatusLabel, formatOrderCode } from "@/lib/orderStatus";
 import { splitOrderGst, splitGst } from "@/lib/utils/gst";
 
 const inputClasses =
@@ -633,7 +633,7 @@ export default function OrderDetailClient({ order, currentUser, availablePartner
           </div>
           <div className="flex justify-between pt-0.5">
             <span>Cashier: {currentUser?.name || "biller"}</span>
-            <span className="font-bold">Bill No.: {order.id.slice(-4).toUpperCase()}</span>
+            <span className="font-bold">Bill No.: {formatOrderCode(order)}</span>
           </div>
         </div>
 
@@ -657,13 +657,13 @@ export default function OrderDetailClient({ order, currentUser, availablePartner
 
               return (
                 <tr key={item.id} className="align-top border-b border-gray-100">
-                  <td className="py-1 pr-1 font-medium">
+                  <td className="py-1 pr-1 font-medium break-words max-w-[140px]">
                     {item.product?.name || "Product"}
                     {item.variantLabel ? ` (${item.variantLabel})` : ""}
                   </td>
                   <td className="py-1 text-center font-bold">{item.quantity}</td>
-                  <td className="py-1 text-right">{taxableUnitPrice.toFixed(2)}</td>
-                  <td className="py-1 text-right font-bold">{itemGst.taxableValue.toFixed(2)}</td>
+                  <td className="py-1 text-right whitespace-nowrap">{taxableUnitPrice.toFixed(2)}</td>
+                  <td className="py-1 text-right font-bold whitespace-nowrap">{itemGst.taxableValue.toFixed(2)}</td>
                 </tr>
               );
             })}
@@ -678,7 +678,7 @@ export default function OrderDetailClient({ order, currentUser, availablePartner
             <span>Total Qty: {order.items.reduce((sum, item) => sum + item.quantity, 0)}</span>
             <span>Sub Total: ₹{gstBreakdown.taxableValue.toFixed(2)}</span>
           </div>
-          {gstBreakdown.totalTax > 0 && (
+          {gstBreakdown.totalTax > 0 ? (
             <>
               <div className="flex justify-between">
                 <span>CGST@2.5 2.5%</span>
@@ -689,6 +689,11 @@ export default function OrderDetailClient({ order, currentUser, availablePartner
                 <span>₹{gstBreakdown.sgst.toFixed(2)}</span>
               </div>
             </>
+          ) : (
+            <div className="flex justify-between text-black">
+              <span>GST (Incl. @ 0%)</span>
+              <span>₹0.00</span>
+            </div>
           )}
         </div>
 
