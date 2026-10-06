@@ -5,22 +5,14 @@ function appUrl() {
   return process.env.NEXT_PUBLIC_APP_URL || "https://fncmumbai.com";
 }
 
-const CHECKOUT_ABANDONED_AFTER_MS = 60 * 60 * 1000; // 1 hour
-const CHECKOUT_ABANDONED_BEFORE_MS = 48 * 60 * 60 * 1000; // stop bothering after 2 days — a 3-day-old unpaid order is dead, not "abandoned"
-const WIN_BACK_INACTIVE_AFTER_MS = 30 * 24 * 60 * 60 * 1000; // 30 days since last order
-const WIN_BACK_RESEND_COOLDOWN_MS = 30 * 24 * 60 * 60 * 1000; // at most once every 30 days
+const CHECKOUT_ABANDONED_AFTER_MS = 10 * 60 * 1000; // 10 minutes after checkout start
+const CHECKOUT_ABANDONED_BEFORE_MS = 48 * 60 * 60 * 1000; // 48 hours
 
-/**
- * Texts customers who started checkout (a real Order row exists) but
- * never completed payment. This is the only "abandoned cart" signal that
- * actually exists server-side — the cart itself lives in localStorage
- * only, so the server has no visibility into it before checkout starts.
- */
 export async function sendAbandonedCheckoutReminders() {
   const now = Date.now();
   const orders = await db.order.findMany({
     where: {
-      status: "PLACED",
+      status: { in: ["PENDING_PAYMENT", "PLACED", "CANCELLED"] },
       paymentStatus: "PENDING",
       cartReminderSentAt: null,
       createdAt: {

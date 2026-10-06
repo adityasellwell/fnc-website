@@ -68,29 +68,36 @@ export default function OrderRowActions({
     <div className="flex items-center gap-2 justify-end">
       <Toast message={toast?.message} type={toast?.type} onClose={() => setToast(null)} />
 
-      {/* Quick Rider Assignment Dropdown for Delivery Orders */}
-      {fulfillmentType === "DELIVERY" && !isTerminal && (
-        <div className="relative shrink-0">
-          <select
-            value={selectedRider}
-            onChange={handleRiderChange}
-            disabled={pending}
-            className={`h-8 pl-7 pr-3 text-xs font-semibold rounded-full border transition-colors cursor-pointer outline-none ${
-              selectedRider
-                ? "bg-warmwhite border-bordergray text-charcoal"
-                : "bg-fnc-blue/10 border-fnc-blue/30 text-fnc-blue animate-pulse"
-            }`}
-          >
-            <option value="">{selectedRider ? (deliveryPartnerName ? `Rider: ${deliveryPartnerName}` : "Assigned Rider") : "+ Assign Rider"}</option>
-            {availablePartners.map((p) => (
-              <option key={p.id} value={p.id}>
-                {p.name} ({p.phone})
+      {/* Quick Rider Assignment Dropdown — Shown for delivery orders when CONFIRMED, PREPARING, or READY_FOR_PICKUP */}
+      {fulfillmentType === "DELIVERY" &&
+        ["CONFIRMED", "PREPARING", "READY_FOR_PICKUP", "OUT_FOR_DELIVERY"].includes(status) && (
+          <div className="relative shrink-0">
+            <select
+              value={selectedRider}
+              onChange={handleRiderChange}
+              disabled={pending}
+              className={`h-8 pl-7 pr-3 text-xs font-semibold rounded-full border transition-colors cursor-pointer outline-none ${
+                selectedRider
+                  ? "bg-warmwhite border-bordergray text-charcoal"
+                  : "bg-fnc-blue/10 border-fnc-blue/30 text-fnc-blue animate-pulse"
+              }`}
+            >
+              <option value="">
+                {selectedRider
+                  ? deliveryPartnerName
+                    ? `Rider: ${deliveryPartnerName}`
+                    : "Assigned Rider"
+                  : "+ Assign Rider"}
               </option>
-            ))}
-          </select>
-          <Truck className="h-3.5 w-3.5 absolute left-2.5 top-1/2 -translate-y-1/2 text-charcoal/70 pointer-events-none" />
-        </div>
-      )}
+              {availablePartners.map((p) => (
+                <option key={p.id} value={p.id}>
+                  {p.name} ({p.phone})
+                </option>
+              ))}
+            </select>
+            <Truck className="h-3.5 w-3.5 absolute left-2.5 top-1/2 -translate-y-1/2 text-charcoal/70 pointer-events-none" />
+          </div>
+        )}
 
       {next && (
         needsRiderBeforeDispatch ? (
