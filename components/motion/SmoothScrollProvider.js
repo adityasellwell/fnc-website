@@ -7,20 +7,29 @@ import Lenis from "lenis";
 /**
  * Global smooth scroll, initialized once in the root layout.
  * Employs ResizeObserver and load listeners to prevent Lenis from losing
- * sync when dynamic images or listings shift page height (solving scroll lock / jitter).
+ * sync when dynamic images or listings shift page height.
+ * Forces scroll to top (0, 0) instantly on route changes.
  */
 export default function SmoothScrollProvider({ children }) {
   const pathname = usePathname();
 
+  // Instantly scroll to top (0, 0) on every route/pathname change
   useEffect(() => {
-    // The admin panel is a fixed-sidebar dashboard with its OWN
-    // independently scrolling content column (components/admin/AdminShell.js),
-    // not a single smooth-scrolling page — Lenis hijacking every wheel
-    // event at the window level meant that inner column never received
-    // them at all, so it looked completely un-scrollable by mouse.
-    // data-lenis-prevent (used elsewhere for modals) isn't a fix here
-    // since the whole admin layout would need it, not one element.
-    if (pathname?.startsWith("/admin")) return;
+    if (typeof window === "undefined") return;
+    window.scrollTo({ top: 0, left: 0, behavior: "instant" });
+    if (window.__lenis) {
+      window.__lenis.scrollTo(0, { immediate: true });
+    }
+  }, [pathname]);
+
+  useEffect(() => {
+    if (pathname?.startsWith("/admin")) {
+      if (window.__lenis) {
+        window.__lenis.destroy();
+        window.__lenis = null;
+      }
+      return;
+    }
 
     const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
     const isTouchDevice =
@@ -37,11 +46,11 @@ export default function SmoothScrollProvider({ children }) {
       smoothWheel: true,
     });
 
-    // Exposed so Modal.js can pause/resume Lenis while a modal is open —
-    // data-lenis-prevent alone stops it hijacking wheel events over the
-    // modal's own scroll area, but doesn't stop it still smooth-scrolling
-    // the page behind a fixed-position overlay.
     window.__lenis = lenis;
+
+    // Reset scroll position to top on Lenis initialization
+    lenis.scrollTo(0, { immediate: true });
+    window.scrollTo(0, 0);
 
     // Watch dynamic height changes (DOM insertion, client rendering shifts)
     const resizeObserver = new ResizeObserver(() => {
