@@ -22,10 +22,8 @@ export default function OrderRowActions({
   const next = getNextStatus(status, fulfillmentType);
   const isTerminal = status === "CANCELLED" || status === "REFUNDED" || status === "DELIVERED" || status === "COLLECTED";
 
-  const needsRiderBeforeDispatch =
-    fulfillmentType === "DELIVERY" &&
-    next === "OUT_FOR_DELIVERY" &&
-    !deliveryPartnerId;
+  const isPrepared = status === "READY_FOR_PICKUP";
+  const needsRiderAssignment = fulfillmentType === "DELIVERY" && isPrepared && (!selectedRider && !deliveryPartnerId);
 
   const handleAdvance = () => {
     startTransition(async () => {
@@ -46,7 +44,7 @@ export default function OrderRowActions({
     startTransition(async () => {
       try {
         await assignDeliveryPartnerAction(orderId, partnerId);
-        setToast({ message: "Delivery rider assigned cleanly!", type: "success" });
+        setToast({ message: "Delivery rider assigned! Ready for Out for Delivery.", type: "success" });
       } catch (err) {
         setToast({ message: err?.message || "Failed to assign rider", type: "error" });
       }
@@ -68,58 +66,62 @@ export default function OrderRowActions({
     <div className="flex items-center gap-2 justify-end">
       <Toast message={toast?.message} type={toast?.type} onClose={() => setToast(null)} />
 
-      {/* Quick Rider Assignment Dropdown — Shown for delivery orders when CONFIRMED, PREPARING, or READY_FOR_PICKUP */}
-      {fulfillmentType === "DELIVERY" &&
-        ["CONFIRMED", "PREPARING", "READY_FOR_PICKUP", "OUT_FOR_DELIVERY"].includes(status) && (
+      {/* Main Order Action Button Workflow */}
+      {next && (
+        needsRiderAssignment ? (
+          /* When order is prepared and needs a rider: main action button becomes Assign Rider select */
           <div className="relative shrink-0">
             <select
               value={selectedRider}
               onChange={handleRiderChange}
               disabled={pending}
-              className={`h-8 pl-7 pr-3 text-xs font-semibold rounded-full border transition-colors cursor-pointer outline-none ${
-                selectedRider
-                  ? "bg-warmwhite border-bordergray text-charcoal"
-                  : "bg-fnc-blue/10 border-fnc-blue/30 text-fnc-blue animate-pulse"
-              }`}
+              className="h-8 pl-8 pr-3 text-xs font-semibold rounded-full bg-fnc-blue text-white hover:bg-fnc-blue/90 transition-colors cursor-pointer outline-none shadow-sm appearance-none"
             >
-              <option value="">
-                {selectedRider
-                  ? deliveryPartnerName
-                    ? `Rider: ${deliveryPartnerName}`
-                    : "Assigned Rider"
-                  : "+ Assign Rider"}
+              <option value="" className="bg-white text-charcoal font-semibold">
+                + Assign Rider
               </option>
               {availablePartners.map((p) => (
-                <option key={p.id} value={p.id}>
+                <option key={p.id} value={p.id} className="bg-white text-charcoal font-semibold">
                   {p.name} ({p.phone})
                 </option>
               ))}
             </select>
-            <Truck className="h-3.5 w-3.5 absolute left-2.5 top-1/2 -translate-y-1/2 text-charcoal/70 pointer-events-none" />
+            <Truck className="h-3.5 w-3.5 absolute left-2.5 top-1/2 -translate-y-1/2 text-white pointer-events-none" />
           </div>
-        )}
-
-      {next && (
-        needsRiderBeforeDispatch ? (
-          <Link
-            href={`/admin/orders/${orderId}`}
-            className="h-8 px-3 rounded-full bg-fnc-blue text-white font-body text-xs font-semibold hover:bg-fnc-blue/90 transition-colors flex items-center gap-1 shrink-0"
-          >
-            <UserPlus className="h-3.5 w-3.5" />
-            Assign Rider
-          </Link>
         ) : (
+          /* Standard status transition button (Confirm Order -> Start Preparing -> Mark Prepared -> Out for Delivery) */
           <button
             type="button"
             disabled={pending}
             onClick={handleAdvance}
-            className="h-8 px-3 rounded-full bg-fnc-red text-white font-body text-xs font-semibold hover:bg-fnc-red/90 transition-colors disabled:opacity-60 flex items-center gap-1 shrink-0"
+            className="h-8 px-3.5 rounded-full bg-fnc-red text-white font-body text-xs font-semibold hover:bg-fnc-red/90 transition-colors disabled:opacity-60 flex items-center gap-1.5 shrink-0 shadow-sm"
           >
-            {pending ? <Loader2 className="h-3 w-3 animate-spin" /> : <ChevronRight className="h-3 w-3" />}
+            {pending ? <Loader2 className="h-3 w-3 animate-spin" /> : <ChevronRight className="h-3.5 w-3.5" />}
             {actionButtonLabels[next] || statusLabels[next]}
           </button>
         )
       )}
+
+      {/* Optional: if order is already out for delivery or prepared with a rider, show small rider pill */}
+      {fulfillmentType === "DELIVERY" && (selectedRider || deliveryPartnerId) && !isTerminal && (
+        <div className="relative shrink-0">
+          <select
+            value={selectedRider}
+            onChange={handleRiderChange}
+            disabled={pending}
+            className="h-8 pl-7 pr-2.5 text-[11px] font-medium rounded-full bg-warmwhite border border-bordergray text-charcoal hover:bg-warmwhite/80 transition-colors cursor-pointer outline-none"
+          >
+            <option value="">{deliveryPartnerName ? `Rider: ${deliveryPartnerName}` : "Rider Assigned"}</option>
+            {availablePartners.map((p) => (
+              <option key={p.id} value={p.id}>
+                Change: {p.name} ({p.phone})
+              </option>
+            ))}
+          </select>
+          <Truck className="h-3 w-3 absolute left-2.5 top-1/2 -translate-y-1/2 text-slate pointer-events-none" />
+        </div>
+      )}
+
       {!isTerminal && (
         <ConfirmDialog
           title="Cancel this order?"
