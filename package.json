@@ -50,7 +50,8 @@
     "deepmerge-ts": "^8.0.0",
     "braces": "^3.0.3",
     "micromatch": "^4.0.8",
-    "fast-glob": "^3.3.3"
+    "fast-glob": "^3.3.3",
+    "source-map-js": "^1.2.2"
   },
   "prisma": {
     "seed": "node prisma/seed.js"
