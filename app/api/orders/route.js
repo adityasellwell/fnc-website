@@ -391,13 +391,6 @@ export async function POST(request) {
         },
       });
 
-      if (coupon) {
-        await tx.promotion.update({
-          where: { id: coupon.id },
-          data: { usedCount: { increment: 1 } },
-        });
-      }
-
       // Save a reusable Address row so /account's saved addresses list
       // actually populates, in addition to the immutable JSON snapshot on
       // the order itself. Every order is authenticated now, so no guest

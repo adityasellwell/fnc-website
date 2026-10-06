@@ -19,6 +19,38 @@ export async function decrementStoreInventoryForOrder(tx, order) {
   }
 }
 
+export async function incrementCouponUsageIfAny(tx, order) {
+  if (!order || !order.couponCode) return;
+  try {
+    await tx.promotion.updateMany({
+      where: { code: order.couponCode },
+      data: { usedCount: { increment: 1 } },
+    });
+  } catch (e) {
+    console.error(`[Coupon Increment Error] Code ${order.couponCode}:`, e);
+  }
+}
+
+export async function releaseDeliveryPartnerIfIdle(partnerId) {
+  if (!partnerId) return;
+  try {
+    const activeCount = await db.order.count({
+      where: {
+        deliveryPartnerId: partnerId,
+        status: { in: ["PREPARING", "OUT_FOR_DELIVERY"] },
+      },
+    });
+    if (activeCount === 0) {
+      await db.deliveryPartner.update({
+        where: { id: partnerId },
+        data: { status: "AVAILABLE" },
+      });
+    }
+  } catch (e) {
+    console.error(`[Release Delivery Partner Error] Partner ${partnerId}:`, e);
+  }
+}
+
 function appUrl() {
   return process.env.NEXT_PUBLIC_APP_URL || "https://fncmumbai.com";
 }
@@ -129,6 +161,10 @@ export async function updateOrderStatus(orderId, status, changedById) {
     }
   }
 
+  if (isNewStatus && ["CANCELLED", "DELIVERED", "COLLECTED"].includes(status) && order?.deliveryPartnerId) {
+    await releaseDeliveryPartnerIfIdle(order.deliveryPartnerId);
+  }
+
   return result;
 }
 
@@ -209,6 +245,7 @@ export async function cancelOrder(orderId, customerId) {
       total: true,
       razorpayPaymentId: true,
       storeId: true,
+      deliveryPartnerId: true,
       customer: { select: { phone: true } },
     },
   });
@@ -230,6 +267,10 @@ export async function cancelOrder(orderId, customerId) {
       "Customer cancelled order"
     );
     razorpayRefundId = refund.id;
+  }
+
+  if (order.deliveryPartnerId) {
+    await releaseDeliveryPartnerIfIdle(order.deliveryPartnerId);
   }
 
   // DB update only after Razorpay succeeds (or if no payment was made)

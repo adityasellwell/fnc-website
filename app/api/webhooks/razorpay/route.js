@@ -4,7 +4,7 @@ import { verifyWebhookSignature, createPaymentAuditLog } from "@/services/paymen
 import { sendOrderConfirmedEmail } from "@/lib/email";
 import { sendSms } from "@/lib/sms";
 import { formatOrderCode } from "@/lib/orderStatus";
-import { decrementStoreInventoryForOrder } from "@/services/orders";
+import { decrementStoreInventoryForOrder, incrementCouponUsageIfAny } from "@/services/orders";
 
 export async function POST(request) {
   const rawBody = await request.text();
@@ -88,6 +88,7 @@ export async function POST(request) {
 
         // Auto-decrement fulfilling store's inventory
         await decrementStoreInventoryForOrder(tx, order);
+        await incrementCouponUsageIfAny(tx, order);
 
         // Log in status history
         await tx.orderStatusHistory.create({
