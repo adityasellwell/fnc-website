@@ -239,7 +239,7 @@ export async function processRefundRequest(refundId, decision, adminNotes, admin
   if (refund.order.customer?.phone) {
     sendSms("REFUND_INITIATED", refund.order.customer.phone, {
       amount: amountToRefund,
-      orderId: refund.orderId,
+      orderId: formatOrderCode(refund.order),
     }).catch(() => {});
   }
 

@@ -122,11 +122,35 @@ export default function OrderActions({ order }) {
   const [category, setCategory] = useState("");
   const [reason, setReason] = useState("");
   const [photoUrl, setPhotoUrl] = useState("");
+  const [uploadingPhoto, setUploadingPhoto] = useState(false);
   const [toast, setToast] = useState(null);
 
   const showToast = (message, type = "success") => {
     setToast({ message, type });
     setTimeout(() => setToast(null), 4000);
+  };
+
+  const handlePhotoFileChange = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setUploadingPhoto(true);
+    try {
+      const formData = new FormData();
+      formData.append("file", file);
+      formData.append("folder", "refunds");
+      const res = await fetch("/api/upload", {
+        method: "POST",
+        body: formData,
+      });
+      const json = await res.json();
+      if (!res.ok) throw new Error(json.error || "Upload failed");
+      setPhotoUrl(json.url);
+      showToast("Evidence photo uploaded successfully!", "success");
+    } catch (err) {
+      showToast(err.message || "Failed to upload photo", "error");
+    } finally {
+      setUploadingPhoto(false);
+    }
   };
 
   const handleCancel = () => {
@@ -311,24 +335,42 @@ export default function OrderActions({ order }) {
                   />
                 </div>
 
-                {/* Photo URL (Firebase Storage URL from client-side upload) */}
+                {/* Photo Upload for Evidence */}
                 {["ITEM_DAMAGED", "WRONG_ITEM", "QUALITY_ISSUE"].includes(category) && (
-                  <div className="flex flex-col gap-1.5">
+                  <div className="flex flex-col gap-2">
                     <label className="font-body text-xs font-semibold text-charcoal flex items-center gap-1.5">
-                      <Upload className="h-3.5 w-3.5" />
-                      Evidence Photo URL <span className="text-slate font-normal">(optional)</span>
+                      <Upload className="h-3.5 w-3.5 text-fnc-red" />
+                      Attach Photo Evidence <span className="text-slate font-normal">(Recommended)</span>
                     </label>
-                    <input
-                      type="url"
-                      value={photoUrl}
-                      onChange={(e) => setPhotoUrl(e.target.value)}
-                      placeholder="Paste a photo URL (Firebase, Imgur, etc.)"
-                      disabled={pending}
-                      className="w-full h-11 px-3.5 rounded-xl border border-bordergray bg-white font-body text-sm text-charcoal focus:border-fnc-red focus:outline-none disabled:opacity-60"
-                    />
-                    <p className="font-body text-xs text-slate">
-                      Adding a photo speeds up our review process.
-                    </p>
+
+                    {photoUrl ? (
+                      <div className="relative h-32 w-full rounded-xl overflow-hidden border border-bordergray bg-warmwhite group">
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img src={photoUrl} alt="Evidence preview" className="h-full w-full object-cover" />
+                        <button
+                          type="button"
+                          onClick={() => setPhotoUrl("")}
+                          className="absolute top-2 right-2 h-7 w-7 rounded-full bg-black/60 text-white flex items-center justify-center hover:bg-fnc-red transition-colors"
+                        >
+                          <X className="h-4 w-4" />
+                        </button>
+                      </div>
+                    ) : (
+                      <label className="flex flex-col items-center justify-center h-28 border-2 border-dashed border-bordergray rounded-xl hover:border-fnc-red bg-warmwhite/50 cursor-pointer transition-colors p-4 text-center">
+                        <Upload className="h-6 w-6 text-slate mb-1" />
+                        <span className="font-body text-xs font-semibold text-charcoal">
+                          {uploadingPhoto ? "Uploading photo..." : "Click or tap to upload photo"}
+                        </span>
+                        <span className="font-body text-[11px] text-slate mt-0.5">JPG, PNG, WEBP up to 8MB</span>
+                        <input
+                          type="file"
+                          accept="image/*"
+                          onChange={handlePhotoFileChange}
+                          disabled={uploadingPhoto || pending}
+                          className="hidden"
+                        />
+                      </label>
+                    )}
                   </div>
                 )}
 

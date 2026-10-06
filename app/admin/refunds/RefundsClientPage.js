@@ -16,6 +16,7 @@ import {
   ImageIcon,
 } from "lucide-react";
 import { processRefundAction } from "./actions";
+import { formatOrderCode } from "@/lib/orderStatus";
 
 const STATUS_STYLES = {
   REQUESTED:    { label: "Requested",    className: "text-amber-600 bg-amber-50 border-amber-200" },
@@ -182,7 +183,7 @@ export default function RefundsClientPage({ refunds }) {
               <div className="grid grid-cols-2 gap-3">
                 <InfoBox label="Order" value={
                   <Link href={`/admin/orders/${selected.orderId}`} className="text-fnc-red font-bold flex items-center gap-1 hover:underline">
-                    #{selected.orderId.slice(-8).toUpperCase()}
+                    {formatOrderCode(selected.order)}
                     <ExternalLink className="h-3 w-3" />
                   </Link>
                 } />
@@ -218,13 +219,29 @@ export default function RefundsClientPage({ refunds }) {
                 </div>
               </div>
 
-              {/* Photo evidence */}
+              {/* Photo evidence preview */}
               {selected.photoUrl && (
                 <div className="flex flex-col gap-2">
-                  <p className="font-body text-xs font-semibold text-slate uppercase tracking-wide">Evidence Photo</p>
-                  <a href={selected.photoUrl} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 text-fnc-red text-sm font-semibold hover:underline">
+                  <p className="font-body text-xs font-semibold text-slate uppercase tracking-wide">
+                    Attached Evidence Photo
+                  </p>
+                  <div className="relative h-44 w-full rounded-2xl overflow-hidden border border-bordergray bg-warmwhite">
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img
+                      src={selected.photoUrl}
+                      alt="Customer Evidence"
+                      className="h-full w-full object-cover cursor-pointer hover:scale-105 transition-transform"
+                      onClick={() => window.open(selected.photoUrl, "_blank")}
+                    />
+                  </div>
+                  <a
+                    href={selected.photoUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-2 text-fnc-red text-xs font-semibold hover:underline"
+                  >
                     <ImageIcon className="h-4 w-4" />
-                    View Photo
+                    Open Original Image in New Tab
                     <ExternalLink className="h-3 w-3" />
                   </a>
                 </div>
@@ -310,7 +327,7 @@ function RefundCard({ refund, onReview }) {
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-2 flex-wrap">
           <span className="font-display text-sm font-bold text-charcoal">
-            #{refund.orderId.slice(-8).toUpperCase()}
+            {formatOrderCode(refund.order)}
           </span>
           <span className={`font-body text-xs font-semibold px-2.5 py-0.5 rounded-full border ${s.className}`}>
             {s.label}
