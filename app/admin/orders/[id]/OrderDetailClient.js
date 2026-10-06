@@ -109,9 +109,12 @@ export default function OrderDetailClient({ order, currentUser, availablePartner
 
   return (
     <div className="flex flex-col gap-6">
-      {/* CSS for print mode */}
       <style jsx global>{`
         @media print {
+          @page {
+            margin: 0;
+            size: auto;
+          }
           body * {
             visibility: hidden;
           }
@@ -120,19 +123,16 @@ export default function OrderDetailClient({ order, currentUser, availablePartner
             visibility: visible;
           }
           #printable-invoice {
-            /* Tailwind's "hidden" class (display: none) is applied
-               unconditionally in the markup so the invoice never shows
-               during normal browsing — visibility:visible above has no
-               effect on a display:none element, so display must be
-               forced back on here or the printed page comes out blank. */
             display: flex !important;
             position: absolute;
             left: 0;
             top: 0;
-            width: 100%;
+            width: 76mm !important;
+            max-width: 76mm !important;
             background: white !important;
             color: black !important;
-            padding: 20px;
+            padding: 10px !important;
+            box-sizing: border-box !important;
           }
         }
       `}</style>
@@ -588,7 +588,7 @@ export default function OrderDetailClient({ order, currentUser, availablePartner
         {/* Brand Header */}
         <div className="text-center">
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src="/images/logo.png" alt="F&C Logo" className="h-16 w-16 mx-auto object-contain mb-1" />
+          <img src="/images/logo.png" alt="F&C Logo" className="h-28 w-28 mx-auto object-contain mb-1.5" />
           <h1 className="text-xl font-extrabold tracking-tight text-black">F&amp;C</h1>
           <p className="text-[11px] font-bold text-black tracking-wide">FISH • CHICKEN • CRAB</p>
           <p className="text-[10px] font-semibold text-black tracking-wide mb-1">FRESH PROTEINS &amp; MORE</p>
