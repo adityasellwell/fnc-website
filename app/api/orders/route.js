@@ -91,13 +91,13 @@ export async function GET(request) {
 
     const [orders, totalCount] = await Promise.all([
       db.order.findMany({
-        where: { customerId },
+        where: { customerId, status: { not: "PENDING_PAYMENT" } },
         include: { items: { include: { product: true } } },
         orderBy: { createdAt: "desc" },
         skip: (page - 1) * pageSize,
         take: pageSize,
       }),
-      db.order.count({ where: { customerId } }),
+      db.order.count({ where: { customerId, status: { not: "PENDING_PAYMENT" } } }),
     ]);
 
     return NextResponse.json({
@@ -370,13 +370,13 @@ export async function POST(request) {
           longitude: deliveryCoords?.lng ?? null,
           couponCode: couponCode ?? null,
           total,
-          razorpayOrderId: rzpOrder.id,
+          status: "PENDING_PAYMENT",
           device,
           browser,
           ipAddress: ip,
           deliveryDistance: calculatedDistance,
           items: { create: orderItemsData },
-          statusHistory: { create: { status: "PLACED" } },
+          statusHistory: { create: { status: "PENDING_PAYMENT" } },
         },
         include: {
           items: { include: { product: true } },

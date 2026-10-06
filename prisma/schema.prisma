@@ -405,6 +405,7 @@ enum FulfillmentType {
 }
 
 enum OrderStatus {
+  PENDING_PAYMENT
   PLACED
   CONFIRMED
   PREPARING

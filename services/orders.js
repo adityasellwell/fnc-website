@@ -12,7 +12,7 @@ const PAGE_SIZE = 10;
 
 export async function listOrders({ status, fulfillmentType, page = 1, storeId } = {}) {
   const where = {
-    ...(status ? { status } : {}),
+    ...(status ? { status } : { status: { not: "PENDING_PAYMENT" } }),
     ...(fulfillmentType ? { fulfillmentType } : {}),
     ...(storeId ? { storeId } : {}),
   };

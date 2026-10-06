@@ -23,7 +23,7 @@ import {
   createRefundAction,
 } from "../actions";
 import { getNextStatus, getStatusLabel } from "@/lib/orderStatus";
-import { splitOrderGst } from "@/lib/utils/gst";
+import { splitOrderGst, splitGst } from "@/lib/utils/gst";
 
 const inputClasses =
   "w-full h-11 px-3.5 rounded-xl border border-bordergray bg-white font-body text-sm text-charcoal focus:border-fnc-red focus:outline-none transition-colors disabled:opacity-60";
@@ -580,130 +580,136 @@ export default function OrderDetailClient({ order, currentUser, availablePartner
         </div>
       </div>
 
-      {/* Hidden layout specifically structured for standard invoice printing */}
-      <div id="printable-invoice" className="hidden flex-col gap-5 bg-white text-black p-8 font-body max-w-3xl mx-auto border border-black">
-        {/* Branding header */}
-        <div className="flex justify-between items-start border-b-2 border-black pb-4">
-          <div className="flex items-center gap-3">
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src="/images/logo.png" alt="F&C Logo" className="h-16 w-16 object-contain shrink-0" />
-            <div>
-              <h1 className="font-display text-xl font-black tracking-tight text-black">
-                F&amp;C FRESH PROTEINS &amp; MORE
-              </h1>
-              <p className="text-xs text-gray-700 font-medium">Gourmet Seafood &amp; Meat Delivery</p>
-              <p className="text-xs text-gray-700">{order.store.name}</p>
-              <p className="text-[11px] text-gray-500 max-w-xs">{order.store.address}</p>
-            </div>
-          </div>
-          <div className="text-right">
-            <h2 className="text-xl font-bold text-black uppercase">TAX INVOICE</h2>
-            <p className="text-xs text-gray-700 mt-1">Invoice #: {order.id.slice(-8).toUpperCase()}</p>
-            <p className="text-xs text-gray-700">Date: {formatDate(order.createdAt)}</p>
-            <p className="text-xs text-gray-700">Fulfillment: {order.fulfillmentType}</p>
-          </div>
+      {/* Thermal Receipt Print Layout (Matches 80mm POS Thermal Receipt specification) */}
+      <div
+        id="printable-invoice"
+        className="hidden flex-col bg-white text-black p-4 font-sans text-xs max-w-[320px] mx-auto border border-black leading-tight"
+      >
+        {/* Brand Header */}
+        <div className="text-center">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src="/images/logo.png" alt="F&C Logo" className="h-16 w-16 mx-auto object-contain mb-1" />
+          <h1 className="text-xl font-extrabold tracking-tight text-black">F&amp;C</h1>
+          <p className="text-[11px] font-bold text-black tracking-wide">FISH • CHICKEN • CRAB</p>
+          <p className="text-[10px] font-semibold text-black tracking-wide mb-1">FRESH PROTEINS &amp; MORE</p>
+
+          <p className="text-sm font-bold text-black mt-2">F &amp; C</p>
+          <p className="text-[11px] text-black leading-tight mt-0.5 px-2">
+            {order.store?.address || "Shop no 11 ground floor crown CHSL, Near Rosa Manhattan Hiranandani estate thane west 400607"}
+          </p>
+          <p className="text-xs font-bold text-black mt-1">
+            {order.store?.phone || "7039222266 / 9820225687"}
+          </p>
         </div>
 
-        {/* Customer & Address Details */}
-        <div className="grid grid-cols-2 gap-6 pb-4 border-b border-gray-300">
+        <hr className="border-t-2 border-black my-2" />
+
+        {/* Customer Name */}
+        <div className="text-xs font-bold text-black">
+          Name: {order.customer?.name || "Customer"}
+        </div>
+
+        <hr className="border-t border-black my-2" />
+
+        {/* Order Meta Info */}
+        <div className="text-[11px] text-black space-y-1">
+          <div className="flex justify-between font-bold">
+            <span>Date: {(() => {
+              const d = new Date(order.createdAt);
+              const dd = String(d.getDate()).padStart(2, "0");
+              const mm = String(d.getMonth() + 1).padStart(2, "0");
+              const yy = String(d.getFullYear()).slice(-2);
+              return `${dd}/${mm}/${yy}`;
+            })()}</span>
+            <span>{order.fulfillmentType === "DELIVERY" ? "Delivery" : "Pick Up"}</span>
+          </div>
           <div>
-            <p className="text-xs font-bold text-gray-700 uppercase">Customer Information</p>
-            <p className="text-sm font-bold mt-1">{order.customer.name}</p>
-            <p className="text-xs text-gray-700 mt-0.5">Phone: {order.customer.phone || "N/A"}</p>
-            <p className="text-xs text-gray-700">Email: {order.customer.email}</p>
+            {(() => {
+              const d = new Date(order.createdAt);
+              const hours = String(d.getHours()).padStart(2, "0");
+              const mins = String(d.getMinutes()).padStart(2, "0");
+              return `${hours}:${mins}`;
+            })()}
           </div>
-          {order.fulfillmentType === "DELIVERY" && order.deliveryAddress && (
-            <div>
-              <p className="text-xs font-bold text-gray-700 uppercase">Delivery Address</p>
-              <p className="text-sm font-bold mt-1">{order.deliveryAddress.line1}</p>
-              {order.deliveryAddress.line2 && <p className="text-xs text-gray-700">{order.deliveryAddress.line2}</p>}
-              <p className="text-xs text-gray-700">
-                {order.deliveryAddress.city}, {order.deliveryAddress.state} — {order.deliveryAddress.pincode}
-              </p>
-            </div>
-          )}
+          <div className="flex justify-between pt-0.5">
+            <span>Cashier: {currentUser?.name || "biller"}</span>
+            <span className="font-bold">Bill No.: {order.id.slice(-4).toUpperCase()}</span>
+          </div>
         </div>
 
-        {/* Itemised Table */}
-        <table className="w-full text-left text-xs border-collapse">
+        <hr className="border-t border-black my-2" />
+
+        {/* Items Table */}
+        <table className="w-full text-[11px] text-black border-collapse">
           <thead>
-            <tr className="border-b border-gray-400 bg-gray-100 font-bold">
-              <th className="py-2 px-1">Product Description</th>
-              <th className="py-2 px-1 text-right">Unit Price</th>
-              <th className="py-2 px-1 text-right">Qty</th>
-              <th className="py-2 px-1 text-right">Total</th>
+            <tr className="border-b border-black font-bold">
+              <th className="py-1 text-left">Item</th>
+              <th className="py-1 text-center">Qty</th>
+              <th className="py-1 text-right">Price</th>
+              <th className="py-1 text-right">Amount</th>
             </tr>
           </thead>
           <tbody>
-            {order.items.map((item) => (
-              <tr key={item.id} className="border-b border-gray-200">
-                <td className="py-2 px-1 font-semibold">{item.product.name}{item.variantLabel ? ` — ${item.variantLabel}` : ""}</td>
-                <td className="py-2 px-1 text-right">₹{Number(item.unitPrice).toFixed(2)}</td>
-                <td className="py-2 px-1 text-right">{item.quantity}</td>
-                <td className="py-2 px-1 text-right">₹{(Number(item.unitPrice) * item.quantity).toFixed(2)}</td>
-              </tr>
-            ))}
+            {order.items.map((item) => {
+              const lineTotal = Number(item.unitPrice) * item.quantity;
+              const itemGst = splitGst(lineTotal, item.gstRate);
+              const taxableUnitPrice = itemGst.taxableValue / item.quantity;
+
+              return (
+                <tr key={item.id} className="align-top border-b border-gray-100">
+                  <td className="py-1 pr-1 font-medium">
+                    {item.product?.name || "Product"}
+                    {item.variantLabel ? ` (${item.variantLabel})` : ""}
+                  </td>
+                  <td className="py-1 text-center font-bold">{item.quantity}</td>
+                  <td className="py-1 text-right">{taxableUnitPrice.toFixed(2)}</td>
+                  <td className="py-1 text-right font-bold">{itemGst.taxableValue.toFixed(2)}</td>
+                </tr>
+              );
+            })}
           </tbody>
         </table>
 
-        {/* Totals Table */}
-        <div className="flex justify-end mt-4">
-          <div className="w-64 flex flex-col gap-1.5 text-xs text-gray-800">
-            <div className="flex justify-between">
-              <span>Taxable Value</span>
-              <span>₹{gstBreakdown.taxableValue.toFixed(2)}</span>
-            </div>
-            {gstBreakdown.totalTax > 0 && (
-              <>
-                <div className="flex justify-between">
-                  <span>CGST</span>
-                  <span>₹{gstBreakdown.cgst.toFixed(2)}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span>SGST</span>
-                  <span>₹{gstBreakdown.sgst.toFixed(2)}</span>
-                </div>
-              </>
-            )}
-            <div className="flex justify-between">
-              <span>Items Subtotal (incl. GST)</span>
-              <span>₹{itemsSubtotal.toFixed(2)}</span>
-            </div>
-            {order.couponCode && (
-              <div className="flex justify-between font-bold text-green-700">
-                <span>Coupon Applied</span>
-                <span>{order.couponCode}</span>
-              </div>
-            )}
-            <div className="flex justify-between font-bold text-black text-sm pt-2 border-t-2 border-black">
-              <span>Grand Total</span>
-              <span>₹{Number(order.total).toFixed(2)}</span>
-            </div>
+        <hr className="border-t border-black my-2" />
+
+        {/* Totals & Tax Summary */}
+        <div className="text-[11px] text-black space-y-1">
+          <div className="flex justify-between font-bold">
+            <span>Total Qty: {order.items.reduce((sum, item) => sum + item.quantity, 0)}</span>
+            <span>Sub Total: ₹{gstBreakdown.taxableValue.toFixed(2)}</span>
           </div>
+          {gstBreakdown.totalTax > 0 && (
+            <>
+              <div className="flex justify-between">
+                <span>CGST@2.5 2.5%</span>
+                <span>₹{gstBreakdown.cgst.toFixed(2)}</span>
+              </div>
+              <div className="flex justify-between">
+                <span>SGST@2.5 2.5%</span>
+                <span>₹{gstBreakdown.sgst.toFixed(2)}</span>
+              </div>
+            </>
+          )}
         </div>
 
-        {/* Packing & Rider details */}
-        {(order.packingNotes || order.riderName) && (
-          <div className="mt-6 p-3 bg-gray-50 border border-gray-300 rounded text-xs flex flex-col gap-1">
-            {order.packingNotes && (
-              <p>
-                <span className="font-bold">Packing Instructions:</span> {order.packingNotes}
-              </p>
-            )}
-            {order.riderName && (
-              <p>
-                <span className="font-bold">Assigned Rider:</span> {order.riderName} ({order.riderPhone})
-              </p>
-            )}
-          </div>
-        )}
+        <hr className="border-t-2 border-black my-2" />
 
-        {/* Footer note */}
-        <div className="text-center mt-10 border-t border-gray-300 pt-4">
-          <p className="text-xs font-bold text-black">Thank you for shopping with F&amp;C!</p>
-          <p className="text-[10px] text-gray-500 mt-1">
-            For support, contact us at {order.store.phone} or visit our website.
-          </p>
+        {/* Grand Total */}
+        <div className="flex justify-between items-center text-sm font-black text-black py-1">
+          <span>Grand Total</span>
+          <span className="text-base">₹{Number(order.total).toFixed(2)}</span>
+        </div>
+
+        <div className="text-[11px] text-black py-0.5">
+          <span>Paid via {order.paymentStatus === "PAID" ? (order.razorpayPaymentId ? "UPI" : "Online") : "COD"}</span>
+        </div>
+
+        <hr className="border-t-2 border-black my-2" />
+
+        {/* Footer */}
+        <div className="text-center text-[11px] font-bold text-black space-y-0.5 pt-1">
+          <p>GSTIN - {order.store?.gstin || "27ACPFA4454R1ZK"}</p>
+          <p className="font-semibold">Thank You Visit Again..!</p>
         </div>
       </div>
     </div>

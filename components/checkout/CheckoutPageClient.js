@@ -418,21 +418,44 @@ export default function CheckoutPageClient({ stores = [], settings = {}, savedPr
           setStatus("verifying");
 
           let verified = false;
-          const maxAttempts = 15;
-          const pollInterval = 1500; // 1.5 seconds
 
-          for (let attempt = 1; attempt <= maxAttempts; attempt++) {
-            try {
-              const verifyRes = await fetch(`/api/orders/${orderData.id}/verify-payment`);
-              const verifyJson = await verifyRes.json();
-              if (verifyRes.ok && verifyJson.success) {
-                verified = true;
-                break;
-              }
-            } catch (err) {
-              console.error("Verification poll error:", err);
+          // Try instant client-side signature verification first
+          try {
+            const postRes = await fetch(`/api/orders/${orderData.id}/verify-payment`, {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                razorpay_payment_id: response.razorpay_payment_id,
+                razorpay_order_id: response.razorpay_order_id,
+                razorpay_signature: response.razorpay_signature,
+              }),
+            });
+            const postJson = await postRes.json().catch(() => ({}));
+            if (postRes.ok && postJson.success) {
+              verified = true;
             }
-            await new Promise((resolve) => setTimeout(resolve, pollInterval));
+          } catch (e) {
+            console.error("Direct payment verification failed, falling back to polling:", e);
+          }
+
+          // Fallback to polling if direct verification wasn't instant
+          if (!verified) {
+            const maxAttempts = 15;
+            const pollInterval = 1500; // 1.5 seconds
+
+            for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+              try {
+                const verifyRes = await fetch(`/api/orders/${orderData.id}/verify-payment`);
+                const verifyJson = await verifyRes.json();
+                if (verifyRes.ok && verifyJson.success) {
+                  verified = true;
+                  break;
+                }
+              } catch (err) {
+                console.error("Verification poll error:", err);
+              }
+              await new Promise((resolve) => setTimeout(resolve, pollInterval));
+            }
           }
 
           if (verified) {
