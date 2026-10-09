@@ -16,11 +16,16 @@ import { Volume2, VolumeX } from "lucide-react";
  * single small mute toggle in the corner replaces it instead, since
  * that's the only control that matters for a looping background video.
  *
- * The box uses aspect-video (16:9) because the actual uploaded file is
- * exactly 1280x720 — confirmed by parsing its MP4 tkhd box, not
- * guessed. Any other box ratio crops into the burned-in captions near
- * the frame edges, so don't change this per-breakpoint without
- * re-checking the real file dimensions first.
+ * aspect-video (16:9) is non-negotiable — the actual uploaded file is
+ * exactly 1280x720, confirmed by parsing its MP4 tkhd box, not
+ * guessed. Any box ratio that doesn't match crops into the burned-in
+ * captions near the frame edges. But "always full width" plus a fixed
+ * 16:9 ratio means the box gets TALLER than the viewport on wide
+ * desktop windows (full-width-but-way-too-tall was explicitly flagged
+ * as broken) — so on sm+ screens, height is the constraint instead of
+ * width, and width is left auto to be derived from that height via
+ * the aspect ratio. Mobile keeps full width (its viewport is already
+ * narrow, so height never needs an explicit cap there).
  *
  * Hidden entirely when no video has been uploaded yet.
  */
@@ -38,7 +43,7 @@ export default function StoryVideo({ videoUrl, posterUrl }) {
   return (
     <div className="mb-6 sm:mb-8">
       <h3 className="font-display text-lg sm:text-xl font-extrabold text-charcoal mb-3 text-center">See What Makes Us Fresh</h3>
-      <div className="relative w-full aspect-video rounded-2xl overflow-hidden bg-charcoal shadow-md">
+      <div className="relative w-full aspect-video sm:w-auto sm:h-72 md:h-80 lg:h-105 sm:aspect-video sm:mx-auto max-w-full rounded-2xl overflow-hidden bg-charcoal shadow-md">
         <video
           ref={videoRef}
           src={videoUrl}
