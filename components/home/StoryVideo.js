@@ -21,10 +21,10 @@ export default function StoryVideo({ videoUrl, posterUrl }) {
 
   return (
     <div className="mb-6 sm:mb-8">
-      <h3 className="font-display text-lg sm:text-xl font-extrabold text-charcoal mb-3 text-center">
+      <h3 className="font-display text-base sm:text-lg font-extrabold text-charcoal mb-2 text-center">
         See What Makes Us Fresh
       </h3>
-      <div className="relative w-full aspect-video rounded-2xl overflow-hidden bg-black shadow-md">
+      <div className="relative w-full max-w-md mx-auto aspect-video rounded-2xl overflow-hidden bg-black shadow-md">
         <video
           ref={videoRef}
           src={videoUrl}
@@ -34,14 +34,14 @@ export default function StoryVideo({ videoUrl, posterUrl }) {
           loop
           playsInline
           preload="metadata"
-          className="w-full h-full object-contain bg-black block"
+          className="w-full h-full object-cover block"
         />
 
         <button
           type="button"
           onClick={toggleMute}
           aria-label={muted ? "Unmute video" : "Mute video"}
-          className="absolute z-20 top-3 right-3 h-9 w-9 rounded-full bg-black/50 hover:bg-black/75 text-white flex items-center justify-center transition-colors shadow-md"
+          className="absolute z-20 top-3 right-3 h-8 w-8 rounded-full bg-black/50 hover:bg-black/75 text-white flex items-center justify-center transition-colors shadow-md"
         >
           {muted ? <VolumeX className="h-4 w-4" /> : <Volume2 className="h-4 w-4" />}
         </button>
