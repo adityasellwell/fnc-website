@@ -2,7 +2,6 @@ import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
 import Hero from "@/components/home/Hero";
 import RecommendationsSection from "@/components/home/RecommendationsSection";
-import StoryVideo from "@/components/home/StoryVideo";
 import WhyChooseFC from "@/components/home/WhyChooseFC";
 import HealthHygiene from "@/components/home/HealthHygiene";
 import StoreSection from "@/components/home/StoreSection";
@@ -40,11 +39,14 @@ export default async function Home() {
         {/* 2. Hero Image Slider */}
         <Hero banners={banners} />
 
-        {/* 3, 4, 5. Categories and Recommendations Grid */}
-        <RecommendationsSection products={products} initialCategories={categories} />
-
-        {/* Brand/story video — hidden until an admin uploads one via Settings */}
-        <StoryVideo videoUrl={settings?.homepageVideoUrl} posterUrl={settings?.homepageVideoPoster} />
+        {/* 3, 4, 5. Categories and Recommendations Grid (story video renders
+            between the circles and the product grid, inside this section) */}
+        <RecommendationsSection
+          products={products}
+          initialCategories={categories}
+          videoUrl={settings?.homepageVideoUrl}
+          videoPosterUrl={settings?.homepageVideoPoster}
+        />
 
         {/* Promo Strip */}
         <PromoStrip banners={promoBanners} />

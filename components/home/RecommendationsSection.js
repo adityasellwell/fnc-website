@@ -8,9 +8,10 @@ import { motion, AnimatePresence } from "framer-motion";
 import Container from "@/components/layout/Container";
 import ProductCard from "@/components/product/ProductCard";
 import Reveal from "@/components/motion/Reveal";
+import StoryVideo from "@/components/home/StoryVideo";
 import { cn } from "@/lib/utils";
 
-export default function RecommendationsSection({ products = [], initialCategories = [] }) {
+export default function RecommendationsSection({ products = [], initialCategories = [], videoUrl, videoPosterUrl }) {
   const [selectedCategory, setSelectedCategory] = useState(null);
   const [selectedSubcategory, setSelectedSubcategory] = useState(null);
   const scrollContainerRef = useRef(null);
@@ -279,6 +280,8 @@ export default function RecommendationsSection({ products = [], initialCategorie
             })}
           </div>
         )}
+
+        <StoryVideo videoUrl={videoUrl} posterUrl={videoPosterUrl} />
 
         {/* ── Recommendations Grid ───────────────────────────────── */}
         <div>
