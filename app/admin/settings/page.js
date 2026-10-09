@@ -3,6 +3,7 @@ import { updateSettingsAction } from "./actions";
 import { requireFullAdminUser } from "@/lib/admin-auth";
 import { WHY_CHOOSE_POINTS } from "@/lib/constants";
 import ImageUploadField from "@/components/admin/ImageUploadField";
+import VideoUploadField from "@/components/admin/VideoUploadField";
 
 export const metadata = { title: "Settings — Admin" };
 
@@ -118,6 +119,27 @@ export default async function AdminSettingsPage() {
           defaultValue={settings.franchiseHeroImage || ""}
           folder="franchise"
         />
+
+        <div className="flex flex-col gap-4 pt-3 border-t border-bordergray">
+          <h2 className="font-display text-lg font-bold text-charcoal">Homepage Story Video</h2>
+          <p className="font-body text-xs text-slate -mt-2">
+            Shown as its own section below the category circles on the homepage. Leave empty to hide the section.
+          </p>
+          <div className="grid sm:grid-cols-2 gap-5">
+            <VideoUploadField
+              name="homepageVideoUrl"
+              label="Video"
+              defaultValue={settings.homepageVideoUrl || ""}
+              folder="homepage"
+            />
+            <ImageUploadField
+              name="homepageVideoPoster"
+              label="Poster Image (shown before play)"
+              defaultValue={settings.homepageVideoPoster || ""}
+              folder="homepage"
+            />
+          </div>
+        </div>
 
         <div className="flex justify-end pt-3 border-t border-bordergray">
           <button

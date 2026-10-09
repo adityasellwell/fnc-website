@@ -782,6 +782,12 @@ model Settings {
   // back to its current icon-only look when unset.
   whyChooseCardImages   Json?
   franchiseHeroImage    String?
+  // Homepage brand/story video shown below the Hero banner — null hides
+  // the section entirely until an admin uploads one. Poster is the
+  // thumbnail shown before the viewer presses play (click-to-play, not
+  // autoplay, to respect mobile data).
+  homepageVideoUrl      String?
+  homepageVideoPoster   String?
   createdAt             DateTime @default(now())
   updatedAt             DateTime @updatedAt
 }

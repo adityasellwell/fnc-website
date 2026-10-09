@@ -33,6 +33,8 @@ export async function updateSettingsAction(formData) {
     },
     whyChooseCardImages,
     franchiseHeroImage: formData.get("franchiseHeroImage")?.toString().trim() || null,
+    homepageVideoUrl: formData.get("homepageVideoUrl")?.toString().trim() || null,
+    homepageVideoPoster: formData.get("homepageVideoPoster")?.toString().trim() || null,
   };
 
   await updateSettings(data);
