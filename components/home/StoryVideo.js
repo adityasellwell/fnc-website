@@ -16,6 +16,12 @@ import { Volume2, VolumeX } from "lucide-react";
  * single small mute toggle in the corner replaces it instead, since
  * that's the only control that matters for a looping background video.
  *
+ * The box uses aspect-video (16:9) because the actual uploaded file is
+ * exactly 1280x720 — confirmed by parsing its MP4 tkhd box, not
+ * guessed. Any other box ratio crops into the burned-in captions near
+ * the frame edges, so don't change this per-breakpoint without
+ * re-checking the real file dimensions first.
+ *
  * Hidden entirely when no video has been uploaded yet.
  */
 export default function StoryVideo({ videoUrl, posterUrl }) {
@@ -32,7 +38,7 @@ export default function StoryVideo({ videoUrl, posterUrl }) {
   return (
     <div className="mb-6 sm:mb-8">
       <h3 className="font-display text-lg sm:text-xl font-extrabold text-charcoal mb-3">See What Makes Us Fresh</h3>
-      <div className="relative w-full max-w-4xl mx-auto aspect-[16/10] sm:aspect-video rounded-2xl overflow-hidden bg-charcoal shadow-md">
+      <div className="relative w-full max-w-3xl mx-auto aspect-video rounded-2xl overflow-hidden bg-charcoal shadow-md">
         <video
           ref={videoRef}
           src={videoUrl}
