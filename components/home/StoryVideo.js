@@ -18,6 +18,7 @@ export default function StoryVideo({ videoUrl, posterUrl }) {
         <video
           src={videoUrl}
           poster={posterUrl || undefined}
+          title=""
           controls
           autoPlay
           muted
