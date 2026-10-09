@@ -24,7 +24,7 @@ export default function StoryVideo({ videoUrl, posterUrl }) {
           loop
           playsInline
           preload="metadata"
-          className="h-full w-full object-cover"
+          className="h-full w-full object-contain"
         />
       </div>
     </div>
