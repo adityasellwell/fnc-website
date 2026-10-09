@@ -1,7 +1,7 @@
 "use client";
 
 import { useRef, useState } from "react";
-import { Video, Loader2, X } from "lucide-react";
+import { Video, Loader2, X, ExternalLink } from "lucide-react";
 
 /**
  * Uploads directly from the browser to Cloudinary (see
@@ -70,36 +70,56 @@ export default function VideoUploadField({ name, label, defaultValue, folder = "
   }
 
   return (
-    <div className="flex flex-col gap-1.5">
+    <div className="flex flex-col gap-2">
       {label && <label className="font-body text-xs font-semibold text-charcoal">{label}</label>}
       <input type="hidden" name={name} value={url} />
 
-      <div className="flex items-center gap-4">
-        <div className="relative h-20 w-32 shrink-0 rounded-xl border border-bordergray bg-warmwhite overflow-hidden flex items-center justify-center">
-          {url ? (
-            <video src={url} className="h-full w-full object-cover" muted />
-          ) : (
-            <Video className="h-7 w-7 text-slate" />
-          )}
+      {url && !uploading && (
+        <div className="relative w-full max-w-sm aspect-video rounded-xl border border-bordergray bg-black overflow-hidden">
+          <video src={url} controls preload="metadata" className="h-full w-full object-contain" />
         </div>
+      )}
 
-        <div className="flex flex-col gap-1.5">
-          <label className="h-9 px-3.5 rounded-xl border border-bordergray bg-white font-body text-xs font-semibold text-charcoal hover:border-charcoal transition-colors cursor-pointer inline-flex items-center gap-1.5 w-fit">
-            {uploading ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Video className="h-3.5 w-3.5" />}
-            {uploading ? `Uploading... ${progress}%` : url ? "Replace Video" : "Upload Video"}
-            <input ref={inputRef} type="file" accept="video/mp4,video/webm,video/quicktime" onChange={handleFileChange} disabled={uploading} className="hidden" />
-          </label>
-          {url && !uploading && (
+      {!url && !uploading && (
+        <div className="w-full max-w-sm aspect-video rounded-xl border border-dashed border-bordergray bg-warmwhite flex items-center justify-center">
+          <Video className="h-7 w-7 text-slate" />
+        </div>
+      )}
+
+      {uploading && (
+        <div className="w-full max-w-sm aspect-video rounded-xl border border-bordergray bg-warmwhite flex flex-col items-center justify-center gap-2">
+          <Loader2 className="h-6 w-6 animate-spin text-fnc-red" />
+          <span className="font-body text-xs font-semibold text-charcoal">Uploading... {progress}%</span>
+        </div>
+      )}
+
+      <div className="flex items-center gap-3 flex-wrap">
+        <label className="h-9 px-3.5 rounded-xl border border-bordergray bg-white font-body text-xs font-semibold text-charcoal hover:border-charcoal transition-colors cursor-pointer inline-flex items-center gap-1.5 w-fit">
+          {uploading ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Video className="h-3.5 w-3.5" />}
+          {uploading ? "Uploading..." : url ? "Replace Video" : "Upload Video"}
+          <input ref={inputRef} type="file" accept="video/mp4,video/webm,video/quicktime" onChange={handleFileChange} disabled={uploading} className="hidden" />
+        </label>
+        {url && !uploading && (
+          <>
+            <a
+              href={url}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="h-9 px-3 rounded-xl font-body text-xs font-semibold text-charcoal hover:text-fnc-red transition-colors inline-flex items-center gap-1.5"
+            >
+              <ExternalLink className="h-3.5 w-3.5" />
+              Open full size
+            </a>
             <button
               type="button"
               onClick={() => setUrl("")}
-              className="h-7 px-2 rounded-lg font-body text-[11px] font-semibold text-slate hover:text-fnc-red transition-colors inline-flex items-center gap-1 w-fit"
+              className="h-9 px-3 rounded-xl font-body text-xs font-semibold text-slate hover:text-fnc-red transition-colors inline-flex items-center gap-1.5"
             >
-              <X className="h-3 w-3" />
+              <X className="h-3.5 w-3.5" />
               Remove
             </button>
-          )}
-        </div>
+          </>
+        )}
       </div>
 
       {error && <p className="font-body text-xs text-fnc-red">{error}</p>}
