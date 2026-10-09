@@ -14,7 +14,7 @@ export default function StoryVideo({ videoUrl, posterUrl }) {
   return (
     <div className="mb-6 sm:mb-8">
       <h3 className="font-display text-lg sm:text-xl font-extrabold text-charcoal mb-3">See What Makes Us Fresh</h3>
-      <div className="relative w-full h-56 sm:h-72 md:h-80 lg:h-96 rounded-2xl overflow-hidden bg-charcoal shadow-md">
+      <div className="relative w-full max-w-3xl mx-auto aspect-video rounded-2xl overflow-hidden bg-charcoal shadow-md">
         <video
           src={videoUrl}
           poster={posterUrl || undefined}
@@ -24,7 +24,7 @@ export default function StoryVideo({ videoUrl, posterUrl }) {
           loop
           playsInline
           preload="metadata"
-          className="h-full w-full object-contain"
+          className="h-full w-full object-cover"
         />
       </div>
     </div>
