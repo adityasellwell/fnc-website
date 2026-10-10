@@ -7,17 +7,18 @@ import { Volume2, VolumeX } from "lucide-react";
  * Featured Brand / Freshness Story Video.
  *
  * Full width always — matches the same Container the category circles
- * and product grid sit in. Container.js caps content at max-w-content
- * (1600px, globals.css), so at desktop this section is never wider
- * than ~1520px after padding — calculated from that real number, not
- * guessed: a 4.2:1 ratio there lands at ~360px tall, comfortable on
- * one screen. Mobile is only ~335px wide, where that same ratio would
- * be ~80px tall (unreadable), so the ratio scales up from 1.8:1 on
- * mobile to 4.2:1 on desktop — identical breakpoint values to
- * Hero.js's banner carousel, which solved this exact width-vs-height
- * problem for the same Container already. object-cover crops a little
- * off the top/bottom at each breakpoint as a result; the burned-in
- * captions near the bottom edge have been checked to still clear it.
+ * and product grid sit in. Height is set directly as a share of the
+ * actual viewport height (vh units), not derived from container width
+ * math — a width-based aspect-ratio guess kept landing taller than
+ * expected on real, very-wide browser windows. vh is a direct,
+ * unambiguous promise: this section can never be taller than that
+ * percentage of whatever screen it's actually viewed on. object-contain
+ * shows the COMPLETE frame always (explicitly required — nothing
+ * cropped), which combined with a short wide box means some plain
+ * black bars on the left/right are unavoidable, since the video (2:1)
+ * is relatively narrower than this box's shape at most screen widths.
+ * That's the deliberate tradeoff of "fits on screen" + "shows
+ * everything" at the same time — not a bug.
  *
  * Autoplays muted + looped with a corner mute/unmute toggle button.
  */
@@ -37,7 +38,7 @@ export default function StoryVideo({ videoUrl, posterUrl }) {
       <h3 className="font-display text-lg sm:text-xl font-extrabold text-charcoal mb-3 text-center">
         See What Makes Us Fresh
       </h3>
-      <div className="relative w-full aspect-[1.8/1] sm:aspect-2.5/1 md:aspect-[3.2/1] lg:aspect-[4.2/1] rounded-2xl overflow-hidden bg-black shadow-md">
+      <div className="relative w-full h-[28vh] sm:h-[32vh] lg:h-[36vh] rounded-2xl overflow-hidden bg-black shadow-md">
         <video
           ref={videoRef}
           src={videoUrl}
@@ -47,7 +48,7 @@ export default function StoryVideo({ videoUrl, posterUrl }) {
           loop
           playsInline
           preload="metadata"
-          className="w-full h-full object-cover block"
+          className="w-full h-full object-contain block"
         />
 
         <button
