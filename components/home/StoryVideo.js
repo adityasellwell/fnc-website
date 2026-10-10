@@ -7,18 +7,12 @@ import { Volume2, VolumeX } from "lucide-react";
  * Featured Brand / Freshness Story Video.
  *
  * Full width always — matches the same Container the category circles
- * and product grid sit in. Height is set directly as a share of the
- * actual viewport height (vh units), not derived from container width
- * math — a width-based aspect-ratio guess kept landing taller than
- * expected on real, very-wide browser windows. vh is a direct,
- * unambiguous promise: this section can never be taller than that
- * percentage of whatever screen it's actually viewed on. object-contain
- * shows the COMPLETE frame always (explicitly required — nothing
- * cropped), which combined with a short wide box means some plain
- * black bars on the left/right are unavoidable, since the video (2:1)
- * is relatively narrower than this box's shape at most screen widths.
- * That's the deliberate tradeoff of "fits on screen" + "shows
- * everything" at the same time — not a bug.
+ * and product grid sit in. The uploaded file is re-exported at exactly
+ * 7:1 (2100x300) specifically to fit this section's target height at
+ * full width, so aspect-7/1 here is an exact match: zero cropping,
+ * zero black bars, height scales naturally with width. If the video
+ * is ever re-exported at a different ratio, update aspect-7/1 to
+ * match it exactly or this breaks again.
  *
  * Autoplays muted + looped with a corner mute/unmute toggle button.
  */
@@ -38,7 +32,7 @@ export default function StoryVideo({ videoUrl, posterUrl }) {
       <h3 className="font-display text-lg sm:text-xl font-extrabold text-charcoal mb-3 text-center">
         See What Makes Us Fresh
       </h3>
-      <div className="relative w-full h-[28vh] sm:h-[24vh] lg:h-[25vh] rounded-2xl overflow-hidden bg-black shadow-md">
+      <div className="relative w-full aspect-7/1 rounded-2xl overflow-hidden bg-black shadow-md">
         <video
           ref={videoRef}
           src={videoUrl}
@@ -48,7 +42,7 @@ export default function StoryVideo({ videoUrl, posterUrl }) {
           loop
           playsInline
           preload="metadata"
-          className="w-full h-full object-contain block"
+          className="w-full h-full object-cover block"
         />
 
         <button
