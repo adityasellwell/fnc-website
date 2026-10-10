@@ -8,13 +8,11 @@ import { Volume2, VolumeX } from "lucide-react";
  *
  * Full width always — matches the same Container the category circles
  * and product grid sit in, no max-width cap. The uploaded file is
- * exactly 2:1 (1600x800 — re-exported specifically for this section),
- * so aspect-2/1 here is an exact match: height scales naturally with
- * width (no fixed/capped height), object-cover crops nothing because
- * the box and the file are the same shape, and there are no black
- * bars because nothing needs letterboxing. This only stays correct as
- * long as the uploaded video stays 2:1 — if it's ever re-exported at a
- * different ratio, update aspect-2/1 to match exactly.
+ * 2:1 (1600x800), and the box is deliberately a touch wider than that
+ * (2.3:1) so it sits a little shorter than an exact match — a small,
+ * explicitly requested tradeoff that crops a thin sliver off the
+ * top/bottom via object-cover. Don't widen this further without
+ * checking the burned-in captions (near the bottom edge) still clear.
  *
  * Autoplays muted + looped with a corner mute/unmute toggle button.
  */
@@ -34,7 +32,7 @@ export default function StoryVideo({ videoUrl, posterUrl }) {
       <h3 className="font-display text-lg sm:text-xl font-extrabold text-charcoal mb-3 text-center">
         See What Makes Us Fresh
       </h3>
-      <div className="relative w-full aspect-2/1 rounded-2xl overflow-hidden bg-black shadow-md">
+      <div className="relative w-full aspect-[2.3/1] rounded-2xl overflow-hidden bg-black shadow-md">
         <video
           ref={videoRef}
           src={videoUrl}
