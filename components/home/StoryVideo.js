@@ -11,8 +11,9 @@ import { Volume2, VolumeX } from "lucide-react";
  * desktop, and neither cropping nor a blurred backdrop filler read as
  * clean. At 2:1, full width naturally lands at a reasonable height on
  * every screen size, so object-cover here crops nothing (box ratio
- * matches the file exactly). max-w-5xl only engages on very wide
- * desktop windows — mobile stays full width exactly as before.
+ * matches the file exactly). Full width always — matches the same
+ * Container the category circles and product grid sit in, starting
+ * and ending at the exact same edges as everything else on the page.
  *
  * Autoplays muted + looped with a corner mute/unmute toggle button.
  */
@@ -32,7 +33,7 @@ export default function StoryVideo({ videoUrl, posterUrl }) {
       <h3 className="font-display text-lg sm:text-xl font-extrabold text-charcoal mb-3 text-center">
         See What Makes Us Fresh
       </h3>
-      <div className="relative w-full max-w-5xl mx-auto aspect-2/1 rounded-2xl overflow-hidden bg-black shadow-md">
+      <div className="relative w-full aspect-2/1 rounded-2xl overflow-hidden bg-black shadow-md">
         <video
           ref={videoRef}
           src={videoUrl}
