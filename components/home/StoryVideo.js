@@ -4,18 +4,24 @@ import { useRef, useState } from "react";
 import { Volume2, VolumeX } from "lucide-react";
 
 /**
- * Featured Brand / Freshness Story Video.
- *
- * Full-width banner section matching the main Container layout.
- * Displays edge-to-edge with object-cover (no black side bars).
- * Uses responsive wide banner ratio (aspect-[16/7] sm:aspect-[21/9])
- * so the video and product cards below fit comfortably on screen.
+ * Automatically formats Cloudinary video URLs to auto-crop & transcode
+ * any uploaded video to exact 21:9 resolution (1920x822) with smart auto-quality.
  */
+function getAutoTransformedVideoUrl(url) {
+  if (!url) return url;
+  if (url.includes("res.cloudinary.com") && url.includes("/upload/") && !url.includes("/c_fill,")) {
+    return url.replace("/upload/", "/upload/c_fill,w_1920,h_822,q_auto,f_auto/");
+  }
+  return url;
+}
+
 export default function StoryVideo({ videoUrl, posterUrl }) {
   const [muted, setMuted] = useState(true);
   const videoRef = useRef(null);
 
   if (!videoUrl) return null;
+
+  const finalVideoUrl = getAutoTransformedVideoUrl(videoUrl);
 
   function toggleMute() {
     if (videoRef.current) videoRef.current.muted = !videoRef.current.muted;
@@ -30,7 +36,7 @@ export default function StoryVideo({ videoUrl, posterUrl }) {
       <div className="relative w-full aspect-[16/7] sm:aspect-[21/9] rounded-2xl overflow-hidden bg-black shadow-md">
         <video
           ref={videoRef}
-          src={videoUrl}
+          src={finalVideoUrl}
           poster={posterUrl || undefined}
           autoPlay
           muted={muted}
