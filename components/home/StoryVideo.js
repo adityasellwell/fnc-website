@@ -5,7 +5,15 @@ import { Volume2, VolumeX } from "lucide-react";
 
 /**
  * Featured Brand / Freshness Story Video.
- * Fills the full width of the container edge-to-edge with no side gaps or empty spacing.
+ *
+ * The uploaded file is exported at exactly 2:1 (1600x800) specifically
+ * to fit this section — a 16:9 export was too tall at full width on
+ * desktop, and neither cropping nor a blurred backdrop filler read as
+ * clean. At 2:1, full width naturally lands at a reasonable height on
+ * every screen size, so object-cover here crops nothing (box ratio
+ * matches the file exactly). max-w-5xl only engages on very wide
+ * desktop windows — mobile stays full width exactly as before.
+ *
  * Autoplays muted + looped with a corner mute/unmute toggle button.
  */
 export default function StoryVideo({ videoUrl, posterUrl }) {
@@ -24,7 +32,7 @@ export default function StoryVideo({ videoUrl, posterUrl }) {
       <h3 className="font-display text-lg sm:text-xl font-extrabold text-charcoal mb-3 text-center">
         See What Makes Us Fresh
       </h3>
-      <div className="relative w-full aspect-video rounded-2xl overflow-hidden bg-black shadow-md">
+      <div className="relative w-full max-w-5xl mx-auto aspect-2/1 rounded-2xl overflow-hidden bg-black shadow-md">
         <video
           ref={videoRef}
           src={videoUrl}
@@ -34,7 +42,7 @@ export default function StoryVideo({ videoUrl, posterUrl }) {
           loop
           playsInline
           preload="metadata"
-          className="w-full h-full object-contain bg-black block"
+          className="w-full h-full object-cover block"
         />
 
         <button
