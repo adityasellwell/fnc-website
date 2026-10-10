@@ -6,10 +6,9 @@ import { Volume2, VolumeX } from "lucide-react";
 /**
  * Featured Brand / Freshness Story Video.
  *
- * Full width layout (w-full) matching the category circles & product grid.
- * Controlled height (h-60 sm:h-72 md:h-84 lg:h-[460px]) so product cards fit below.
- * Blurred ambient backdrop fills full width with no empty side gaps.
- * Foreground video is uncropped (object-contain) so captions/text are never cut off.
+ * Full-width 16:9 container that matches the video's exact native aspect ratio.
+ * 100% full video shown: zero zoom, zero cropping, zero text cutoff,
+ * zero extra side space, zero blur backdrop.
  */
 export default function StoryVideo({ videoUrl, posterUrl }) {
   const [muted, setMuted] = useState(true);
@@ -27,20 +26,7 @@ export default function StoryVideo({ videoUrl, posterUrl }) {
       <h3 className="font-display text-lg sm:text-xl font-extrabold text-charcoal mb-3 text-center">
         See What Makes Us Fresh
       </h3>
-      <div className="relative w-full h-60 sm:h-72 md:h-84 lg:h-[460px] rounded-2xl overflow-hidden bg-charcoal shadow-md">
-        {/* Full-width blurred ambient backdrop */}
-        <video
-          src={videoUrl}
-          autoPlay
-          muted
-          loop
-          playsInline
-          aria-hidden="true"
-          tabIndex={-1}
-          className="absolute inset-0 h-full w-full object-cover scale-110 blur-2xl brightness-50 pointer-events-none"
-        />
-
-        {/* Sharp foreground video - centered, un-cropped, zero zoom */}
+      <div className="relative w-full aspect-video rounded-2xl overflow-hidden bg-black shadow-md">
         <video
           ref={videoRef}
           src={videoUrl}
@@ -50,7 +36,7 @@ export default function StoryVideo({ videoUrl, posterUrl }) {
           loop
           playsInline
           preload="metadata"
-          className="relative z-10 h-full w-auto max-w-full mx-auto block object-contain"
+          className="w-full h-full block object-cover"
         />
 
         <button
