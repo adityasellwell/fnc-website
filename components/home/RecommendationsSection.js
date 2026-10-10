@@ -281,7 +281,10 @@ export default function RecommendationsSection({ products = [], initialCategorie
           </div>
         )}
 
-        <StoryVideo videoUrl={videoUrl} posterUrl={videoPosterUrl} />
+        {/* Story Video - shown above products on initial page load */}
+        {!selectedCategory && (
+          <StoryVideo videoUrl={videoUrl} posterUrl={videoPosterUrl} />
+        )}
 
         {/* ── Recommendations Grid ───────────────────────────────── */}
         <div>
@@ -343,6 +346,13 @@ export default function RecommendationsSection({ products = [], initialCategorie
             </div>
           )}
         </div>
+
+        {/* Story Video - moved below products when a category circle is active */}
+        {selectedCategory && (
+          <div className="mt-10">
+            <StoryVideo videoUrl={videoUrl} posterUrl={videoPosterUrl} />
+          </div>
+        )}
 
       </Container>
     </section>
