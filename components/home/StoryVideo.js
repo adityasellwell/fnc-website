@@ -6,14 +6,15 @@ import { Volume2, VolumeX } from "lucide-react";
 /**
  * Featured Brand / Freshness Story Video.
  *
- * The uploaded file is exported at exactly 2:1 (1600x800) specifically
- * to fit this section — a 16:9 export was too tall at full width on
- * desktop, and neither cropping nor a blurred backdrop filler read as
- * clean. At 2:1, full width naturally lands at a reasonable height on
- * every screen size, so object-cover here crops nothing (box ratio
- * matches the file exactly). Full width always — matches the same
- * Container the category circles and product grid sit in, starting
- * and ending at the exact same edges as everything else on the page.
+ * Full width always — matches the same Container the category circles
+ * and product grid sit in. Height is capped per breakpoint directly
+ * (not derived from an aspect ratio), and object-contain always shows
+ * the COMPLETE frame, never cropped/zoomed — explicitly required, even
+ * though it means plain black bars on the sides on very wide screens
+ * where the box is wider than the video's own shape. That tradeoff
+ * (bars, never crop) was chosen deliberately over the alternative
+ * (object-cover, never bars, but crops/zooms) — don't flip it back to
+ * object-cover without checking that's actually wanted again.
  *
  * Autoplays muted + looped with a corner mute/unmute toggle button.
  */
@@ -33,7 +34,7 @@ export default function StoryVideo({ videoUrl, posterUrl }) {
       <h3 className="font-display text-lg sm:text-xl font-extrabold text-charcoal mb-3 text-center">
         See What Makes Us Fresh
       </h3>
-      <div className="relative w-full aspect-2/1 rounded-2xl overflow-hidden bg-black shadow-md">
+      <div className="relative w-full h-52 sm:h-64 md:h-72 lg:h-80 rounded-2xl overflow-hidden bg-black shadow-md">
         <video
           ref={videoRef}
           src={videoUrl}
@@ -43,7 +44,7 @@ export default function StoryVideo({ videoUrl, posterUrl }) {
           loop
           playsInline
           preload="metadata"
-          className="w-full h-full object-cover block"
+          className="w-full h-full object-contain block"
         />
 
         <button
