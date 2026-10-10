@@ -4,24 +4,16 @@ import { useRef, useState } from "react";
 import { Volume2, VolumeX } from "lucide-react";
 
 /**
- * Automatically formats Cloudinary video URLs to auto-crop & transcode
- * any uploaded video to exact 21:9 resolution (1920x822) with smart auto-quality.
+ * Featured Brand / Freshness Story Video.
+ *
+ * Matches the video's exact native 16:9 aspect ratio in a screen-safe max-w-4xl box.
+ * Ensures zero zoom, zero cropping, zero cut-off captions/text, and zero black bars.
  */
-function getAutoTransformedVideoUrl(url) {
-  if (!url) return url;
-  if (url.includes("res.cloudinary.com") && url.includes("/upload/") && !url.includes("/c_fill,")) {
-    return url.replace("/upload/", "/upload/c_fill,w_1920,h_822,q_auto,f_auto/");
-  }
-  return url;
-}
-
 export default function StoryVideo({ videoUrl, posterUrl }) {
   const [muted, setMuted] = useState(true);
   const videoRef = useRef(null);
 
   if (!videoUrl) return null;
-
-  const finalVideoUrl = getAutoTransformedVideoUrl(videoUrl);
 
   function toggleMute() {
     if (videoRef.current) videoRef.current.muted = !videoRef.current.muted;
@@ -33,17 +25,17 @@ export default function StoryVideo({ videoUrl, posterUrl }) {
       <h3 className="font-display text-lg sm:text-xl font-extrabold text-charcoal mb-3 text-center">
         See What Makes Us Fresh
       </h3>
-      <div className="relative w-full aspect-[16/7] sm:aspect-[21/9] rounded-2xl overflow-hidden bg-black shadow-md">
+      <div className="relative w-full max-w-4xl mx-auto aspect-video rounded-2xl overflow-hidden bg-black shadow-md">
         <video
           ref={videoRef}
-          src={finalVideoUrl}
+          src={videoUrl}
           poster={posterUrl || undefined}
           autoPlay
           muted={muted}
           loop
           playsInline
           preload="metadata"
-          className="w-full h-full object-cover block"
+          className="w-full h-full block object-cover"
         />
 
         <button
