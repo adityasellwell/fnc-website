@@ -38,7 +38,7 @@ export default function StoryVideo({ videoUrl, posterUrl }) {
       <h3 className="font-display text-lg sm:text-xl font-extrabold text-charcoal mb-3 text-center">
         See What Makes Us Fresh
       </h3>
-      <div className="relative w-full h-[28vh] sm:h-[32vh] lg:h-[36vh] rounded-2xl overflow-hidden bg-black shadow-md">
+      <div className="relative w-full h-[22vh] sm:h-[24vh] lg:h-[25vh] rounded-2xl overflow-hidden bg-black shadow-md">
         <video
           ref={videoRef}
           src={videoUrl}
