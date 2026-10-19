@@ -31,7 +31,10 @@ import {
   ChevronRight,
   Shield,
   Bell,
+  Volume2,
+  VolumeX,
 } from "lucide-react";
+import { playOrderAlarm, playRefundAlert, playInquiryNotification } from "@/lib/utils/alarmAudio";
 import SignOutButton from "@/components/auth/SignOutButton";
 import { BRAND } from "@/lib/constants";
 
@@ -61,26 +64,91 @@ export default function AdminShell({ user, nav, children }) {
   const [collapsed, setCollapsed] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
   const [counts, setCounts] = useState({ orders: 0, refunds: 0, inquiries: 0 });
+  const [soundEnabled, setSoundEnabled] = useState(true);
+  const [recentAlert, setRecentAlert] = useState(null);
+
+  // Initialize sound preference from localStorage
+  useEffect(() => {
+    try {
+      const stored = localStorage.getItem("fnc_admin_sound_enabled");
+      if (stored !== null) {
+        setSoundEnabled(stored === "true");
+      }
+    } catch (e) {}
+  }, []);
+
+  const toggleSound = () => {
+    setSoundEnabled((prev) => {
+      const next = !prev;
+      try {
+        localStorage.setItem("fnc_admin_sound_enabled", String(next));
+      } catch (e) {}
+      if (next) {
+        // Quick confirmation test chime when toggling ON
+        playOrderAlarm();
+      }
+      return next;
+    });
+  };
 
   useEffect(() => {
     let isMounted = true;
+    let initialLoad = true;
+    let prevCounts = { orders: 0, refunds: 0, inquiries: 0 };
+
     const fetchCounts = async () => {
       try {
         const res = await fetch("/api/admin/notifications/counts");
         if (res.ok) {
           const data = await res.json();
-          if (isMounted) setCounts(data);
+          if (!isMounted) return;
+
+          setCounts(data);
+
+          // Only trigger alarms on updates AFTER the initial load
+          if (!initialLoad) {
+            const hasNewOrder = (data.orders || 0) > (prevCounts.orders || 0);
+            const hasNewRefund = (data.refunds || 0) > (prevCounts.refunds || 0);
+            const hasNewInquiry = (data.inquiries || 0) > (prevCounts.inquiries || 0);
+
+            if (hasNewOrder) {
+              if (soundEnabled) playOrderAlarm();
+              setRecentAlert({
+                type: "order",
+                message: `🔔 New Order received! (${data.orders} pending)`,
+                href: "/admin/orders",
+              });
+            } else if (hasNewRefund) {
+              if (soundEnabled) playRefundAlert();
+              setRecentAlert({
+                type: "refund",
+                message: `⚠️ New Refund Request! (${data.refunds} pending)`,
+                href: "/admin/refunds",
+              });
+            } else if (hasNewInquiry) {
+              if (soundEnabled) playInquiryNotification();
+              setRecentAlert({
+                type: "inquiry",
+                message: `💬 New Customer Inquiry! (${data.inquiries} unread)`,
+                href: "/admin/inquiries",
+              });
+            }
+          }
+
+          prevCounts = data;
+          initialLoad = false;
         }
       } catch (err) {}
     };
 
     fetchCounts();
-    const interval = setInterval(fetchCounts, 45000);
+    // Poll every 15 seconds so order alerts arrive fast
+    const interval = setInterval(fetchCounts, 15000);
     return () => {
       isMounted = false;
       clearInterval(interval);
     };
-  }, []);
+  }, [soundEnabled]);
 
   // Close mobile sidebar on route change
   useEffect(() => {
@@ -301,6 +369,30 @@ export default function AdminShell({ user, nav, children }) {
 
           {/* Right Header Controls */}
           <div className="flex items-center gap-2">
+            {/* Audio Alarm Toggle Button */}
+            <button
+              type="button"
+              onClick={toggleSound}
+              title={soundEnabled ? "Order Sound Alarm: ON (Click to mute)" : "Order Sound Alarm: MUTED (Click to enable)"}
+              className={`h-9 px-3 rounded-full font-body text-xs font-semibold flex items-center gap-1.5 transition-all border ${
+                soundEnabled
+                  ? "bg-fnc-green/10 text-fnc-green border-fnc-green/30 hover:bg-fnc-green/20"
+                  : "bg-warmwhite text-slate border-bordergray hover:text-charcoal"
+              }`}
+            >
+              {soundEnabled ? (
+                <>
+                  <Volume2 className="w-3.5 h-3.5 text-fnc-green animate-pulse" />
+                  <span className="hidden sm:inline">Alarm: ON</span>
+                </>
+              ) : (
+                <>
+                  <VolumeX className="w-3.5 h-3.5" />
+                  <span className="hidden sm:inline">Alarm: Muted</span>
+                </>
+              )}
+            </button>
+
             {totalNotifications > 0 && (
               <Link
                 href="/admin/orders"
@@ -313,6 +405,24 @@ export default function AdminShell({ user, nav, children }) {
             <SignOutButton />
           </div>
         </header>
+
+        {/* Live Floating Alert Toast */}
+        {recentAlert && (
+          <div className="bg-charcoal text-white px-4 py-2.5 flex items-center justify-between text-xs font-body shadow-md border-b border-white/10 z-20 animate-in fade-in slide-in-from-top-2 duration-200">
+            <Link href={recentAlert.href} className="font-semibold hover:underline flex items-center gap-2">
+              <span>{recentAlert.message}</span>
+              <span className="underline text-fnc-red font-bold">View Now →</span>
+            </Link>
+            <button
+              type="button"
+              onClick={() => setRecentAlert(null)}
+              className="text-white/70 hover:text-white px-2 py-0.5 rounded text-sm font-bold"
+              aria-label="Dismiss alert"
+            >
+              ✕
+            </button>
+          </div>
+        )}
 
         {/* Mobile Horizontal Quick Nav */}
         <nav className="md:hidden shrink-0 flex overflow-x-auto gap-1.5 px-3 py-2.5 bg-white border-b border-bordergray/80 shadow-2xs no-scrollbar">

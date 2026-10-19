@@ -9,7 +9,7 @@ export async function GET() {
 
     const storeFilter = storeId ? { storeId } : {};
 
-    const [pendingOrders, pendingRefunds, unreadInquiries] = await Promise.all([
+    const [pendingOrders, pendingRefunds, newFranchiseLeads, contactMessages] = await Promise.all([
       db.order.count({
         where: {
           ...storeFilter,
@@ -21,13 +21,18 @@ export async function GET() {
           status: { in: ["REQUESTED", "UNDER_REVIEW"] },
         },
       }),
+      db.franchiseLead.count({
+        where: {
+          status: "NEW",
+        },
+      }),
       db.contactMessage.count(),
     ]);
 
     return NextResponse.json({
       orders: pendingOrders,
       refunds: pendingRefunds,
-      inquiries: unreadInquiries,
+      inquiries: newFranchiseLeads + contactMessages,
     });
   } catch (error) {
     console.error("[GET /api/admin/notifications/counts] failed:", error);
