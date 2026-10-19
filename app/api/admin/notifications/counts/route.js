@@ -21,11 +21,7 @@ export async function GET() {
           status: { in: ["REQUESTED", "UNDER_REVIEW"] },
         },
       }),
-      db.contactMessage.count({
-        where: {
-          isRead: false,
-        },
-      }),
+      db.contactMessage.count(),
     ]);
 
     return NextResponse.json({
