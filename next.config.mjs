@@ -17,6 +17,10 @@ const securityHeaders = [
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   /* config options here */
+  experimental: {
+    cpus: 2,
+    workerThreads: false,
+  },
   devIndicators: {
     position: "top-right",
   },

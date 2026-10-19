@@ -22,6 +22,8 @@ import { getReviewsForProduct } from "@/lib/data/reviews";
 import { resolveCategoryMeta } from "@/lib/constants";
 import { cn } from "@/lib/utils";
 
+export const dynamic = "force-dynamic";
+
 export async function generateMetadata({ params }) {
   const { slug } = await params;
   const product = await getProductBySlug(slug);
